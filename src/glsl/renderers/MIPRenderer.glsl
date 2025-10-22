@@ -155,7 +155,7 @@ void main() {
     //     acc = maxVal;
     // }
 
-    acc = pow(acc, 0.7);
+    //acc = pow(acc, 0.7);
     
     // float delta = 0.5;
     // if(acc != 0.0) {
@@ -163,10 +163,10 @@ void main() {
     //     acc += delta;
     // }
 
-    // acc = pow(acc, 0.3);
-    // if(acc != 0.0) {
-    //     acc = 1.4 - acc;
-    // }
+    acc = pow(acc, 0.25);
+    if(acc != 0.0) {
+        acc = 1.4 - acc;
+    }
     oColor = vec4(acc, acc, acc, 1);
 }
 

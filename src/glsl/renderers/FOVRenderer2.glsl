@@ -134,44 +134,42 @@ void main() {
     if(mip == 0.0) {
         photon.radiance = texture(uEnvironment, mappedPosition).rgb;
     }
-    else {
-        for (uint i = 0u; i < steps; i++) {
-            float dist = random_exponential(state, uExtinction);
-            photon.position += dist * photon.direction;
+    for (uint i = 0u; i < steps; i++) {
+        float dist = random_exponential(state, uExtinction);
+        photon.position += dist * photon.direction;
 
-            vec4 volumeSample = sampleVolumeColor(photon.position);
+        vec4 volumeSample = sampleVolumeColor(photon.position);
 
-            float PNull = 1.0 - volumeSample.a;
-            float PScattering;
-            if (photon.bounces >= uMaxBounces) {
-                PScattering = 0.0;
-            } else {
-                PScattering = volumeSample.a * max3(volumeSample.rgb);
-            }
-            float PAbsorption = 1.0 - PNull - PScattering;
+        float PNull = 1.0 - volumeSample.a;
+        float PScattering;
+        if (photon.bounces >= uMaxBounces) {
+            PScattering = 0.0;
+        } else {
+            PScattering = volumeSample.a * max3(volumeSample.rgb);
+        }
+        float PAbsorption = 1.0 - PNull - PScattering;
 
-            float fortuneWheel = random_uniform(state);
-            if (any(greaterThan(photon.position, vec3(1))) || any(lessThan(photon.position, vec3(0)))) {
-                // out of bounds
-                vec4 envSample = sampleEnvironmentMap(photon.direction);
-                vec3 radiance = photon.transmittance * envSample.rgb;
-                photon.samples++;
-                photon.radiance += (radiance - photon.radiance) / float(photon.samples);
-                resetPhoton(state, photon);
-            } else if (fortuneWheel < PAbsorption) {
-                // absorption
-                vec3 radiance = vec3(0);
-                photon.samples++;
-                photon.radiance += (radiance - photon.radiance) / float(photon.samples);
-                resetPhoton(state, photon);
-            } else if (fortuneWheel < PAbsorption + PScattering) {
-                // scattering
-                photon.transmittance *= volumeSample.rgb;
-                photon.direction = sampleHenyeyGreenstein(state, uAnisotropy, photon.direction);
-                photon.bounces++;
-            } else {
-                // null collision
-            }
+        float fortuneWheel = random_uniform(state);
+        if (any(greaterThan(photon.position, vec3(1))) || any(lessThan(photon.position, vec3(0)))) {
+            // out of bounds
+            vec4 envSample = sampleEnvironmentMap(photon.direction);
+            vec3 radiance = photon.transmittance * envSample.rgb;
+            photon.samples++;
+            photon.radiance += (radiance - photon.radiance) / float(photon.samples);
+            resetPhoton(state, photon);
+        } else if (fortuneWheel < PAbsorption) {
+            // absorption
+            vec3 radiance = vec3(0);
+            photon.samples++;
+            photon.radiance += (radiance - photon.radiance) / float(photon.samples);
+            resetPhoton(state, photon);
+        } else if (fortuneWheel < PAbsorption + PScattering) {
+            // scattering
+            photon.transmittance *= volumeSample.rgb;
+            photon.direction = sampleHenyeyGreenstein(state, uAnisotropy, photon.direction);
+            photon.bounces++;
+        } else {
+            // null collision
         }
     }
 
