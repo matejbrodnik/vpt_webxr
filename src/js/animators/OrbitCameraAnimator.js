@@ -40,6 +40,7 @@ constructor(camera, domElement, options = {}) {
 
     this._addEventListeners();
     Ticker.add(this._update);
+    console.log("CAMERA START")
 }
 
 _addEventListeners() {

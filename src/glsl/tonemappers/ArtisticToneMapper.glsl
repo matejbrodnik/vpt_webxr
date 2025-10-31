@@ -46,6 +46,5 @@ void main() {
     float exponent = -log(midpoint) / log(2.0);
     color = pow(color, vec4(exponent / uGamma));
 
-
     oColor = vec4(color.rgb, 1.0);
 }

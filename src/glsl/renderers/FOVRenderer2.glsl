@@ -60,6 +60,7 @@ uniform float uExtinction;
 uniform float uAnisotropy;
 uniform uint uMaxBounces;
 uniform uint uSteps;
+uniform uint uCycles;
 
 in vec2 vPosition;
 
@@ -67,6 +68,7 @@ layout (location = 0) out vec4 oPosition;
 layout (location = 1) out vec4 oDirection;
 layout (location = 2) out vec4 oTransmittance;
 layout (location = 3) out vec4 oRadiance;
+layout (location = 4) out vec4 oMIP;
 
 void resetPhoton(inout uint state, inout Photon photon) {
     vec3 from, to;
@@ -127,12 +129,20 @@ void main() {
     photon.direction = directionAndBounces.xyz;
     photon.bounces = uint(directionAndBounces.w + 0.5);
     photon.transmittance = texture(uTransmittance, mappedPosition).rgb;
+    vec4 M2MIP = texture(uMIP, mappedPosition);
+    photon.M2 = M2MIP.rgb;
+    float mip = M2MIP.a;
 
-    float mip = texture(uMIP, mappedPosition).r;
-    float avg = texelFetch(uMIP, ivec2(0, 0), 9).r;
+    // float mip = texture(uMIP, mappedPosition).r;
+    float avg = texelFetch(uMIP, ivec2(0, 0), 9).a;
     uint steps = uint(float(uSteps) * mip / avg);
-    if(mip == 0.0) {
-        photon.radiance = texture(uEnvironment, mappedPosition).rgb;
+    // avg
+    // if(mip == 0.0) {
+    //     photon.radiance = texture(uEnvironment, mappedPosition).rgb;
+    //     photon.radiance = vec3(0.0, 0.7, 0.7);
+    // }
+    if(steps > 250u) {
+        steps = 250u;
     }
     for (uint i = 0u; i < steps; i++) {
         float dist = random_exponential(state, uExtinction);
@@ -155,13 +165,17 @@ void main() {
             vec4 envSample = sampleEnvironmentMap(photon.direction);
             vec3 radiance = photon.transmittance * envSample.rgb;
             photon.samples++;
-            photon.radiance += (radiance - photon.radiance) / float(photon.samples);
+            vec3 delta = radiance - photon.radiance;
+            photon.radiance += delta / float(photon.samples);
+            photon.M2 += delta * (radiance - photon.radiance);
             resetPhoton(state, photon);
         } else if (fortuneWheel < PAbsorption) {
             // absorption
             vec3 radiance = vec3(0);
             photon.samples++;
-            photon.radiance += (radiance - photon.radiance) / float(photon.samples);
+            vec3 delta = radiance - photon.radiance;
+            photon.radiance += delta / float(photon.samples);
+            photon.M2 += delta * (radiance - photon.radiance);
             resetPhoton(state, photon);
         } else if (fortuneWheel < PAbsorption + PScattering) {
             // scattering
@@ -175,8 +189,45 @@ void main() {
 
     oPosition = vec4(photon.position, 0);
     oDirection = vec4(photon.direction, float(photon.bounces));
-    oTransmittance = vec4(photon.transmittance, 0);
     oRadiance = vec4(photon.radiance, float(photon.samples));
+    // oMIP = vec4(mip, mip, mip, 1);
+    oMIP = vec4(photon.M2, mip);
+
+    vec3 variance = photon.M2 / float(photon.samples - 1u);
+    float sum = variance.r + variance.g + variance.b;
+    oTransmittance = vec4(photon.transmittance, sum);
+    
+    // oTransmittance = vec4(photon.transmittance, texture(uTransmittance, mappedPosition).a);
+    // uint thr = 6u;
+    // int k = 1;
+    // if(uCycles < thr) {
+    //     // mip += variance.r / 500.0;
+    //     oTransmittance = vec4(photon.transmittance, sum);
+
+    // }
+    // else if (uCycles == thr) {
+    //     float maxVal = 0.0;
+    //     for (int dx = -k; dx <= k; ++dx) {
+    //         for (int dy = -k; dy <= k; ++dy) {
+    //             vec2 offset = vec2(dx, dy) / 512.0;
+    //             float val = texture(uTransmittance, mappedPosition + offset).a;
+    //             maxVal = max(maxVal, val);
+    //         }
+    //     }
+    //     oTransmittance = vec4(photon.transmittance, maxVal);
+    // }
+    // else if (uCycles == thr + 1u) {
+    //     float minVal = 1.0;
+    //     for (int dx = -k; dx <= k; ++dx) {
+    //         for (int dy = -k; dy <= k; ++dy) {
+    //             vec2 offset = vec2(dx, dy) / 512.0;
+    //             float val = texture(uTransmittance, mappedPosition + offset).a;
+    //             minVal = min(minVal, val);
+    //         }
+    //     }
+    //     oTransmittance = vec4(photon.transmittance, minVal);
+    // }
+
 }
 
 // #part /glsl/shaders/renderers/FOV2/render/vertex
@@ -203,14 +254,22 @@ void main() {
 precision highp float;
 precision highp sampler2D;
 
+uniform sampler2D uMIP;
 uniform sampler2D uColor;
 
 in vec2 vPosition;
 
 out vec4 oColor;
+// layout (location = 1) out vec4 oMIP;
 
 void main() {
-    oColor = vec4(texture(uColor, vPosition).rgb, 1);
+    float acc = texture(uMIP, vPosition).a;
+    // oMIP = vec4(acc, acc, acc, 1);
+    oColor = vec4(acc, acc, acc, 1);
+    // if(acc == 1.0) {
+    //     oColor = vec4(acc, 0, 0, 1);
+    // }
+    // oColor = vec4(texture(uColor, vPosition).rgb, 1);
 }
 
 // #part /glsl/shaders/renderers/FOV2/reset/vertex
@@ -252,6 +311,7 @@ precision highp float;
 
 @unprojectRand
 
+uniform sampler2D uMIP;
 uniform mat4 uMvpInverseMatrix;
 uniform vec2 uInverseResolution;
 uniform float uRandSeed;
@@ -263,8 +323,11 @@ layout (location = 0) out vec4 oPosition;
 layout (location = 1) out vec4 oDirection;
 layout (location = 2) out vec4 oTransmittance;
 layout (location = 3) out vec4 oRadiance;
+layout (location = 4) out vec4 oMIP;
 
 void main() {
+    vec2 mappedPosition = vPosition * 0.5 + 0.5;
+
     Photon photon;
     vec3 from, to;
     uint state = hash(uvec3(floatBitsToUint(vPosition.x), floatBitsToUint(vPosition.y), floatBitsToUint(uRandSeed)));
@@ -278,8 +341,11 @@ void main() {
     photon.radiance = vec3(1);
     photon.bounces = 0u;
     photon.samples = 0u;
+    photon.M2 = vec3(0);
     oPosition = vec4(photon.position, 0);
     oDirection = vec4(photon.direction, float(photon.bounces));
     oTransmittance = vec4(photon.transmittance, 0);
     oRadiance = vec4(photon.radiance, float(photon.samples));
+    oMIP = vec4(photon.M2, texture(uMIP, mappedPosition).r);
+    // oMIP = texture(uMIP, mappedPosition);
 }

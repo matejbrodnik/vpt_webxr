@@ -1,4 +1,5 @@
 import { WebGL } from './WebGL.js';
+import { WebXR } from './WebXR.js';
 import { Ticker } from './Ticker.js';
 
 import { Node } from './Node.js';
@@ -36,6 +37,7 @@ constructor(options = {}) {
     this.canvas.addEventListener('webglcontextrestored', this.webglcontextrestoredHandler);
 
     this.initGL();
+    this.session = WebXR.createSession(this.gl);
 
     this.resolution = options.resolution ?? 512;
     this.filter = options.filter ?? 'linear';
@@ -86,6 +88,7 @@ initGL() {
         stencil: false,
         antialias: false,
         preserveDrawingBuffer: true,
+        // xrCompatible: true,
     };
 
     this.contextRestorable = true;
@@ -108,6 +111,7 @@ initGL() {
     if (!this.extTextureFloatLinear) {
         console.error('OES_texture_float_linear not supported!');
     }
+
 
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
 
@@ -463,6 +467,7 @@ render() {
 
         //     //gl.beginQuery(this.ext.TIME_ELAPSED_EXT, this.query1);
         // }
+
         if(this.countFOV % 2 == 0 && this.countFOV < 501) {
             //this.query1 = gl.createQuery();
             // this.timer4 = performance.now().toFixed(3);
@@ -470,6 +475,7 @@ render() {
             let pixelsFOV = new Uint8Array(512 * 512 * 4);
             gl.readPixels(0, 0, 512, 512, gl.RGBA, gl.UNSIGNED_BYTE, pixelsFOV);
             this.FOVList.push(pixelsFOV);
+            console.log(pixelsFOV[512 * 256 * 4 + 4 * 254], pixelsFOV[512 * 256 * 4 + 4 * 256], pixelsFOV[512 * 256 * 4 + 4 * 258]);
             // this.timeoffsetF += performance.now().toFixed(3) - this.timer4;
 
             if(this.countFOV == 500) {

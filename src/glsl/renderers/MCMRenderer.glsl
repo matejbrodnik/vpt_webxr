@@ -148,13 +148,17 @@ void main() {
             vec4 envSample = sampleEnvironmentMap(photon.direction);
             vec3 radiance = photon.transmittance * envSample.rgb;
             photon.samples++;
-            photon.radiance += (radiance - photon.radiance) / float(photon.samples);
+            vec3 delta = radiance - photon.radiance;
+            photon.radiance += delta / float(photon.samples);
+            photon.M2 += delta * (radiance - photon.radiance);
             resetPhoton(state, photon);
         } else if (fortuneWheel < PAbsorption) {
             // absorption
             vec3 radiance = vec3(0);
             photon.samples++;
-            photon.radiance += (radiance - photon.radiance) / float(photon.samples);
+            vec3 delta = radiance - photon.radiance;
+            photon.radiance += delta / float(photon.samples);
+            photon.M2 += delta * (radiance - photon.radiance);
             resetPhoton(state, photon);
         } else if (fortuneWheel < PAbsorption + PScattering) {
             // scattering
@@ -271,6 +275,7 @@ void main() {
     photon.radiance = vec3(1);
     photon.bounces = 0u;
     photon.samples = 0u;
+    photon.M2 = vec3(0);
     oPosition = vec4(photon.position, 0);
     oDirection = vec4(photon.direction, float(photon.bounces));
     oTransmittance = vec4(photon.transmittance, 0);

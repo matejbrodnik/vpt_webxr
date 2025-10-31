@@ -1,11 +1,17 @@
 export const Ticker = (() => {
 
 let queue = [];
+let _session = null;
 
-(function tick() {
+function tick(time, frame) {
     queue.forEach(f => f());
-    requestAnimationFrame(tick);
-})();
+    _session.requestAnimationFrame(tick);
+};
+
+function start(session) {
+    _session = session;
+    _session.requestAnimationFrame(tick);
+}
 
 function add(f) {
     if (!queue.includes(f)) {
@@ -20,6 +26,6 @@ function remove(f) {
     }
 }
 
-return { add, remove };
+return { add, remove, start };
 
 })();

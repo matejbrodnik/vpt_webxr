@@ -98,10 +98,26 @@ _resetFrame() {
 
     this.mip.render();
 
-    this._MIPmap = { ...this.mip._renderBuffer.getAttachments() }; // MOGOČE TUKAJ??? KAJ JE BILO TREBA, DA SE TEKSTURA OHRANI/NE POVOZI NA UNDEFINED??
+    this._MIPmap = { ...this.mip._renderBuffer.getAttachments() };
 
-    this._accumulationBuffer.use(); //
+    // this._rebuildBuffers();
+    // console.log(this._accumulationBuffer._readAttachments.color);
 
+    // this._accumulationBuffer._readAttachments.color[4] = WebGL.createTexture(gl, {
+    //     texture : this._MIPmap.color[0],
+    //     width   : this._resolution,
+    //     height  : this._resolution,
+    //     min     : gl.NEAREST,
+    //     mag     : gl.NEAREST,
+    //     format  : gl.RGBA,
+    //     iformat : gl.RGBA32F,
+    //     type    : gl.FLOAT,
+    // });
+    // gl.bindFramebuffer(gl.FRAMEBUFFER, this._accumulationBuffer._readFramebuffer);
+    // gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT4, gl.TEXTURE_2D, this._accumulationBuffer._readAttachments.color[4], 0);
+
+    this._accumulationBuffer.use();
+    
     this._context.count2 = 0;
 
     const { program, uniforms } = this._programs.reset;
@@ -110,7 +126,7 @@ _resetFrame() {
     gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution, 1 / this._resolution);
     gl.uniform1f(uniforms.uRandSeed, Math.random());
     gl.uniform1f(uniforms.uBlur, 0);
-
+    
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this._MIPmap.color[0]);
     gl.uniform1i(uniforms.uMIP, 0);
@@ -137,9 +153,11 @@ _resetFrame() {
         gl.COLOR_ATTACHMENT1,
         gl.COLOR_ATTACHMENT2,
         gl.COLOR_ATTACHMENT3,
+        gl.COLOR_ATTACHMENT4,
     ]);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    this.cycles = 0;
 }
 
 _generateFrame() {
@@ -180,12 +198,15 @@ _integrateFrame() {
     gl.uniform1i(uniforms.uTransferFunction, 6);
 
     gl.activeTexture(gl.TEXTURE7);
-    gl.bindTexture(gl.TEXTURE_2D, this._MIPmap.color[0]);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[4]);
     gl.uniform1i(uniforms.uMIP, 7);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
+    gl.generateMipmap(gl.TEXTURE_2D);
 
     gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution, 1 / this._resolution);
     gl.uniform1f(uniforms.uRandSeed, Math.random());
     gl.uniform1f(uniforms.uBlur, 0);
+    gl.uniform1ui(uniforms.uCycles, this.cycles);
 
     gl.uniform1f(uniforms.uExtinction, this.extinction);
     gl.uniform1f(uniforms.uAnisotropy, this.anisotropy);
@@ -210,6 +231,7 @@ _integrateFrame() {
         gl.COLOR_ATTACHMENT1,
         gl.COLOR_ATTACHMENT2,
         gl.COLOR_ATTACHMENT3,
+        gl.COLOR_ATTACHMENT4,
     ]);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -220,12 +242,18 @@ _renderFrame() {
 
     const { program, uniforms } = this._programs.render;
     gl.useProgram(program);
-
+    
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[3]);
     gl.uniform1i(uniforms.uColor, 0);
+    
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[2]);
+    gl.uniform1i(uniforms.uMIP, 1);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    this.cycles++;
+    
 }
 
 _getFrameBufferSpec() {
@@ -241,8 +269,36 @@ _getFrameBufferSpec() {
     }];
 }
 
+_getRenderBufferSpec() {
+    const gl = this._gl;
+    return [{
+        width   : this._resolution,
+        height  : this._resolution,
+        min     : gl.NEAREST,
+        mag     : gl.NEAREST,
+        wrapS   : gl.CLAMP_TO_EDGE,
+        wrapT   : gl.CLAMP_TO_EDGE,
+        format  : gl.RGBA,
+        iformat : gl.RGBA32F,
+        type    : gl.FLOAT,
+    },
+    // {
+    //     width   : this._resolution,
+    //     height  : this._resolution,
+    //     min     : gl.NEAREST,
+    //     mag     : gl.NEAREST,
+    //     wrapS   : gl.CLAMP_TO_EDGE,
+    //     wrapT   : gl.CLAMP_TO_EDGE,
+    //     format  : gl.RGBA,
+    //     iformat : gl.RGBA32F,
+    //     type    : gl.FLOAT,
+    // }
+];
+}
+
 _getAccumulationBufferSpec() {
     const gl = this._gl;
+    this.rebuildRead = 1;
 
     const positionBufferSpec = {
         width   : this._resolution,
@@ -284,11 +340,23 @@ _getAccumulationBufferSpec() {
         type    : gl.FLOAT,
     };
 
+    const mipBufferSpec = {
+        // texture : this._MIPmap ? this._MIPmap.color[0] : gl.createTexture(),
+        width   : this._resolution,
+        height  : this._resolution,
+        min     : gl.NEAREST,
+        mag     : gl.NEAREST,
+        format  : gl.RGBA,
+        iformat : gl.RGBA32F,
+        type    : gl.FLOAT,
+    };
+
     return [
         positionBufferSpec,
         directionBufferSpec,
         transmittanceBufferSpec,
         radianceBufferSpec,
+        mipBufferSpec,
     ];
 }
 

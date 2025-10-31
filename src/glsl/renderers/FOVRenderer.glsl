@@ -97,7 +97,7 @@ void resetPhotonHard(inout uint state, inout Photon photon) {
     photon.transmittance = vec3(1);
     photon.radiance = vec3(0);
     photon.bounces = 0u;
-    photon.samples2 = 0.0;
+    photon.samples = 0u;
     photon.positionA = pos;
     photon.pdf = pdf;
 }
@@ -149,7 +149,7 @@ void main() {
     }
     else {
         vec4 radianceAndSamples = texture(uRadiance, mappedPosition);
-        photon.samples2 = 0.0; //uint(radianceAndSamples.w + 0.5);
+        photon.samples = 0u; //uint(radianceAndSamples.w + 0.5);
         photon.radiance = vec3(0); //radianceAndSamples.rgb;
         // photon.position = texture(uPosition, mappedPosition).xyz;
         photon.position = vec3(texture(uPosition, mappedPosition).xy, texture(uTransmittance, mappedPosition).w);
@@ -183,19 +183,13 @@ void main() {
             // out of bounds
             vec4 envSample = sampleEnvironmentMap(photon.direction);
             vec3 radiance = photon.transmittance * envSample.rgb;
-            photon.samples2 += 1.0;
+            photon.samples++;
             photon.radiance += radiance;            
-            // photon.samples2 += photon.pdf;
-            // photon.radiance += (radiance * photon.pdf);
-            // photon.radiance += (radiance - photon.radiance) / photon.samples2;
             resetPhoton(state, photon);
         } else if (fortuneWheel < PAbsorption) {
             // absorption
             vec3 radiance = vec3(0);
-            photon.samples2 += 1.0;
-            // photon.samples2 += photon.pdf;
-
-            // photon.radiance += (radiance - photon.radiance) / photon.samples2;
+            photon.samples++;
             resetPhoton(state, photon);
         } else if (fortuneWheel < PAbsorption + PScattering) {
             // scattering
@@ -214,10 +208,10 @@ void main() {
     }
 
     oDirection = vec4(photon.direction, float(photon.bounces));
-    oRadiance = vec4(photon.radiance, photon.samples2);
+    oRadiance = vec4(photon.radiance, photon.samples);
     oPosition = vec4(photon.position.xy, photon.positionA);
     oTransmittance = vec4(photon.transmittance, photon.position.z);
-    oRadianceLast = vec4(photon.radiance, photon.samples2);
+    oRadianceLast = vec4(photon.radiance, photon.samples);
 
     // oPositionA = vec4(photon.positionA, 0, 0);
     // oPosition = vec4(photon.position, 0);
@@ -225,7 +219,7 @@ void main() {
     // oPositionA = vec4(photon.positionA, 0, 0);
 
 
-    // if (photon.samples2 == 0.0 && photon.positionA == vPosition) {
+    // if (photon.samples == 0u && photon.positionA == vPosition) {
     //     oRadiance = vec4(0, 1, 0, 1);
     // }
 }
@@ -263,9 +257,9 @@ layout (location = 1) out vec4 oColor2;
 void main() {
     vec2 mappedPosition = vPosition * 0.5 + 0.5;
     vec4 colorAndSamples = texture(uColor, vPosition);
-    vec4 colorAndSamples2 = texture(uColor2, vPosition);
+    vec4 colorAndsamples = texture(uColor2, vPosition);
     oColor = vec4(colorAndSamples.rgb, colorAndSamples.a);
-    oColor2 = vec4(colorAndSamples2.rgb, colorAndSamples2.a);
+    oColor2 = vec4(colorAndsamples.rgb, colorAndsamples.a);
 }
 
 // #part /glsl/shaders/renderers/FOV/reset/vertex
@@ -338,9 +332,9 @@ void main() {
     photon.transmittance = vec3(1);
     photon.radiance = vec3(0);
     photon.bounces = 0u;
-    photon.samples2 = 0.0;
+    photon.samples = 0u;
     oDirection = vec4(photon.direction, float(photon.bounces));
-    oRadiance = vec4(photon.radiance, photon.samples2);
+    oRadiance = vec4(photon.radiance, photon.samples);
     oPosition = vec4(photon.position.xy, photon.positionA);
     oTransmittance = vec4(photon.transmittance, photon.position.z);
     // oPosition = vec4(photon.position, 0);

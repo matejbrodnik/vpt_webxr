@@ -25,6 +25,7 @@ precision highp float;
 
 uniform highp sampler2D uTexture;
 uniform highp sampler2D uTexture2;
+uniform highp sampler2D uDeviation;
 uniform highp sampler2D uEnvironment;
 uniform float uLow;
 uniform float uMid;
@@ -34,7 +35,8 @@ uniform float uGamma;
 
 in vec2 vPosition;
 
-out vec4 oColor;
+layout (location = 0) out vec4 oColor;
+layout (location = 1) out vec4 oDeviation;
 
 void main() {
     vec4 color = texture(uTexture, vPosition);

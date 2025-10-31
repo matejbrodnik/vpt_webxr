@@ -163,9 +163,9 @@ void main() {
     //     acc += delta;
     // }
 
-    acc = pow(acc, 0.25);
+    acc = pow(acc, 0.05);
     if(acc != 0.0) {
-        acc = 1.4 - acc;
+        acc = 1.6 - acc;
     }
     oColor = vec4(acc, acc, acc, 1);
 }
