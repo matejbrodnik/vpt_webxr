@@ -11,7 +11,7 @@ const [ SHADERS, MIXINS ] = await Promise.all([
     'mixins.json',
 ].map(url => fetch(url).then(response => response.json())));
 
-export class FOVRenderer2 extends AbstractRenderer {
+export class FOVRenderer3 extends AbstractRenderer {
 
 constructor(gl, volume, camera, environmentTexture, options = {}) {
     super(gl, volume, camera, environmentTexture, options);

@@ -17,6 +17,7 @@ import { MCMRenderer2 } from './renderers/MCMRenderer2.js';
 import { MIPRenderer } from './renderers/MIPRenderer.js';
 import { MCMRenderer } from './renderers/MCMRenderer.js';
 import { FOVRenderer2 } from './renderers/FOVRenderer2.js';
+import { FOVRenderer3 } from './renderers/FOVRenderer3.js';
 
 const [ SHADERS, MIXINS ] = await Promise.all([
     'shaders.json',
@@ -52,7 +53,6 @@ constructor(options = {}) {
 
         }
     });
-
     //this.cameraAnimator = new CircleAnimator(this.camera, {
     //    center: [0, 0, 2],
     //    direction: [0, 0, 1],
@@ -91,6 +91,7 @@ initGL() {
         // xrCompatible: true,
     };
 
+    this.autoMeasure = true;
     this.contextRestorable = true;
 
     this.gl = this.canvas.getContext('webgl2', contextSettings);
@@ -198,6 +199,10 @@ setFilter(filter) {
     }
 }
 
+setAuto(auto) {
+    this.autoMeasure = auto;
+}
+
 chooseRenderer(renderer) {
     if (this.renderer) {
         this.renderer.destroy();
@@ -220,8 +225,16 @@ chooseRenderer(renderer) {
     this.countFOV = 0;
     this.timer = 0;
     this.count = 0;
-    this.pendingQueries = [];
-    this.queryTime = 0;
+    if(this.query) {
+        this.gl.endQuery(this.ext.TIME_ELAPSED_EXT);
+        this.gl.deleteQuery(this.query);
+        console.log("QUERY!");
+    }
+    if(this.queries) {
+        this.queries.forEach(q => {
+            this.gl.deleteQuery(q);
+        });
+    }  
     this.query = null;
     this.queries = [];
     // if(this.renderer instanceof FOVRenderer){
@@ -262,10 +275,8 @@ render() {
         return;
     }
     let ext = this.ext;
-    // if(this.queryTime == 0) {
-        const query = gl.createQuery();
-        gl.beginQuery(ext.TIME_ELAPSED_EXT, query);
-    // }
+    this.query = gl.createQuery();
+    gl.beginQuery(ext.TIME_ELAPSED_EXT, this.query);
 
     this.renderer.render();
     this.toneMapper.render();
@@ -284,52 +295,50 @@ render() {
     gl.uniform1i(uniforms.uTexture, 0);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
-    if(this.queryTime == 0) {
-        gl.endQuery(ext.TIME_ELAPSED_EXT);
-        this.queries.push(query);
-    }
+
+    gl.endQuery(ext.TIME_ELAPSED_EXT);
+    this.queries.push(this.query);
+    this.query = null;
 
     // this.pendingQueries.push(query);
     // const readyQueries = [];
     // for (let q of this.pendingQueries) {
-    if(this.queryTime == 0) {
-        // console.log(this.query);
-        if (this.queries.length > 0) {
-            const q = this.queries[0];
-            const available = gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE);
-            const disjoint = gl.getParameter(this.ext.GPU_DISJOINT_EXT);
-    
-            if (available) {
-                if (!disjoint) {
-                    const elapsedTime = gl.getQueryParameter(q, gl.QUERY_RESULT);
-                    this.timer += elapsedTime;
-                    if(this.renderer instanceof MCMRenderer && this.countMCM > 500 && this.countMCM < 1001) {
-                    // if(this.renderer instanceof MCMRenderer && this.countMCM < 501) {
-                        if(this.first)
-                            this.timerMCM2 += elapsedTime;
-                        else
-                            this.timerMCM += elapsedTime;
-                    }
-                    if((this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2) && this.countFOV < 501)
-                        this.timerFOV += elapsedTime;
-                    this.count++;
-                }
-                else
-                    console.log("DISJOINT");
+    // console.log(this.query);
+    if (this.queries.length > 0) {
+        const q = this.queries[0];
+        const available = gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE);
+        const disjoint = gl.getParameter(this.ext.GPU_DISJOINT_EXT);
 
-                gl.deleteQuery(q);
-                // q = null;
-                this.queries.shift();
+        if (available) {
+            if (!disjoint) {
+                const elapsedTime = gl.getQueryParameter(q, gl.QUERY_RESULT);
+                this.timer += elapsedTime;
+                if((this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3) && this.countMCM > 500 && this.countMCM < 1001) {
+                // if(this.renderer instanceof MCMRenderer && this.countMCM < 501) {
+                    if(this.first)
+                        this.timerMCM2 += elapsedTime;
+                    else
+                        this.timerMCM += elapsedTime;
+                }
+                if((this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2) && this.countFOV < 501)
+                    this.timerFOV += elapsedTime;
+                this.count++;
             }
             else
-                console.log("NOT READY");
+                console.log("DISJOINT");
+
+            gl.deleteQuery(q);
+            // q = null;
+            this.queries.shift();
         }
+        else
+            console.log("NOT READY");
     }
 
-    if((this.renderer instanceof MCMRenderer)) {
+    if((this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3)) {
         if(this.countMCM == 5000) {
-            this.pixels = new Uint8Array(512 * 512 * 4);
-            gl.readPixels(0, 0, 512, 512, gl.RGBA, gl.UNSIGNED_BYTE, this.pixels);
+            this.pixels = new Uint8Array(this.canvas.width * this.canvas.height * 4);
+            gl.readPixels(0, 0, this.canvas.width, this.canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, this.pixels);
             //this.renderer.measureTexture = { ...this.toneMapper.getTexture() };
             console.log("-\n-\n-\nMEASURE READY\n-\n-\n-");
             this.first = true;
@@ -357,16 +366,18 @@ render() {
 
             gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fboSrc);
             // gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, fboDst);
-            gl.blitFramebuffer(0, 0, 512, 512,
-                            0, 0, 512, 512,
+            gl.blitFramebuffer(0, 0, this.canvas.width, this.canvas.height,
+                            0, 0, this.canvas.width, this.canvas.height,
                             gl.COLOR_BUFFER_BIT, gl.NEAREST);
 
             this.compare = 1.0;
+            if(this.autoMeasure)
+                this.chooseRenderer("fov2");
         }
         if(this.first && this.countMCM % 2 == 0 && this.countMCM < 501) {
-            let pixelsMCM = new Uint8Array(512 * 512 * 4);
+            let pixelsMCM = new Uint8Array(this.canvas.width * this.canvas.height * 4);
             // this.timer3 = performance.now().toFixed(3);
-            gl.readPixels(0, 0, 512, 512, gl.RGBA, gl.UNSIGNED_BYTE, pixelsMCM);
+            gl.readPixels(0, 0, this.canvas.width, this.canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsMCM);
             this.MCMList.push(pixelsMCM);
             // this.timeoffsetM += performance.now().toFixed(3) - this.timer3;
             // this.timeoffsetM += performance.now().toFixed(3) - this.timer3;
@@ -383,7 +394,8 @@ render() {
             let ratio = this.timerFOV / this.timerMCM;
             console.log("RATIO (speedup):", (this.timerFOV / this.timerMCM2).toFixed(2));
             console.log("RATIO (used):", ratio.toFixed(2));
-            // ratio = 1.26;
+            // ratio = 0.95;
+            ratio = 1.00;
             let listF = [];
             let listM = [];
             let resultsFOV = "";
@@ -400,9 +412,9 @@ render() {
                     break;
                 let mseF = 0;
                 let mseM = 0;
-                for(let i = 0; i < 512; i++) {
-                    for(let j = 0; j < 512; j++) {
-                        let index = (i * 512 + j) * 4;
+                for(let i = 0; i < this.canvas.height; i++) {
+                    for(let j = 0; j < this.canvas.width; j++) {
+                        let index = (i * this.canvas.height + j) * 4;
                         let R = this.pixels[index];
                         let G = this.pixels[index+1];
                         let B = this.pixels[index+2];
@@ -422,8 +434,8 @@ render() {
                         //console.log(mse);
                     }
                 }
-                mseF /= (512*512);
-                mseM /= (512*512);
+                mseF /= (this.canvas.width * this.canvas.height);
+                mseM /= (this.canvas.width * this.canvas.height);
                 bpFOV += "FOV " + k * 2 + "\n";
                 bpMCM += "MCM " + k2 * 2 + "\n";
                 resultsFOV += mseF.toFixed(2) + "\n";
@@ -434,20 +446,17 @@ render() {
                 console.log(mseF);
                 console.log(mseM);
             }
-            // console.log("FOV RESULTS:\n" + resultsFOV);
-            // console.log("MCM RESULTS:\n" + resultsMCM);
             console.log("RATIO (used):", ratio.toFixed(2));
             console.log("DIFFERENCE:\n" + diff);
             console.log("F/M RATIO:\n" + div);
             // console.log("FOV BP:\n" + bpFOV);
             // console.log("MCM BP:\n" + bpMCM);
 
-
             let white = 0;
             let it = 0;
-            for(let i = 0; i < 512; i++) {
-                for(let j = 0; j < 512; j++) {
-                    let index = (i * 512 + j) * 4;
+            for(let i = 0; i < this.canvas.height; i++) {
+                for(let j = 0; j < this.canvas.width; j++) {
+                    let index = (i * this.canvas.height + j) * 4;
                     let R = this.pixels[index];
                     let G = this.pixels[index+1];
                     let B = this.pixels[index+2];
@@ -462,55 +471,46 @@ render() {
         this.countMCM++;
     }
     else if((this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2)) {
-        // if(this.count2 == 0) {
-        //     this.timerF = performance.now().toFixed(3);
-
-        //     //gl.beginQuery(this.ext.TIME_ELAPSED_EXT, this.query1);
-        // }
-
         if(this.countFOV % 2 == 0 && this.countFOV < 501) {
-            //this.query1 = gl.createQuery();
-            // this.timer4 = performance.now().toFixed(3);
-
-            let pixelsFOV = new Uint8Array(512 * 512 * 4);
-            gl.readPixels(0, 0, 512, 512, gl.RGBA, gl.UNSIGNED_BYTE, pixelsFOV);
+            let pixelsFOV = new Uint8Array(this.canvas.width * this.canvas.height * 4);
+            gl.readPixels(0, 0, this.canvas.width, this.canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsFOV);
             this.FOVList.push(pixelsFOV);
-            console.log(pixelsFOV[512 * 256 * 4 + 4 * 254], pixelsFOV[512 * 256 * 4 + 4 * 256], pixelsFOV[512 * 256 * 4 + 4 * 258]);
-            // this.timeoffsetF += performance.now().toFixed(3) - this.timer4;
 
             if(this.countFOV == 500) {
-                console.log("FOV READY");
-                // this.FOVtime = performance.now().toFixed(3) - this.timerF - this.timeoffsetF;
+                console.log("--- FOV READY ---");
+                if(this.autoMeasure)
+                    this.chooseRenderer("mcm");
             }
-            //gl.endQuery(this.ext.TIME_ELAPSED_EXT);
-            //console.log(this.FOVList);
         }
         
-        
-
         this.countFOV++;
     }
 
     if(this.count % 25 == 0 && this.timer != 0) {
-        // if(this.renderer instanceof FOVRenderer)
-        //     this.FOV
-        console.log(`READ Time: ${((this.timer / 25.0) / 1000000.0).toFixed(2)} ms`);
+        let type = "READ";
+        if(this.renderer instanceof FOVRenderer || this.renderer instanceof FOVRenderer2)
+            type = "FOV";
+        else if(this.renderer instanceof MCMRenderer)
+            type = "MCM";
+        else if(this.renderer instanceof MIPRenderer)
+            type = "MIP";
+        console.log(`${type} Time: ${((this.timer / 25.0) / 1000000.0).toFixed(2)} ms`);
         this.timer = 0;
     }
 }
 
-            // let imageURL  = this.canvas.toDataURL('image/png');
-            // var downloadLink = document.createElement('a');
-            // downloadLink.href = imageURL;
-            // if(this.renderer instanceof FOVRenderer) {
-            //     downloadLink.download = 'FOV.png';
-            // }
-            // else {
-            //     downloadLink.download = 'MCM.png';
-            // }
-            // document.body.appendChild(downloadLink);
-            // downloadLink.click();
-            // document.body.removeChild(downloadLink);
+    // let imageURL  = this.canvas.toDataURL('image/png');
+    // var downloadLink = document.createElement('a');
+    // downloadLink.href = imageURL;
+    // if(this.renderer instanceof FOVRenderer) {
+    //     downloadLink.download = 'FOV.png';
+    // }
+    // else {
+    //     downloadLink.download = 'MCM.png';
+    // }
+    // document.body.appendChild(downloadLink);
+    // downloadLink.click();
+    // document.body.removeChild(downloadLink);
 
 get resolution() {
     return this._resolution;

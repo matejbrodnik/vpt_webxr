@@ -68,6 +68,10 @@ constructor() {
         this.renderingContext.canvas.classList.toggle('fullscreen',
             this.renderingContextDialog.fullscreen);
     });
+    this.renderingContextDialog.addEventListener('auto', e => {
+        this.renderingContext.canvas.classList.toggle('auto',
+            this.renderingContext.setAuto(this.renderingContextDialog.auto));
+    });
 
     new ResizeObserver(entries => {
         const size = entries[0].contentBoxSize[0];

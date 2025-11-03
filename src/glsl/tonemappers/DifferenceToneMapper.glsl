@@ -46,7 +46,8 @@ void main() {
     color = vec4(color.rgb / color.a, 1.0); 
     vec3 diff = abs(texture(uTexture2, vPosition).rgb - color.rgb);
     float mse = ((color2.r - color.r) * (color2.r - color.r) + (color2.g - color.g) * (color2.g - color.g) + (color2.b - color.b) * (color2.b - color.b)) / 3.0;
-    color = vec4(mse, 0.0, 0.0, 1.0) * 40.0;
+    mse = mse * 60.0;
+    color = vec4(mse, mse, mse, 1.0);
 
     color = (color - uLow) / (uHigh - uLow);
     const vec3 gray = normalize(vec3(1));

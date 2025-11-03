@@ -1,4 +1,4 @@
-// #part /glsl/shaders/renderers/FOV2/integrate/vertex
+// #part /glsl/shaders/renderers/FOV3/integrate/vertex
 
 #version 300 es
 
@@ -16,7 +16,7 @@ void main() {
     gl_Position = vec4(position, 0, 1);
 }
 
-// #part /glsl/shaders/renderers/FOV2/integrate/fragment
+// #part /glsl/shaders/renderers/FOV3/integrate/fragment
 
 #version 300 es
 precision highp float;
@@ -146,10 +146,10 @@ void main() {
     //     avg = texelFetch(uMIP, ivec2(0, 0), 9).a;
     // }
 
-    if(uCycles >= uThr) {
-        mip = texture(uTransmittance, mappedPosition).a;
-        avg = texelFetch(uTransmittance, ivec2(0, 0), 9).a;
-    }
+    // if(uCycles >= uThr) {
+    //     mip = texture(uTransmittance, mappedPosition).a;
+    //     avg = texelFetch(uTransmittance, ivec2(0, 0), 9).a;
+    // }
     uint steps = uint(float(uSteps) * mip / avg);
 
     // avg
@@ -219,8 +219,8 @@ void main() {
         oTransmittance = vec4(photon.transmittance, sum);
     }
     if(steps > 0u && uCycles == uThr - 1u) {
-        sum = max(0.0, sum - 0.1);
-        sum = pow(sum + 0.2, 0.4);
+        sum = max(0.0, sum - 0.3);
+        sum = pow(sum + 0.5, 0.2);
         oTransmittance = vec4(photon.transmittance, sum);
     }
     // else if (uCycles == uThr) {
@@ -259,7 +259,7 @@ void main() {
 
 }
 
-// #part /glsl/shaders/renderers/FOV2/render/vertex
+// #part /glsl/shaders/renderers/FOV3/render/vertex
 
 #version 300 es
 
@@ -277,7 +277,7 @@ void main() {
     gl_Position = vec4(position, 0, 1);
 }
 
-// #part /glsl/shaders/renderers/FOV2/render/fragment
+// #part /glsl/shaders/renderers/FOV3/render/fragment
 
 #version 300 es
 precision highp float;
@@ -304,7 +304,7 @@ void main() {
 
 }
 
-// #part /glsl/shaders/renderers/FOV2/reset/vertex
+// #part /glsl/shaders/renderers/FOV3/reset/vertex
 
 #version 300 es
 
@@ -322,7 +322,7 @@ void main() {
     gl_Position = vec4(position, 0, 1);
 }
 
-// #part /glsl/shaders/renderers/FOV2/reset/fragment
+// #part /glsl/shaders/renderers/FOV3/reset/fragment
 
 #version 300 es
 precision highp float;

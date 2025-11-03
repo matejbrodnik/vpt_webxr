@@ -16,6 +16,7 @@ constructor() {
     this._handleTransformationChange = this._handleTransformationChange.bind(this);
     this._handleFilterChange = this._handleFilterChange.bind(this);
     this._handleFullscreenChange = this._handleFullscreenChange.bind(this);
+    this._handleAutoChange = this._handleAutoChange.bind(this);
 
     this.binds.resolution.addEventListener('change', this._handleResolutionChange);
     this.binds.translation.addEventListener('input', this._handleTransformationChange);
@@ -23,6 +24,7 @@ constructor() {
     this.binds.scale.addEventListener('input', this._handleTransformationChange);
     this.binds.filter.addEventListener('change', this._handleFilterChange);
     this.binds.fullscreen.addEventListener('change', this._handleFullscreenChange);
+    this.binds.auto.addEventListener('change', this._handleAutoChange);
 }
 
 get resolution() {
@@ -49,6 +51,10 @@ get fullscreen() {
     return this.binds.fullscreen.checked;
 }
 
+get auto() {
+    return this.binds.auto.checked;
+}
+
 _handleResolutionChange() {
     this.dispatchEvent(new Event('resolution'));
 }
@@ -63,6 +69,10 @@ _handleFilterChange() {
 
 _handleFullscreenChange() {
     this.dispatchEvent(new Event('fullscreen'));
+}
+
+_handleAutoChange() {
+    this.dispatchEvent(new Event('auto'));
 }
 
 }
