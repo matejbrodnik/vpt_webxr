@@ -274,8 +274,8 @@ _renderFrame() {
 _getFrameBufferSpec() {
     const gl = this._gl;
     return [{
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         format  : gl.RGBA,
@@ -288,8 +288,8 @@ _getAccumulationBufferSpec() {
     const gl = this._gl;
 
     const colorBuffer = {
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         format  : gl.RGBA,
@@ -298,8 +298,8 @@ _getAccumulationBufferSpec() {
     };
 
     const occlusionBuffer = {
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.LINEAR,
         mag     : gl.LINEAR,
         format  : gl.RED,

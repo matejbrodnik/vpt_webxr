@@ -118,7 +118,7 @@ _resetFrame() {
     const { program, uniforms } = this._programs.reset;
     gl.useProgram(program);
 
-    gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution, 1 / this._resolution);
+    gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution.width, 1 / this._resolution.height);
     gl.uniform1f(uniforms.uRandSeed, Math.random());
     gl.uniform1f(uniforms.uBlur, 0);
 
@@ -217,7 +217,7 @@ _integrateFrame() {
     //     this.generate = false;
     // }
 
-    gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution, 1 / this._resolution);
+    gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution.width, 1 / this._resolution.height);
     gl.uniform1f(uniforms.uRandSeed, Math.random());
     gl.uniform1f(uniforms.uBlur, 0);
 
@@ -264,8 +264,8 @@ _renderFrame() {
     if(this.resetCount == 0) {
         WebGL.createTexture(gl, {
             texture : this._renderBuffer.getAttachments().color[1],
-            width   : this._resolution,
-            height  : this._resolution,
+            width   : this._resolution.width,
+            height  : this._resolution.height,
             min     : gl.NEAREST,
             mag     : gl.NEAREST,
             format  : gl.RGBA,
@@ -286,7 +286,7 @@ _renderFrame() {
 
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[4]);
-    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, this._resolution, this._resolution, 0, gl.RGBA, gl.FLOAT, null);
+    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, this._resolution.width, this._resolution.height, 0, gl.RGBA, gl.FLOAT, null);
     
     gl.uniform1i(uniforms.uColor2, 1);
     
@@ -299,7 +299,7 @@ _renderFrame() {
         gl.COLOR_ATTACHMENT1,
     ]);
 
-    gl.drawArrays(gl.POINTS, 0, 512*512);
+    gl.drawArrays(gl.POINTS, 0, this._resolution.width * this._resolution.height);
     gl.disable(gl.BLEND);
 
     this.generate = true;
@@ -313,8 +313,8 @@ _renderFrame() {
 _getFrameBufferSpec() {
     const gl = this._gl;
     return [{
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         format  : gl.RGBA,
@@ -326,8 +326,8 @@ _getFrameBufferSpec() {
 _getRenderBufferSpec() {
     const gl = this._gl;
     return [{
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         wrapS   : gl.CLAMP_TO_EDGE,
@@ -337,8 +337,8 @@ _getRenderBufferSpec() {
         type    : gl.FLOAT,
     },
     {
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         wrapS   : gl.CLAMP_TO_EDGE,
@@ -353,8 +353,8 @@ _getAccumulationBufferSpec() {
     const gl = this._gl;
 
     const positionBufferSpec = {
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         format  : gl.RGBA,
@@ -363,8 +363,8 @@ _getAccumulationBufferSpec() {
     };
 
     const directionBufferSpec = {
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         format  : gl.RGBA,
@@ -373,8 +373,8 @@ _getAccumulationBufferSpec() {
     };
 
     const transmittanceBufferSpec = {
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         format  : gl.RGBA,
@@ -383,8 +383,8 @@ _getAccumulationBufferSpec() {
     };
 
     const radianceBufferSpec = {
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         format  : gl.RGBA,
@@ -393,8 +393,8 @@ _getAccumulationBufferSpec() {
     };
 
     const radianceLastBufferSpec = {
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         format  : gl.RGBA,

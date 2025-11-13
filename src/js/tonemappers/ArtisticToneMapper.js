@@ -75,7 +75,6 @@ _renderFrame() {
     gl.uniform1f(uniforms.uSaturation, this.saturation);
     gl.uniform1f(uniforms.uGamma, this.gamma);
 
-    //gl.drawArrays(gl.POINTS, 0, 512*512);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
 

@@ -12,7 +12,7 @@ export class AbstractToneMapper extends PropertyBag {
 constructor(gl, texture, options = {}) {
     super();
 
-    this._resolution = options.resolution ?? 512;
+    this._resolution = options.resolution ?? {width: 512, height: 512};
 
     this._gl = gl;
     this._texture = texture;
@@ -66,8 +66,8 @@ _renderFrame() {
 _getRenderBufferSpec() {
     const gl = this._gl;
     return [{
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.LINEAR,
         mag     : gl.LINEAR,
         wrapS   : gl.CLAMP_TO_EDGE,

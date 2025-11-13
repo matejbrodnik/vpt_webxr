@@ -123,7 +123,7 @@ _resetFrame() {
     const { program, uniforms } = this._programs.reset;
     gl.useProgram(program);
 
-    gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution, 1 / this._resolution);
+    gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution.width, 1 / this._resolution.height);
     gl.uniform1f(uniforms.uRandSeed, Math.random());
     gl.uniform1f(uniforms.uBlur, 0);
     
@@ -145,7 +145,7 @@ _resetFrame() {
     mat4.multiply(matrix, modelMatrix, matrix);
     mat4.multiply(matrix, viewMatrix, matrix);
     mat4.multiply(matrix, projectionMatrix, matrix);
-    mat4.invert(matrix, matrix);
+    mat4.invert(matrix, matrix);;
     gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix);
 
     gl.drawBuffers([
@@ -211,7 +211,7 @@ _integrateFrame() {
         gl.generateMipmap(gl.TEXTURE_2D);
     }
 
-    gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution, 1 / this._resolution);
+    gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution.width, 1 / this._resolution.height);
     gl.uniform1f(uniforms.uRandSeed, Math.random());
     gl.uniform1f(uniforms.uBlur, 0);
     gl.uniform1ui(uniforms.uCycles, this.cycles);
@@ -233,6 +233,10 @@ _integrateFrame() {
     mat4.multiply(matrix, viewMatrix, matrix);
     mat4.multiply(matrix, projectionMatrix, matrix);
     mat4.invert(matrix, matrix);
+    // console.log("MODEL")
+    // console.log(modelMatrix);
+    // console.log("VIEW", viewMatrix);
+    // console.log("PROJ", projectionMatrix)
     gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix);
 
     gl.drawBuffers([
@@ -268,8 +272,8 @@ _renderFrame() {
 _getFrameBufferSpec() {
     const gl = this._gl;
     return [{
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         format  : gl.RGBA,
@@ -281,8 +285,8 @@ _getFrameBufferSpec() {
 _getRenderBufferSpec() {
     const gl = this._gl;
     return [{
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         wrapS   : gl.CLAMP_TO_EDGE,
@@ -292,8 +296,8 @@ _getRenderBufferSpec() {
         type    : gl.FLOAT,
     },
     // {
-    //     width   : this._resolution,
-    //     height  : this._resolution,
+    //     width   : this._resolution.width,
+    //     height  : this._resolution.height,
     //     min     : gl.NEAREST,
     //     mag     : gl.NEAREST,
     //     wrapS   : gl.CLAMP_TO_EDGE,
@@ -310,8 +314,8 @@ _getAccumulationBufferSpec() {
     this.rebuildRead = 1;
 
     const positionBufferSpec = {
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         format  : gl.RGBA,
@@ -320,8 +324,8 @@ _getAccumulationBufferSpec() {
     };
 
     const directionBufferSpec = {
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         format  : gl.RGBA,
@@ -330,8 +334,8 @@ _getAccumulationBufferSpec() {
     };
 
     const transmittanceBufferSpec = {
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         format  : gl.RGBA,
@@ -340,8 +344,8 @@ _getAccumulationBufferSpec() {
     };
 
     const radianceBufferSpec = {
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         format  : gl.RGBA,
@@ -351,8 +355,8 @@ _getAccumulationBufferSpec() {
 
     const mipBufferSpec = {
         // texture : this._MIPmap ? this._MIPmap.color[0] : gl.createTexture(),
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         format  : gl.RGBA,

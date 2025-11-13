@@ -114,8 +114,8 @@ _rebuildBuffers() {
 _getRenderBufferSpec() {
     const gl = this._gl;
     return [{
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.LINEAR,
         mag     : gl.LINEAR,
         wrapS   : gl.CLAMP_TO_EDGE,
@@ -129,8 +129,8 @@ _getRenderBufferSpec() {
 _getAccumulationBufferSpec() { 
     const gl = this._gl;
     return [{
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         wrapS   : gl.CLAMP_TO_EDGE,

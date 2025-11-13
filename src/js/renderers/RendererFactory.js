@@ -1,4 +1,5 @@
 import { MIPRenderer } from './MIPRenderer.js';
+import { TestRenderer } from './TestRenderer.js';
 import { ISORenderer } from './ISORenderer.js';
 import { EAMRenderer } from './EAMRenderer.js';
 import { LAORenderer } from './LAORenderer.js';
@@ -14,6 +15,7 @@ import { DepthRenderer } from './DepthRenderer.js';
 export function RendererFactory(which) {
     switch (which) {
         case 'mip': return MIPRenderer;
+        case 'test': return TestRenderer;
         case 'iso': return ISORenderer;
         case 'eam': return EAMRenderer;
         case 'lao': return LAORenderer;

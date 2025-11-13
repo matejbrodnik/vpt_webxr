@@ -10,10 +10,17 @@ constructor(node, options = {}) {
     this.aspect = options.aspect ?? 1;
     this.near = options.near ?? 0.1;
     this.far = options.far ?? 100;
+    this.matrix = null;
 }
 
 get projectionMatrix() {
+    if(this.matrix)
+        return this.matrix;
     return mat4.perspective(mat4.create(), this.fovy, this.aspect, this.near, this.far);
+}
+
+set projectionMatrix(matrix) {
+    this.matrix = matrix;
 }
 
 }

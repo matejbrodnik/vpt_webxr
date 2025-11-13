@@ -253,9 +253,9 @@ void main() {
     //     }
     // }
 
-    if(steps == 250u) {
-        oRadiance = vec4(0, 0.7, 0.7, float(photon.samples));
-    }
+    // if(steps == 250u) {
+    //     oRadiance = vec4(0, 0.7, 0.7, float(photon.samples));
+    // }
 
 }
 

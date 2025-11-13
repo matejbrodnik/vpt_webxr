@@ -1,6 +1,7 @@
 import { WebGL } from './WebGL.js';
 import { WebXR } from './WebXR.js';
 import { Ticker } from './Ticker.js';
+import { mat4 } from '../../lib/gl-matrix-module.js';
 
 import { Node } from './Node.js';
 import { PerspectiveCamera } from './PerspectiveCamera.js';
@@ -39,8 +40,12 @@ constructor(options = {}) {
 
     this.initGL();
     this.session = WebXR.createSession(this.gl);
+    this.isImmersive = false;
+    this.useTimer = false;
+    this.right = false;
 
-    this.resolution = options.resolution ?? 512;
+
+    this.resolution = options.resolution ?? {width: 512, height: 512};
     this.filter = options.filter ?? 'linear';
 
     this.camera = new Node();
@@ -77,6 +82,9 @@ constructor(options = {}) {
     this.timerFOV = 0;
     this.timerMCM = 0;
     this.timerMCM2 = 0;
+
+    this._update = this._update.bind(this);
+    this.VRiterations = 0;
 }
 
 // ============================ WEBGL SUBSYSTEM ============================ //
@@ -88,7 +96,7 @@ initGL() {
         stencil: false,
         antialias: false,
         preserveDrawingBuffer: true,
-        // xrCompatible: true,
+        xrCompatible: true,
     };
 
     this.autoMeasure = true;
@@ -96,6 +104,7 @@ initGL() {
 
     this.gl = this.canvas.getContext('webgl2', contextSettings);
     const gl = this.gl;
+    console.log(gl)
 
     this.extLoseContext = gl.getExtension('WEBGL_lose_context');
     this.extColorBufferFloat = gl.getExtension('EXT_color_buffer_float');
@@ -146,7 +155,6 @@ initGL() {
         quad: SHADERS.quad,
         quadFov: SHADERS.quadFov
     }, MIXINS);
-
 }
 
 enableBtn() {
@@ -242,6 +250,25 @@ chooseRenderer(renderer) {
     // }
 }
 
+chooseRenderer2(renderer) {
+    if (this.renderer2) {
+        this.renderer2.destroy();
+    }
+    const rendererClass = RendererFactory(renderer);
+    this.renderer2 = new rendererClass(this.gl, this.volume, this.camera, this.environmentTexture, {
+        resolution: this.resolution,
+        transform: this.volumeTransform,
+    });
+    this.renderer2.setContext(this);
+    // if(this.renderer instanceof FOVRenderer){
+    //     this.disable = true;
+    // }
+    this.renderer2.reset();
+    if (this.toneMapper2) {
+        this.toneMapper2.setTexture(this.renderer2.getTexture());
+    }
+}
+
 chooseToneMapper(toneMapper) {
     if (this.toneMapper && !this.keep) {
         this.toneMapper.destroy();
@@ -269,17 +296,98 @@ chooseToneMapper(toneMapper) {
     }
 }
 
+chooseToneMapper2(toneMapper) {
+    if (this.toneMapper2 && !this.keep) {
+        this.toneMapper2.destroy();
+    }
+    const gl = this.gl;
+    let texture;
+    if (this.renderer2) {
+        texture = this.renderer2.getTexture();
+    } else {
+        texture = WebGL.createTexture(gl, {
+            width  : 1,
+            height : 1,
+            data   : new Uint8Array([255, 255, 255, 255]),
+        });
+    }
+    const toneMapperClass = ToneMapperFactory(toneMapper);
+    this.toneMapper2 = new toneMapperClass(gl, texture, {
+        resolution: this.resolution,
+    });
+
+    this.toneMapper2.copy = this.copy;
+}
+
+_update(t, frame) {
+    console.log(this.gl.getError());
+    if(this.VRiterations > 1500) {
+        console.log("OVER");
+        Ticker.remove(this._update);
+        return;
+    }
+    let session = this.session;
+    let gl = this.gl;
+    console.log(gl.getError());
+    if(this.VRFirst) {
+        this.VRFirst = false;
+        console.log("render state:", session.renderState);
+        let glLayer = session.renderState.baseLayer;
+        console.log("gl layer:", glLayer);
+        this.resolution = {width: glLayer.framebufferWidth, height: glLayer.framebufferHeight}
+        console.log(gl.getError());
+        this.chooseRenderer("test");
+        this.chooseRenderer2("test");
+        this.chooseToneMapper("artistic");
+        this.chooseToneMapper2("artistic");
+        this.renderer.VROn = true;
+        this.extLoseContext = gl.getExtension('WEBGL_lose_context');
+        this.extColorBufferFloat = gl.getExtension('EXT_color_buffer_float');
+        this.extTextureFloatLinear = gl.getExtension('OES_texture_float_linear');
+        console.log(gl.getError());
+
+        // this.ext = this.gl.getExtension('EXT_disjoint_timer_query_webgl2');
+    }
+    console.log("t", t, this.VRiterations);
+    // console.log("frame", frame);
+    let pose = frame.getViewerPose(this.refSpace);
+    if (pose) {
+        let glLayer = session.renderState.baseLayer;
+        for (let view of pose.views) {
+            let viewport = glLayer.getViewport(view);
+            gl.viewport(viewport.x, viewport.y,
+                viewport.width, viewport.height);
+            // this.camera.transform.localMatrix = mat4.invert([], view.transform.matrix);
+            // scene.draw(view.projectionMatrix, view.transform);
+            this.render();
+            this.right = !this.right;
+        }
+    } else {
+        console.log("NO POSE!");
+    }
+    this.VRiterations++;
+}
+
 render() {
     const gl = this.gl;
     if (!gl || !this.renderer || !this.toneMapper) {
         return;
     }
     let ext = this.ext;
-    this.query = gl.createQuery();
-    gl.beginQuery(ext.TIME_ELAPSED_EXT, this.query);
 
-    this.renderer.render();
-    this.toneMapper.render();
+    if(this.useTimer) {
+        this.query = gl.createQuery();
+        gl.beginQuery(ext.TIME_ELAPSED_EXT, this.query);
+    }
+
+    if(this.right) {
+        this.renderer2.render();
+        this.toneMapper2.render();
+    }
+    else {
+        this.renderer.render();
+        this.toneMapper.render();
+    }
     
     this.program = this.programs.quad;
     
@@ -287,15 +395,29 @@ render() {
     
     gl.useProgram(program);
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    if(this.isImmersive) {
+        let glLayer = this.session.renderState.baseLayer;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, glLayer.framebuffer);
+        gl.clearColor(0, 0, 0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+    }
+    else {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    }
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.toneMapper.getTexture());
+    gl.bindTexture(gl.TEXTURE_2D, this.right ? this.toneMapper2.getTexture() : this.toneMapper.getTexture());
+
     gl.uniform1i(uniforms.uTexture, 0);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
+
+    if(!this.useTimer) {
+        return;
+    }
     gl.endQuery(ext.TIME_ELAPSED_EXT);
     this.queries.push(this.query);
     this.query = null;
@@ -337,16 +459,16 @@ render() {
 
     if((this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3)) {
         if(this.countMCM == 5000) {
-            this.pixels = new Uint8Array(this.canvas.width * this.canvas.height * 4);
-            gl.readPixels(0, 0, this.canvas.width, this.canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, this.pixels);
+            this.pixels = new Uint8Array(this.resolution.width * this.resolution.height * 4);
+            gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, this.pixels);
             //this.renderer.measureTexture = { ...this.toneMapper.getTexture() };
             console.log("-\n-\n-\nMEASURE READY\n-\n-\n-");
             this.first = true;
             this.toneMapper._Ref = { ...this.renderer._renderBuffer.getAttachments() };
 
             this.copy = WebGL.createTexture(gl, {
-                width   : this._resolution,
-                height  : this._resolution,
+                width   : this._resolution.width,
+                height  : this._resolution.height,
                 min     : gl.NEAREST,
                 mag     : gl.NEAREST,
                 format  : gl.RGBA,
@@ -366,8 +488,8 @@ render() {
 
             gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fboSrc);
             // gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, fboDst);
-            gl.blitFramebuffer(0, 0, this.canvas.width, this.canvas.height,
-                            0, 0, this.canvas.width, this.canvas.height,
+            gl.blitFramebuffer(0, 0, this.resolution.width, this.resolution.height,
+                            0, 0, this.resolution.width, this.resolution.height,
                             gl.COLOR_BUFFER_BIT, gl.NEAREST);
 
             this.compare = 1.0;
@@ -375,9 +497,9 @@ render() {
                 this.chooseRenderer("fov2");
         }
         if(this.first && this.countMCM % 2 == 0 && this.countMCM < 501) {
-            let pixelsMCM = new Uint8Array(this.canvas.width * this.canvas.height * 4);
+            let pixelsMCM = new Uint8Array(this.resolution.width * this.resolution.height * 4);
             // this.timer3 = performance.now().toFixed(3);
-            gl.readPixels(0, 0, this.canvas.width, this.canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsMCM);
+            gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsMCM);
             this.MCMList.push(pixelsMCM);
             // this.timeoffsetM += performance.now().toFixed(3) - this.timer3;
             // this.timeoffsetM += performance.now().toFixed(3) - this.timer3;
@@ -434,8 +556,8 @@ render() {
                         //console.log(mse);
                     }
                 }
-                mseF /= (this.canvas.width * this.canvas.height);
-                mseM /= (this.canvas.width * this.canvas.height);
+                mseF /= (this.resolution.width * this.resolution.height);
+                mseM /= (this.resolution.width * this.resolution.height);
                 bpFOV += "FOV " + k * 2 + "\n";
                 bpMCM += "MCM " + k2 * 2 + "\n";
                 resultsFOV += mseF.toFixed(2) + "\n";
@@ -454,9 +576,9 @@ render() {
 
             let white = 0;
             let it = 0;
-            for(let i = 0; i < this.canvas.height; i++) {
-                for(let j = 0; j < this.canvas.width; j++) {
-                    let index = (i * this.canvas.height + j) * 4;
+            for(let i = 0; i < this.resolution.height; i++) {
+                for(let j = 0; j < this.resolution.width; j++) {
+                    let index = (i * this.resolution.height + j) * 4;
                     let R = this.pixels[index];
                     let G = this.pixels[index+1];
                     let B = this.pixels[index+2];
@@ -472,8 +594,8 @@ render() {
     }
     else if((this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2)) {
         if(this.countFOV % 2 == 0 && this.countFOV < 501) {
-            let pixelsFOV = new Uint8Array(this.canvas.width * this.canvas.height * 4);
-            gl.readPixels(0, 0, this.canvas.width, this.canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsFOV);
+            let pixelsFOV = new Uint8Array(this.resolution.width * this.resolution.height * 4);
+            gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsFOV);
             this.FOVList.push(pixelsFOV);
 
             if(this.countFOV == 500) {
@@ -518,8 +640,8 @@ get resolution() {
 
 set resolution(resolution) {
     this._resolution = resolution;
-    this.canvas.width = resolution;
-    this.canvas.height = resolution;
+    this.canvas.width = resolution.width;
+    this.canvas.height = resolution.height;
     if (this.renderer) {
         this.renderer.setResolution(resolution);
     }

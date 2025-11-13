@@ -36,6 +36,10 @@ getEnvmapLoadContainer() {
     return this.binds.envmapLoadContainer;
 }
 
+getVRLoadContainer() {
+    return this.binds.vrLoadContainer;
+}
+
 getRendererSettingsContainer() {
     return this.binds.rendererSettingsContainer;
 }

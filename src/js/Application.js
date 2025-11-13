@@ -8,12 +8,16 @@ import { ReaderFactory } from './readers/ReaderFactory.js';
 import { MainDialog } from './dialogs/MainDialog/MainDialog.js';
 import { VolumeLoadDialog } from './dialogs/VolumeLoadDialog/VolumeLoadDialog.js';
 import { EnvmapLoadDialog } from './dialogs/EnvmapLoadDialog/EnvmapLoadDialog.js';
+import { VRLoadDialog } from './dialogs/VRLoadDialog/VRLoadDialog.js';
 import { RenderingContextDialog } from './dialogs/RenderingContextDialog/RenderingContextDialog.js';
 import { DialogConstructor } from './dialogs/DialogConstructor.js';
 
 import { RenderingContext } from './RenderingContext.js';
 
 import { PerspectiveCamera } from './PerspectiveCamera.js';
+
+import { Ticker } from './Ticker.js';
+
 
 export class Application {
 
@@ -23,6 +27,7 @@ constructor() {
     this._handleToneMapperChange = this._handleToneMapperChange.bind(this);
     this._handleVolumeLoad = this._handleVolumeLoad.bind(this);
     this._handleEnvmapLoad = this._handleEnvmapLoad.bind(this);
+    this._handleVRLoad = this._handleVRLoad.bind(this);
     this._handleRecordAnimation = this._handleRecordAnimation.bind(this);
 
     this.binds = DOMUtils.bind(document.body);
@@ -44,13 +49,17 @@ constructor() {
     this.mainDialog.getEnvmapLoadContainer().appendChild(this.envmapLoadDialog.object);
     this.envmapLoadDialog.addEventListener('load', this._handleEnvmapLoad);
 
+    this.VRLoadDialog = new VRLoadDialog();
+    this.mainDialog.getVRLoadContainer().appendChild(this.VRLoadDialog.object);
+    this.VRLoadDialog.addEventListener('enter', this._handleVRLoad);
+
     this.renderingContextDialog = new RenderingContextDialog();
     this.mainDialog.getRenderingContextSettingsContainer().appendChild(
             this.renderingContextDialog.object);
-    this.renderingContextDialog.addEventListener('resolution', e => {
-        const resolution = this.renderingContextDialog.resolution;
-        this.renderingContext.resolution = resolution;
-    });
+    // this.renderingContextDialog.addEventListener('resolution', e => {
+    //     const resolution = this.renderingContextDialog.resolution;
+    //     this.renderingContext.resolution = resolution;
+    // });
     this.renderingContextDialog.addEventListener('transformation', e => {
         const t = this.renderingContextDialog.translation;
         const r = this.renderingContextDialog.rotation;
@@ -224,6 +233,53 @@ _handleEnvmapLoad(e) {
     } else if (options.type === 'url') {
         image.src = options.url;
     }
+}
+
+_handleVRLoad(e) {
+    // this.renderingContext.volumeTransform.localTranslation = [0, 1, 0, 1];
+    // if(this.renderingContext.session) {
+    //     console.log(this.renderingContext.session);
+    //     this.renderingContext.session.end();
+    // }
+    if (this.refSpace) {
+        this.refSpace = null;
+        // Ticker.reset(); // remove???
+    }
+    else {
+        console.log("BEGIN SESSION")
+        navigator.xr.requestSession('immersive-vr').then((session) => {
+            let gl = this.renderingContext.gl;
+            Ticker.reset();
+            gl.makeXRCompatible().then(() => {
+                this.renderingContext.session = session;
+                const layer = new XRWebGLLayer(session, gl);
+                console.log(layer);
+                session.updateRenderState({ baseLayer: layer });
+                session.requestReferenceSpace('local').then((refSpace) => {
+                    this.renderingContext.refSpace = refSpace;
+                    console.log("ref space:", this.renderingContext.refSpace);
+                    this.renderingContext.isImmersive = true;
+                    this.renderingContext.useTimer = false;
+                    console.log("state", session.renderState);
+
+                    this._reset();
+                });
+
+            });
+        });
+    }
+
+    // resetiraj Ticker?
+    console.log("VR LOAD");
+}
+
+_reset() {
+    // console.log("session:", this.renderingContext.session);
+    this.renderingContext.VRFirst = true;
+    console.log("RESET");
+
+    Ticker.add(this.renderingContext._update);
+    Ticker.start(this.renderingContext.session, this.renderingContext.gl);
 }
 
 }

@@ -13,6 +13,8 @@ constructor(gl, spec) {
 
     this._width = this._spec[0].width;
     this._height = this._spec[0].height;
+    // this._x = this._spec[0].x ?? 0;
+    // this._y = this._spec[0].y ?? 0;
 }
 
 destroy() {
@@ -34,7 +36,7 @@ _createAttachmentsFromSpec(gl, spec) {
 use() {
     const gl = this._gl;
     gl.bindFramebuffer(gl.FRAMEBUFFER, this._writeFramebuffer);
-    gl.viewport(0, 0, this._width, this._height);
+    // gl.viewport(0, 0, this._width, this._height);
 }
 
 swap() {

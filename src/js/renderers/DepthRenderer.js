@@ -165,8 +165,8 @@ _renderFrame() {
 _getFrameBufferSpec() {
     const gl = this._gl;
     return [{
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         format  : gl.RED,
@@ -178,8 +178,8 @@ _getFrameBufferSpec() {
 _getAccumulationBufferSpec() {
     const gl = this._gl;
     return [{
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         format  : gl.RED,

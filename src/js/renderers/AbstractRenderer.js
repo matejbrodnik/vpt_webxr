@@ -17,7 +17,7 @@ export class AbstractRenderer extends PropertyBag {
 constructor(gl, volume, camera, environmentTexture, options = {}) {
     super();
 
-    this._resolution = options.resolution ?? 512;
+    this._resolution = options.resolution ?? {width: 512, height: 512};
 
     this._gl = gl;
     this._volume = volume;
@@ -48,7 +48,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     }, MIXINS).quad;
     this.ready = true;
     this.ext = gl.getExtension('EXT_disjoint_timer_query_webgl2');
-
+    this.VROn = false;
 }
 
 destroy(destroyRender = true) {
@@ -165,8 +165,8 @@ _getAccumulationBufferSpec() {
 _getRenderBufferSpec() {
     const gl = this._gl;
     return [{
-        width   : this._resolution,
-        height  : this._resolution,
+        width   : this._resolution.width,
+        height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
         wrapS   : gl.CLAMP_TO_EDGE,
