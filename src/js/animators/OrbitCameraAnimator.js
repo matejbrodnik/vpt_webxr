@@ -126,6 +126,8 @@ _updateCamera() {
 
     const translation = vec3.transformQuat(vec3.create(),
         [0, 0, this._focusDistance], rotation);
+    // console.log(translation);
+    // console.log(rotation);
 
     transform.localRotation = rotation;
     transform.localTranslation = vec3.add(vec3.create(), this._focus, translation);
@@ -148,8 +150,15 @@ _move(v) {
     const rotation = quat.create();
     quat.rotateY(rotation, rotation, this._yaw);
     quat.rotateX(rotation, rotation, this._pitch);
+    // console.log("------------");
+    // console.log(this._yaw);
+    // console.log(this._pitch);
+    // console.log(v);
     vec3.transformQuat(v, v, rotation);
+    // console.log(v);
     vec3.add(this._focus, this._focus, v);
+    // console.log(this._focus);
+
     this._updateCamera();
 }
 
@@ -165,7 +174,6 @@ _update() {
 
     let dx = 0;
     let dz = 0;
-
     if (this._forward) {
         dz -= this.moveSpeed * this._focusDistance * dt;
     }

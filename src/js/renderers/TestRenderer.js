@@ -65,9 +65,9 @@ _generateFrame() {
 }
 
 _integrateFrame() {
-    console.log("TEST INTEGRATE");
+    // console.log("TEST INTEGRATE");
     const gl = this._gl;
-    console.log(gl.getError());
+    // console.log(gl.getError());
 
     const { program, uniforms } = this._programs.integrate;
     gl.useProgram(program);
@@ -86,10 +86,10 @@ _integrateFrame() {
 }
 
 _renderFrame() {
-    console.log("TEST RENDER");
+    // console.log("TEST RENDER");
     
     const gl = this._gl;
-    console.log(gl.getError());
+    // console.log(gl.getError());
 
     const { program, uniforms } = this._programs.render;
     gl.useProgram(program);

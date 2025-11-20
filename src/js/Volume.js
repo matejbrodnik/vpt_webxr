@@ -29,6 +29,7 @@ async readMetadata() {
 }
 
 async readModality(modalityName) {
+    console.log("load volume")
     this.ready = false;
 
     if (!this.metadata) {

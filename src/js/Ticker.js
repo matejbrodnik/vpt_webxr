@@ -6,13 +6,13 @@ let requestID = null;
 let _gl = null;
 
 function tick(time, frame) {
-    if(_gl) {
-        console.log("tick", _gl.getError());
-    }
+    // if(_gl) {
+    //     console.log("tick", _gl.getError()); //
+    // }
     queue.forEach(f => (f.length ? f(time, frame) : f()));
-    if(_gl) {
-        console.log("tick2", _gl.getError());
-    }
+    // if(_gl) {
+    //     console.log("tick2", _gl.getError());
+    // }
     requestID = _session.requestAnimationFrame(tick);
 };
 
@@ -43,6 +43,7 @@ function reset() {
     console.log("reset")
     queue = [];
     _session.cancelAnimationFrame(requestID);
+    _session = null;
 }
 
 return { add, remove, start, reset };

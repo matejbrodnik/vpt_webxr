@@ -8,12 +8,22 @@ const vec2 vertices[] = vec2[](
     vec2(-1,  3)
 );
 
+const vec2 uv[3] = vec2[](
+    vec2(0.0, 0.0),
+    vec2(2.0, 0.0),
+    vec2(0.0, 2.0)
+);
+
 out vec2 vPosition;
 
 void main() {
     vec2 position = vertices[gl_VertexID];
     vPosition = position * 0.5 + 0.5;
     gl_Position = vec4(position, 0, 1);
+
+    // vec2 position = vertices[gl_VertexID];
+    // vPosition = uv[gl_VertexID];
+    // gl_Position = vec4(position, 0, 1);
 }
 
 // #part /glsl/shaders/tonemappers/ArtisticToneMapper/fragment
@@ -46,5 +56,7 @@ void main() {
     float exponent = -log(midpoint) / log(2.0);
     color = pow(color, vec4(exponent / uGamma));
 
+    // oColor = vec4(vPosition, 0.0, 1.0);
+    // oColor = vec4(0.0, 0.7, 0.3, 1.0);
     oColor = vec4(color.rgb, 1.0);
 }

@@ -36,7 +36,7 @@ _createAttachmentsFromSpec(gl, spec) {
 use() {
     const gl = this._gl;
     gl.bindFramebuffer(gl.FRAMEBUFFER, this._writeFramebuffer);
-    // gl.viewport(0, 0, this._width, this._height);
+    gl.viewport(0, 0, this._width, this._height);
 }
 
 swap() {

@@ -243,29 +243,53 @@ _handleVRLoad(e) {
     // }
     if (this.refSpace) {
         this.refSpace = null;
+        this.renderingContext.session.end();
+        this.renderingContext.VRiterations = 0;
         // Ticker.reset(); // remove???
     }
     else {
-        console.log("BEGIN SESSION")
-        navigator.xr.requestSession('immersive-vr').then((session) => {
-            let gl = this.renderingContext.gl;
-            Ticker.reset();
+        console.log("BEGIN SESSION");
+        let renderingContext = this.renderingContext;
+        let gl = renderingContext.gl;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        gl.bindTexture(gl.TEXTURE_3D, null);
+        navigator.xr.requestSession('immersive-vr', {requiredFeatures: ['local-floor']}).then((session) => {
+            session.addEventListener("inputsourcechange", (event) => {
+                console.log("inputs", event.session.inputSources);
+            });
+            session.addEventListener("selectstart", (event) => {
+                console.log("select start", event);
+                console.log(event.inputSource);
+            });
+            session.addEventListener('select', (event) => {
+                console.log("select", event);
+                console.log(event.inputSource);
+            });
+            session.addEventListener('squeezestart', (event) => {
+                console.log("squeeze start", event);
+                console.log(event.inputSource);
+            });
+            renderingContext.session = session;
             gl.makeXRCompatible().then(() => {
-                this.renderingContext.session = session;
+                // renderingContext.initGL(false);
+                renderingContext = this.renderingContext;
+                gl = renderingContext.gl;
+                
                 const layer = new XRWebGLLayer(session, gl);
                 console.log(layer);
-                session.updateRenderState({ baseLayer: layer });
-                session.requestReferenceSpace('local').then((refSpace) => {
-                    this.renderingContext.refSpace = refSpace;
-                    console.log("ref space:", this.renderingContext.refSpace);
-                    this.renderingContext.isImmersive = true;
-                    this.renderingContext.useTimer = false;
+                renderingContext.session.updateRenderState({ baseLayer: layer });
+                renderingContext.session.requestReferenceSpace('local-floor').then((refSpace) => {
+                    renderingContext.refSpace = refSpace;
+                    console.log("ref space:", renderingContext.refSpace);
+                    renderingContext.isImmersive = true;
+                    renderingContext.useTimer = false;
                     console.log("state", session.renderState);
-
+    
                     this._reset();
                 });
-
             });
+
         });
     }
 
@@ -277,7 +301,7 @@ _reset() {
     // console.log("session:", this.renderingContext.session);
     this.renderingContext.VRFirst = true;
     console.log("RESET");
-
+    Ticker.reset();
     Ticker.add(this.renderingContext._update);
     Ticker.start(this.renderingContext.session, this.renderingContext.gl);
 }

@@ -43,7 +43,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'steps',
             label: 'Steps',
             type: 'spinner',
-            value: 40,
+            value: 10,
             min: 0,
         },
         {

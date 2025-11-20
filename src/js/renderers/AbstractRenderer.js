@@ -25,6 +25,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     this._environmentTexture = environmentTexture;
 
     this._volumeTransform = options.transform ?? new Transform();
+    this._VRAnimator = options.VRAnimator;
 
     this._rebuildBuffers();
 

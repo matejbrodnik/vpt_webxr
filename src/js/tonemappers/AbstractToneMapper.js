@@ -49,6 +49,7 @@ _rebuildBuffers() {
         this._renderBuffer.destroy();
     }
     const gl = this._gl;
+    console.log("render buffer", this._getRenderBufferSpec())
     this._renderBuffer = new SingleBuffer(gl, this._getRenderBufferSpec());
 }
 
