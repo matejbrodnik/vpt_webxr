@@ -110,7 +110,8 @@ initGL(inline = true) {
 
     }
     const gl = this.gl;
-
+    console.log(gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT).precision);
+    console.log(gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS));
     this.extLoseContext = gl.getExtension('WEBGL_lose_context');
     this.extColorBufferFloat = gl.getExtension('EXT_color_buffer_float');
     this.extTextureFloatLinear = gl.getExtension('OES_texture_float_linear');
@@ -315,12 +316,12 @@ chooseToneMapper2(toneMapper) {
 }
 
 _update(t, frame) {
-    // console.log("update", this.gl.getError());
-    // if(this.VRiterations > 2000) {
-    //     console.log("OVER");
-    //     Ticker.remove(this._update);
-    //     return;
-    // }
+    console.log("update", this.gl.getError());
+    if(this.VRiterations > 80) {
+        console.log("OVER");
+        Ticker.remove(this._update);
+        return;
+    }
     let session = this.session;
     let gl = this.gl;
     if(this.VRFirst) {
@@ -330,8 +331,8 @@ _update(t, frame) {
         console.log("gl layer:", glLayer);
         this.resolution = {width: glLayer.framebufferWidth, height: glLayer.framebufferHeight}
         this.VRAnimator = new VRCameraAnimator();
-        this.chooseRenderer("mip");
-        this.chooseRenderer2("mip");
+        this.chooseRenderer("mcm");
+        this.chooseRenderer2("mcm");
         this.chooseToneMapper("artistic");
         this.chooseToneMapper2("artistic");
         this.renderer.VROn = true;
@@ -345,13 +346,13 @@ _update(t, frame) {
         let gp = frame.session.inputSources[0].gamepad;
         this.VRAnimator.update(gp, dt);
     }
-
+    this.right = true;
     let pose = frame.getViewerPose(this.refSpace);
     if (pose) {
         let glLayer = session.renderState.baseLayer;
         for (let view of pose.views) {
             this.viewport = glLayer.getViewport(view);
-            if(this.VRiterations % 2 == 0 && this.VRiterations != 0) {
+            if(this.VRiterations % 20 == 0 && this.VRiterations != 0) {
                 // this.camera.transform.localMatrix = mat4.invert([], view.transform.matrix);
                 if(!this.right){
                     this.VRAnimator.apply();
@@ -362,11 +363,13 @@ _update(t, frame) {
                     console.log(this.VRAnimator.transform);
                     this.renderer2.reset();
                 }
-                else
-                    this.renderer.reset();
+                // else
+                //     this.renderer.reset();
                     // this.renderer.VRView = this.VRAnimator.transform;
             }
             this.render();
+            if(this.right) // remove !!!!!!!
+                break;
             this.right = !this.right;
         }
     } else {
@@ -425,209 +428,209 @@ render() {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
 
-    if(!this.useTimer) {
-        return;
-    }
-    gl.endQuery(ext.TIME_ELAPSED_EXT);
-    this.queries.push(this.query);
-    this.query = null;
+    // if(!this.useTimer) {
+    //     return;
+    // }
+    // gl.endQuery(ext.TIME_ELAPSED_EXT);
+    // this.queries.push(this.query);
+    // this.query = null;
 
-    // this.pendingQueries.push(query);
-    // const readyQueries = [];
-    // for (let q of this.pendingQueries) {
-    // console.log(this.query);
-    if (this.queries.length > 0) {
-        const q = this.queries[0];
-        const available = gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE);
-        const disjoint = gl.getParameter(this.ext.GPU_DISJOINT_EXT);
+    // // this.pendingQueries.push(query);
+    // // const readyQueries = [];
+    // // for (let q of this.pendingQueries) {
+    // // console.log(this.query);
+    // if (this.queries.length > 0) {
+    //     const q = this.queries[0];
+    //     const available = gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE);
+    //     const disjoint = gl.getParameter(this.ext.GPU_DISJOINT_EXT);
 
-        if (available) {
-            if (!disjoint) {
-                const elapsedTime = gl.getQueryParameter(q, gl.QUERY_RESULT);
-                this.timer += elapsedTime;
-                if((this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3) && this.countMCM > 500 && this.countMCM < 1001) {
-                // if(this.renderer instanceof MCMRenderer && this.countMCM < 501) {
-                    if(this.first)
-                        this.timerMCM2 += elapsedTime;
-                    else
-                        this.timerMCM += elapsedTime;
-                }
-                if((this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2) && this.countFOV < 501)
-                    this.timerFOV += elapsedTime;
-                this.count++;
-            }
-            else
-                console.log("DISJOINT");
+    //     if (available) {
+    //         if (!disjoint) {
+    //             const elapsedTime = gl.getQueryParameter(q, gl.QUERY_RESULT);
+    //             this.timer += elapsedTime;
+    //             if((this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3) && this.countMCM > 500 && this.countMCM < 1001) {
+    //             // if(this.renderer instanceof MCMRenderer && this.countMCM < 501) {
+    //                 if(this.first)
+    //                     this.timerMCM2 += elapsedTime;
+    //                 else
+    //                     this.timerMCM += elapsedTime;
+    //             }
+    //             if((this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2) && this.countFOV < 501)
+    //                 this.timerFOV += elapsedTime;
+    //             this.count++;
+    //         }
+    //         else
+    //             console.log("DISJOINT");
 
-            gl.deleteQuery(q);
-            // q = null;
-            this.queries.shift();
-        }
-        else
-            console.log("NOT READY");
-    }
+    //         gl.deleteQuery(q);
+    //         // q = null;
+    //         this.queries.shift();
+    //     }
+    //     else
+    //         console.log("NOT READY");
+    // }
 
-    if((this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3)) {
-        if(this.countMCM == 5000) {
-            this.pixels = new Uint8Array(this.resolution.width * this.resolution.height * 4);
-            gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, this.pixels);
-            console.log("-\n-\n-\nMEASURE READY\n-\n-\n-");
-            this.first = true;
-            this.toneMapper._Ref = { ...this.renderer._renderBuffer.getAttachments() };
+    // if((this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3)) {
+    //     if(this.countMCM == 5000) {
+    //         this.pixels = new Uint8Array(this.resolution.width * this.resolution.height * 4);
+    //         gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, this.pixels);
+    //         console.log("-\n-\n-\nMEASURE READY\n-\n-\n-");
+    //         this.first = true;
+    //         this.toneMapper._Ref = { ...this.renderer._renderBuffer.getAttachments() };
 
-            this.copy = WebGL.createTexture(gl, {
-                width   : this._resolution.width,
-                height  : this._resolution.height,
-                min     : gl.NEAREST,
-                mag     : gl.NEAREST,
-                format  : gl.RGBA,
-                iformat : gl.RGBA32F,
-                type    : gl.FLOAT,
-            })
+    //         this.copy = WebGL.createTexture(gl, {
+    //             width   : this._resolution.width,
+    //             height  : this._resolution.height,
+    //             min     : gl.NEAREST,
+    //             mag     : gl.NEAREST,
+    //             format  : gl.RGBA,
+    //             iformat : gl.RGBA32F,
+    //             type    : gl.FLOAT,
+    //         })
 
-            const fboSrc = gl.createFramebuffer();
-            gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fboSrc);
-            gl.framebufferTexture2D(gl.READ_FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
-                                    gl.TEXTURE_2D, this.renderer._renderBuffer.getAttachments().color[0], 0);
+    //         const fboSrc = gl.createFramebuffer();
+    //         gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fboSrc);
+    //         gl.framebufferTexture2D(gl.READ_FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+    //                                 gl.TEXTURE_2D, this.renderer._renderBuffer.getAttachments().color[0], 0);
 
-            const fboDst = gl.createFramebuffer();
-            gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, fboDst);
-            gl.framebufferTexture2D(gl.DRAW_FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
-                                    gl.TEXTURE_2D, this.copy, 0);
+    //         const fboDst = gl.createFramebuffer();
+    //         gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, fboDst);
+    //         gl.framebufferTexture2D(gl.DRAW_FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+    //                                 gl.TEXTURE_2D, this.copy, 0);
 
-            gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fboSrc);
-            // gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, fboDst);
-            gl.blitFramebuffer(0, 0, this.resolution.width, this.resolution.height,
-                            0, 0, this.resolution.width, this.resolution.height,
-                            gl.COLOR_BUFFER_BIT, gl.NEAREST);
+    //         gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fboSrc);
+    //         // gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, fboDst);
+    //         gl.blitFramebuffer(0, 0, this.resolution.width, this.resolution.height,
+    //                         0, 0, this.resolution.width, this.resolution.height,
+    //                         gl.COLOR_BUFFER_BIT, gl.NEAREST);
 
-            this.compare = 1.0;
-            if(this.autoMeasure)
-                this.chooseRenderer("fov2");
-        }
-        if(this.first && this.countMCM % 2 == 0 && this.countMCM < 501) {
-            let pixelsMCM = new Uint8Array(this.resolution.width * this.resolution.height * 4);
-            // this.timer3 = performance.now().toFixed(3);
-            gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsMCM);
-            this.MCMList.push(pixelsMCM);
-            // this.timeoffsetM += performance.now().toFixed(3) - this.timer3;
-            // this.timeoffsetM += performance.now().toFixed(3) - this.timer3;
+    //         this.compare = 1.0;
+    //         if(this.autoMeasure)
+    //             this.chooseRenderer("fov2");
+    //     }
+    //     if(this.first && this.countMCM % 2 == 0 && this.countMCM < 501) {
+    //         let pixelsMCM = new Uint8Array(this.resolution.width * this.resolution.height * 4);
+    //         // this.timer3 = performance.now().toFixed(3);
+    //         gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsMCM);
+    //         this.MCMList.push(pixelsMCM);
+    //         // this.timeoffsetM += performance.now().toFixed(3) - this.timer3;
+    //         // this.timeoffsetM += performance.now().toFixed(3) - this.timer3;
 
-            if(this.countMCM == 500) {
-                console.log("MCM READY");
-                this.second = true;
-            }
-        }
-        if(this.countMCM == 500 && this.second) {
-            console.log("FOV TIME: ", (this.timerFOV / 500.0).toFixed(2));
-            console.log("MCM TIME (speedup):", (this.timerMCM2 / 500.0).toFixed(2));
-            console.log("MCM TIME (used): ", (this.timerMCM / 500.0).toFixed(2));
-            let ratio = this.timerFOV / this.timerMCM;
-            console.log("RATIO (speedup):", (this.timerFOV / this.timerMCM2).toFixed(2));
-            console.log("RATIO (used):", ratio.toFixed(2));
-            // ratio = 0.95;
-            ratio = 1.00;
-            let listF = [];
-            let listM = [];
-            let resultsFOV = "";
-            let resultsMCM = "";
-            let bpFOV = "";
-            let bpMCM = "";
-            let diff = "";
-            let div = "";
-            for(let k = 0; k < this.FOVList.length; k++) { //FOVList length = MCMList length - 1?
-                if(k % 5 != 0)
-                    continue;
-                let k2 = Math.round(k * ratio);
-                if(k2 >= this.MCMList.length)
-                    break;
-                let mseF = 0;
-                let mseM = 0;
-                for(let i = 0; i < this.canvas.height; i++) {
-                    for(let j = 0; j < this.canvas.width; j++) {
-                        let index = (i * this.canvas.height + j) * 4;
-                        let R = this.pixels[index];
-                        let G = this.pixels[index+1];
-                        let B = this.pixels[index+2];
+    //         if(this.countMCM == 500) {
+    //             console.log("MCM READY");
+    //             this.second = true;
+    //         }
+    //     }
+    //     if(this.countMCM == 500 && this.second) {
+    //         console.log("FOV TIME: ", (this.timerFOV / 500.0).toFixed(2));
+    //         console.log("MCM TIME (speedup):", (this.timerMCM2 / 500.0).toFixed(2));
+    //         console.log("MCM TIME (used): ", (this.timerMCM / 500.0).toFixed(2));
+    //         let ratio = this.timerFOV / this.timerMCM;
+    //         console.log("RATIO (speedup):", (this.timerFOV / this.timerMCM2).toFixed(2));
+    //         console.log("RATIO (used):", ratio.toFixed(2));
+    //         // ratio = 0.95;
+    //         ratio = 1.00;
+    //         let listF = [];
+    //         let listM = [];
+    //         let resultsFOV = "";
+    //         let resultsMCM = "";
+    //         let bpFOV = "";
+    //         let bpMCM = "";
+    //         let diff = "";
+    //         let div = "";
+    //         for(let k = 0; k < this.FOVList.length; k++) { //FOVList length = MCMList length - 1?
+    //             if(k % 5 != 0)
+    //                 continue;
+    //             let k2 = Math.round(k * ratio);
+    //             if(k2 >= this.MCMList.length)
+    //                 break;
+    //             let mseF = 0;
+    //             let mseM = 0;
+    //             for(let i = 0; i < this.canvas.height; i++) {
+    //                 for(let j = 0; j < this.canvas.width; j++) {
+    //                     let index = (i * this.canvas.height + j) * 4;
+    //                     let R = this.pixels[index];
+    //                     let G = this.pixels[index+1];
+    //                     let B = this.pixels[index+2];
     
-                        let r = this.FOVList[k][index];
-                        let g = this.FOVList[k][index+1];
-                        let b = this.FOVList[k][index+2];
+    //                     let r = this.FOVList[k][index];
+    //                     let g = this.FOVList[k][index+1];
+    //                     let b = this.FOVList[k][index+2];
     
-                        let rr = this.MCMList[k2][index];
-                        let gg = this.MCMList[k2][index+1];
-                        let bb = this.MCMList[k2][index+2];
+    //                     let rr = this.MCMList[k2][index];
+    //                     let gg = this.MCMList[k2][index+1];
+    //                     let bb = this.MCMList[k2][index+2];
     
-                        mseF += ((R - r) ** 2 + (G - g) ** 2 + (B - b) ** 2) / 3.0;
-                        mseM += ((R - rr) ** 2 + (G - gg) ** 2 + (B - bb) ** 2) / 3.0;
-                        // mseF += (R - r) ** 2;
-                        // mseM += (R - rr) ** 2;
-                        //console.log(mse);
-                    }
-                }
-                mseF /= (this.resolution.width * this.resolution.height);
-                mseM /= (this.resolution.width * this.resolution.height);
-                bpFOV += "FOV " + k * 2 + "\n";
-                bpMCM += "MCM " + k2 * 2 + "\n";
-                resultsFOV += mseF.toFixed(2) + "\n";
-                resultsMCM += mseM.toFixed(2) + "\n";
-                diff += (mseF - mseM).toFixed(2) + "\n";
-                div += (mseF/ mseM).toFixed(2) + "\n";
-                console.log("FOV " + k * 2 + " MCM " + k2 * 2);
-                console.log(mseF);
-                console.log(mseM);
-            }
-            console.log("RATIO (used):", ratio.toFixed(2));
-            console.log("DIFFERENCE:\n" + diff);
-            console.log("F/M RATIO:\n" + div);
-            // console.log("FOV BP:\n" + bpFOV);
-            // console.log("MCM BP:\n" + bpMCM);
+    //                     mseF += ((R - r) ** 2 + (G - g) ** 2 + (B - b) ** 2) / 3.0;
+    //                     mseM += ((R - rr) ** 2 + (G - gg) ** 2 + (B - bb) ** 2) / 3.0;
+    //                     // mseF += (R - r) ** 2;
+    //                     // mseM += (R - rr) ** 2;
+    //                     //console.log(mse);
+    //                 }
+    //             }
+    //             mseF /= (this.resolution.width * this.resolution.height);
+    //             mseM /= (this.resolution.width * this.resolution.height);
+    //             bpFOV += "FOV " + k * 2 + "\n";
+    //             bpMCM += "MCM " + k2 * 2 + "\n";
+    //             resultsFOV += mseF.toFixed(2) + "\n";
+    //             resultsMCM += mseM.toFixed(2) + "\n";
+    //             diff += (mseF - mseM).toFixed(2) + "\n";
+    //             div += (mseF/ mseM).toFixed(2) + "\n";
+    //             console.log("FOV " + k * 2 + " MCM " + k2 * 2);
+    //             console.log(mseF);
+    //             console.log(mseM);
+    //         }
+    //         console.log("RATIO (used):", ratio.toFixed(2));
+    //         console.log("DIFFERENCE:\n" + diff);
+    //         console.log("F/M RATIO:\n" + div);
+    //         // console.log("FOV BP:\n" + bpFOV);
+    //         // console.log("MCM BP:\n" + bpMCM);
 
-            let white = 0;
-            let it = 0;
-            for(let i = 0; i < this.resolution.height; i++) {
-                for(let j = 0; j < this.resolution.width; j++) {
-                    let index = (i * this.resolution.height + j) * 4;
-                    let R = this.pixels[index];
-                    let G = this.pixels[index+1];
-                    let B = this.pixels[index+2];
-                    if(R + G + B == 765)
-                        white++;
-                    it++;
-                }
-            }
-            console.log("WHITE %: " + white / it);
-        }
+    //         let white = 0;
+    //         let it = 0;
+    //         for(let i = 0; i < this.resolution.height; i++) {
+    //             for(let j = 0; j < this.resolution.width; j++) {
+    //                 let index = (i * this.resolution.height + j) * 4;
+    //                 let R = this.pixels[index];
+    //                 let G = this.pixels[index+1];
+    //                 let B = this.pixels[index+2];
+    //                 if(R + G + B == 765)
+    //                     white++;
+    //                 it++;
+    //             }
+    //         }
+    //         console.log("WHITE %: " + white / it);
+    //     }
 
-        this.countMCM++;
-    }
-    else if((this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2)) {
-        if(this.countFOV % 2 == 0 && this.countFOV < 501) {
-            let pixelsFOV = new Uint8Array(this.resolution.width * this.resolution.height * 4);
-            gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsFOV);
-            this.FOVList.push(pixelsFOV);
+    //     this.countMCM++;
+    // }
+    // else if((this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2)) {
+    //     if(this.countFOV % 2 == 0 && this.countFOV < 501) {
+    //         let pixelsFOV = new Uint8Array(this.resolution.width * this.resolution.height * 4);
+    //         gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsFOV);
+    //         this.FOVList.push(pixelsFOV);
 
-            if(this.countFOV == 500) {
-                console.log("--- FOV READY ---");
-                if(this.autoMeasure)
-                    this.chooseRenderer("mcm");
-            }
-        }
+    //         if(this.countFOV == 500) {
+    //             console.log("--- FOV READY ---");
+    //             if(this.autoMeasure)
+    //                 this.chooseRenderer("mcm");
+    //         }
+    //     }
         
-        this.countFOV++;
-    }
+    //     this.countFOV++;
+    // }
 
-    if(this.count % 25 == 0 && this.timer != 0) {
-        let type = "READ";
-        if(this.renderer instanceof FOVRenderer || this.renderer instanceof FOVRenderer2)
-            type = "FOV";
-        else if(this.renderer instanceof MCMRenderer)
-            type = "MCM";
-        else if(this.renderer instanceof MIPRenderer)
-            type = "MIP";
-        console.log(`${type} Time: ${((this.timer / 25.0) / 1000000.0).toFixed(2)} ms`);
-        this.timer = 0;
-    }
+    // if(this.count % 25 == 0 && this.timer != 0) {
+    //     let type = "READ";
+    //     if(this.renderer instanceof FOVRenderer || this.renderer instanceof FOVRenderer2)
+    //         type = "FOV";
+    //     else if(this.renderer instanceof MCMRenderer)
+    //         type = "MCM";
+    //     else if(this.renderer instanceof MIPRenderer)
+    //         type = "MIP";
+    //     console.log(`${type} Time: ${((this.timer / 25.0) / 1000000.0).toFixed(2)} ms`);
+    //     this.timer = 0;
+    // }
 }
 
     // let imageURL  = this.canvas.toDataURL('image/png');

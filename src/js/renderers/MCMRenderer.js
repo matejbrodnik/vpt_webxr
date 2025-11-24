@@ -20,7 +20,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'extinction',
             label: 'Extinction',
             type: 'spinner',
-            value: 100,
+            value: 50,
             min: 0,
         },
         {
@@ -35,14 +35,14 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'bounces',
             label: 'Max bounces',
             type: 'spinner',
-            value: 8,
+            value: 4,
             min: 0,
         },
         {
             name: 'steps',
             label: 'Steps',
             type: 'spinner',
-            value: 40,
+            value: 1,
             min: 0,
         },
         {
@@ -116,6 +116,31 @@ _resetFrame() {
 }
 
 _generateFrame() {
+    const gl = this._gl;
+    console.log(gl.getError());
+
+    const { program, uniforms } = this._programs.generate;
+    gl.useProgram(program);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[0]);
+    gl.uniform1i(uniforms.uPosition, 0);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[1]);
+    gl.uniform1i(uniforms.uDirection, 1);
+
+    this.rand = Math.random();
+    gl.uniform1f(uniforms.uRandSeed, this.rand);
+    gl.uniform1f(uniforms.uExtinction, this.extinction);
+    gl.uniform1f(uniforms.uAnisotropy, this.anisotropy);
+
+    gl.drawBuffers([
+        gl.COLOR_ATTACHMENT0,
+        gl.COLOR_ATTACHMENT1,
+    ]);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
 
 _integrateFrame() {
@@ -125,7 +150,7 @@ _integrateFrame() {
     gl.useProgram(program);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[0]);
+    gl.bindTexture(gl.TEXTURE_2D, this._frameBuffer.getAttachments().color[0]);
     gl.uniform1i(uniforms.uPosition, 0);
 
     gl.activeTexture(gl.TEXTURE1);
@@ -152,12 +177,14 @@ _integrateFrame() {
     gl.bindTexture(gl.TEXTURE_2D, this._transferFunction);
     gl.uniform1i(uniforms.uTransferFunction, 6);
 
+    gl.activeTexture(gl.TEXTURE7);
+    gl.bindTexture(gl.TEXTURE_2D, this._frameBuffer.getAttachments().color[1]);
+    gl.uniform1i(uniforms.uDirection2, 7);
+
     gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution.width, 1 / this._resolution.height);
-    gl.uniform1f(uniforms.uRandSeed, Math.random());
+    gl.uniform1f(uniforms.uRandSeed, this.rand);
     gl.uniform1f(uniforms.uBlur, 0);
 
-    gl.uniform1f(uniforms.uExtinction, this.extinction);
-    gl.uniform1f(uniforms.uAnisotropy, this.anisotropy);
     gl.uniform1ui(uniforms.uMaxBounces, this.bounces);
     gl.uniform1ui(uniforms.uSteps, this.steps);
 
@@ -200,6 +227,15 @@ _renderFrame() {
 _getFrameBufferSpec() {
     const gl = this._gl;
     return [{
+        width   : this._resolution.width,
+        height  : this._resolution.height,
+        min     : gl.NEAREST,
+        mag     : gl.NEAREST,
+        format  : gl.RGBA,
+        iformat : gl.RGBA32F,
+        type    : gl.FLOAT,
+    },
+    {
         width   : this._resolution.width,
         height  : this._resolution.height,
         min     : gl.NEAREST,
