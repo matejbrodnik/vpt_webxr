@@ -24,7 +24,7 @@ constructor(camera, domElement, options = {}) {
 
     this._focus = [0, 0, 0];
     this._focusDistance = vec3.distance(this._focus, this._camera.transform.globalTranslation);
-
+    console.log(this._focusDistance);
     this._yaw = 0;
     this._pitch = 0;
 
@@ -126,11 +126,12 @@ _updateCamera() {
 
     const translation = vec3.transformQuat(vec3.create(),
         [0, 0, this._focusDistance], rotation);
-    // console.log(translation);
-    // console.log(rotation);
-
+        
     transform.localRotation = rotation;
     transform.localTranslation = vec3.add(vec3.create(), this._focus, translation);
+    console.log(this._focus);
+    // console.log("camera", translation);
+    // console.log(rotation);
 }
 
 _rotateAroundFocus(dx, dy) {

@@ -1,7 +1,7 @@
 import { WebGL } from './WebGL.js';
 import { WebXR } from './WebXR.js';
 import { Ticker } from './Ticker.js';
-import { mat4 } from '../../lib/gl-matrix-module.js';
+import { quat, vec3, mat4 } from '../../lib/gl-matrix-module.js';
 
 import { Node } from './Node.js';
 import { PerspectiveCamera } from './PerspectiveCamera.js';
@@ -48,7 +48,7 @@ constructor(options = {}) {
     this.isImmersive = false;
     this.useTimer = false;
     this.right = false;
-
+    this.changedView = false;
 
     this.resolution = options.resolution ?? {width: 512, height: 512};
     this.filter = options.filter ?? 'linear';
@@ -115,8 +115,9 @@ initGL(inline = true) {
     this.extLoseContext = gl.getExtension('WEBGL_lose_context');
     this.extColorBufferFloat = gl.getExtension('EXT_color_buffer_float');
     this.extTextureFloatLinear = gl.getExtension('OES_texture_float_linear');
-    this.ext = this.gl.getExtension('EXT_disjoint_timer_query_webgl2');
-    if (!this.ext) {
+    this.extTime = this.gl.getExtension('EXT_disjoint_timer_query_webgl2');
+
+    if (!this.extTime) {
         console.error('EXT_disjoint_timer_query is not supported');
     }
 
@@ -229,7 +230,7 @@ chooseRenderer(renderer) {
     this.timer = 0;
     this.count = 0;
     if(this.query) {
-        this.gl.endQuery(this.ext.TIME_ELAPSED_EXT);
+        this.gl.endQuery(this.extTime.TIME_ELAPSED_EXT);
         this.gl.deleteQuery(this.query);
         console.log("QUERY!");
     }
@@ -316,12 +317,12 @@ chooseToneMapper2(toneMapper) {
 }
 
 _update(t, frame) {
-    console.log("update", this.gl.getError());
-    if(this.VRiterations > 80) {
-        console.log("OVER");
-        Ticker.remove(this._update);
-        return;
-    }
+    // console.log("update", this.gl.getError());
+    // if(this.VRiterations > 100) {
+    //     console.log("OVER");
+    //     Ticker.remove(this._update);
+    //     return;
+    // }
     let session = this.session;
     let gl = this.gl;
     if(this.VRFirst) {
@@ -329,10 +330,10 @@ _update(t, frame) {
         console.log("render state:", session.renderState);
         let glLayer = session.renderState.baseLayer;
         console.log("gl layer:", glLayer);
-        this.resolution = {width: glLayer.framebufferWidth, height: glLayer.framebufferHeight}
+        this.resolution = {width: glLayer.framebufferWidth / 4, height: glLayer.framebufferHeight / 4}
         this.VRAnimator = new VRCameraAnimator();
-        this.chooseRenderer("mcm");
-        this.chooseRenderer2("mcm");
+        this.chooseRenderer("fov2");
+        this.chooseRenderer2("fov2");
         this.chooseToneMapper("artistic");
         this.chooseToneMapper2("artistic");
         this.renderer.VROn = true;
@@ -346,30 +347,32 @@ _update(t, frame) {
         let gp = frame.session.inputSources[0].gamepad;
         this.VRAnimator.update(gp, dt);
     }
-    this.right = true;
+    // this.right = true;
     let pose = frame.getViewerPose(this.refSpace);
+    // if(this.VRiterations % 10 == 0 && this.VRiterations != 0) {
+
     if (pose) {
         let glLayer = session.renderState.baseLayer;
         for (let view of pose.views) {
             this.viewport = glLayer.getViewport(view);
-            if(this.VRiterations % 20 == 0 && this.VRiterations != 0) {
-                // this.camera.transform.localMatrix = mat4.invert([], view.transform.matrix);
-                if(!this.right){
-                    this.VRAnimator.apply();
-                    // this.renderer2.VRProjection = view.projectionMatrix;
-                    // this.renderer2.VRView = view.transform.inverse.matrix;
-                    // this.renderer2.VRView = this.VRAnimator.transform;
-                    console.log(this.camera.transform);
-                    console.log(this.VRAnimator.transform);
-                    this.renderer2.reset();
+                if(!this.right) {
+                    this.changedView = this.VRAnimator.apply(view.transform.matrix)
                 }
-                // else
-                //     this.renderer.reset();
-                    // this.renderer.VRView = this.VRAnimator.transform;
-            }
+                if(this.changedView) {
+                    if(this.right) {
+                        this.renderer2.reset();
+                        // this.renderer2.VRProjection = view.projectionMatrix;
+                        this.changedView = false;
+                        console.log("RESET 2");
+                    }
+                    else {
+                        this.renderer.reset();
+                        console.log("RESET 1");
+                    }
+                    //continue; // če želimo pri resetu preskočiti render
+                }
+
             this.render();
-            if(this.right) // remove !!!!!!!
-                break;
             this.right = !this.right;
         }
     } else {
@@ -383,7 +386,7 @@ render() {
     if (!gl || !this.renderer || !this.toneMapper) {
         return;
     }
-    let ext = this.ext;
+    let ext = this.extTime;
 
     if(this.useTimer) {
         this.query = gl.createQuery();

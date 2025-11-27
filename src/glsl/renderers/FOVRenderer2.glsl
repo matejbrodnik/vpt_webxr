@@ -31,15 +31,14 @@ precision highp sampler3D;
 @intersectCube
 
 @constants
-@random/hash/pcg
-@random/hash/squashlinear
-@random/distribution/uniformdivision
-@random/distribution/square
-@random/distribution/disk
-@random/distribution/sphere
-@random/distribution/exponential
+@random/hash_float/pcg
+@random/distribution_float/uniformdivision
+@random/distribution_float/square
+@random/distribution_float/disk
+@random/distribution_float/sphere
+@random/distribution_float/exponential
 
-@unprojectRand
+@unprojectRandFloat
 
 uniform sampler2D uPosition;
 uniform sampler2D uDirection;
@@ -71,9 +70,9 @@ layout (location = 2) out vec4 oTransmittance;
 layout (location = 3) out vec4 oRadiance;
 layout (location = 4) out vec4 oMIP;
 
-void resetPhoton(inout uint state, inout Photon photon) {
+void resetPhoton(inout float state, inout Photon photon) {
     vec3 from, to;
-    unprojectRand(state, vPosition, uMvpInverseMatrix, uInverseResolution, uBlur, from, to);
+    unprojectRandFloat(state, vPosition, uMvpInverseMatrix, uInverseResolution, uBlur, from, to);
     photon.direction = normalize(to - from);
     photon.bounces = 0u;
     vec2 tbounds = max(intersectCube(from, photon.direction), 0.0);
@@ -92,13 +91,13 @@ vec4 sampleVolumeColor(vec3 position) {
     return transferSample;
 }
 
-float sampleHenyeyGreensteinAngleCosine(inout uint state, float g) {
+float sampleHenyeyGreensteinAngleCosine(inout float state, float g) {
     float g2 = g * g;
     float c = (1.0 - g2) / (1.0 - g + 2.0 * g * random_uniform(state));
     return (1.0 + g2 - c * c) / (2.0 * g);
 }
 
-vec3 sampleHenyeyGreenstein(inout uint state, float g, vec3 direction) {
+vec3 sampleHenyeyGreenstein(inout float state, float g, vec3 direction) {
     // generate random direction and adjust it so that the angle is HG-sampled
     vec3 u = random_sphere(state);
     if (abs(g) < EPS) {
@@ -125,7 +124,7 @@ float normpdf(in float x, in float sigma)
 void main() {
     Photon photon;
     vec2 mappedPosition = vPosition * 0.5 + 0.5;
-    uint state = hash(uvec3(floatBitsToUint(mappedPosition.x), floatBitsToUint(mappedPosition.y), floatBitsToUint(uRandSeed)));
+    float state = hash(vec3(mappedPosition.x * 123.456, mappedPosition.y * 654.321, uRandSeed));
     
     vec4 radianceAndSamples = texture(uRadiance, mappedPosition);
     photon.radiance = radianceAndSamples.rgb;
@@ -333,15 +332,14 @@ precision highp float;
 @intersectCube
 
 @constants
-@random/hash/pcg
-@random/hash/squashlinear
-@random/distribution/uniformdivision
-@random/distribution/square
-@random/distribution/disk
-@random/distribution/sphere
-@random/distribution/exponential
+@random/hash_float/pcg
+@random/distribution_float/uniformdivision
+@random/distribution_float/square
+@random/distribution_float/disk
+@random/distribution_float/sphere
+@random/distribution_float/exponential
 
-@unprojectRand
+@unprojectRandFloat
 
 uniform sampler2D uMIP;
 uniform mat4 uMvpInverseMatrix;
@@ -362,9 +360,9 @@ void main() {
 
     Photon photon;
     vec3 from, to;
-    uint state = hash(uvec3(floatBitsToUint(vPosition.x), floatBitsToUint(vPosition.y), floatBitsToUint(uRandSeed)));
-    
-    unprojectRand(state, vPosition, uMvpInverseMatrix, uInverseResolution, uBlur, from, to);
+    float state = hash(vec3(vPosition.x * 123.456, vPosition.y * 654.321, uRandSeed));
+
+    unprojectRandFloat(state, vPosition, uMvpInverseMatrix, uInverseResolution, uBlur, from, to);
     
     photon.direction = normalize(to - from);
     vec2 tbounds = max(intersectCube(from, photon.direction), 0.0);

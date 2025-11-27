@@ -167,6 +167,9 @@ void main() {
     // if(acc != 0.0) {
     //     acc = 1.6 - acc;
     // }
+    // if(acc > 0) {
+    //     acc = 0.7;
+    // }
 
     oColor = vec4(acc, acc, acc, 1);
 }

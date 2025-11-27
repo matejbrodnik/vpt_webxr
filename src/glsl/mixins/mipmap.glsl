@@ -1,7 +1,7 @@
 // #part /glsl/mixins/mipmap
 
 void mipmap(
-        inout uint state,
+        inout float state,
         in sampler2D MIP,
         out vec2 pos,
         out float pdf)
@@ -23,7 +23,7 @@ void mipmap(
         ne = ne / sum;
         se = se / sum;
         // state = state + uint(i);
-        float normRand = random_uniform(state);
+        float normRand = state;
         // normRand *= sum;
         if(normRand < nw) {
             a *= 2;

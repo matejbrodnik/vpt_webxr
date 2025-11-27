@@ -126,7 +126,7 @@ _resetFrame() {
     gl.bindTexture(gl.TEXTURE_2D, this._MIPmap.color[0]);
     gl.uniform1i(uniforms.uMIP, 0);
     
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.generateMipmap(gl.TEXTURE_2D);
     
@@ -155,8 +155,8 @@ _resetFrame() {
     let error = gl.getError();
     if(error != 0)
         console.log("ERROR", error);
-    this.resetMax = 4;
-    this.resetCount = 4;
+    this.resetMax = 1;
+    this.resetCount = 1;
     //this.mip.destroy();
 
     this._rebuildRender();
@@ -167,6 +167,7 @@ _generateFrame() {
 }
 
 _integrateFrame() {
+    console.log("int")
     const gl = this._gl;
 
     const { program, uniforms } = this._programs.integrate;
@@ -221,13 +222,14 @@ _integrateFrame() {
     gl.uniform1f(uniforms.uRandSeed, Math.random());
     gl.uniform1f(uniforms.uBlur, 0);
 
-    gl.uniform1f(uniforms.uReset, this.resetCount);
+    gl.uniform1ui(uniforms.uReset, this.resetCount);
+    // gl.uniform1ui(uniforms.uReset, this.resetCount);
     
     if(this.resetCount > 0) {
         this.resetCount--;
     }
     else {
-        this.resetCount = this.resetMax;
+        this.resetCount = 200;
     }
 
     gl.uniform1f(uniforms.uExtinction, this.extinction);
@@ -284,20 +286,20 @@ _renderFrame() {
     gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[3]);
     gl.uniform1i(uniforms.uColor, 0);
 
+    // gl.activeTexture(gl.TEXTURE1);
+    // gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[4]);
+    // // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, this._resolution.width, this._resolution.height, 0, gl.RGBA, gl.FLOAT, null);
+    
+    // gl.uniform1i(uniforms.uColor2, 1);
+    
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[4]);
-    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, this._resolution.width, this._resolution.height, 0, gl.RGBA, gl.FLOAT, null);
-    
-    gl.uniform1i(uniforms.uColor2, 1);
-    
-    gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[0]);
-    gl.uniform1i(uniforms.uPosition, 2);
+    gl.uniform1i(uniforms.uPosition, 1);
 
-    gl.drawBuffers([
-        gl.COLOR_ATTACHMENT0,
-        gl.COLOR_ATTACHMENT1,
-    ]);
+    // gl.drawBuffers([
+    //     gl.COLOR_ATTACHMENT0,
+    //     gl.COLOR_ATTACHMENT1,
+    // ]);
 
     gl.drawArrays(gl.POINTS, 0, this._resolution.width * this._resolution.height);
     gl.disable(gl.BLEND);

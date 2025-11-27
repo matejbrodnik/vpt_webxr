@@ -1,89 +1,3 @@
-// #part /glsl/shaders/renderers/MCM/generate/vertex
-
-#version 300 es
-
-const vec2 vertices[] = vec2[](
-    vec2(-1, -1),
-    vec2( 3, -1),
-    vec2(-1,  3)
-);
-
-out vec2 vPosition;
-
-void main() {
-    vec2 position = vertices[gl_VertexID];
-    vPosition = position;
-    gl_Position = vec4(position, 0, 1);
-}
-
-// #part /glsl/shaders/renderers/MCM/generate/fragment
-
-#version 300 es
-precision highp float;
-precision highp sampler2D;
-precision highp sampler3D;
-
-#define EPS 1e-5
-
-// #link /glsl/mixins/Photon
-@Photon
-// #link /glsl/mixins/intersectCube
-@intersectCube
-
-@constants
-@random/hash_float/pcg
-@random/distribution_float/uniformdivision
-@random/distribution_float/square
-@random/distribution_float/disk
-@random/distribution_float/sphere
-@random/distribution_float/exponential
-
-uniform sampler2D uPosition;
-uniform sampler2D uDirection;
-
-uniform float uRandSeed;
-uniform float uExtinction;
-uniform float uAnisotropy;
-
-in vec2 vPosition;
-
-layout (location = 0) out vec4 oPosition;
-layout (location = 1) out vec4 oDirection2;
-
-float sampleHenyeyGreensteinAngleCosine(inout float state, float g) {
-    float g2 = g * g;
-    float c = (1.0 - g2) / (1.0 - g + 2.0 * g * random_uniform(state));
-    return (1.0 + g2 - c * c) / (2.0 * g);
-}
-
-vec3 sampleHenyeyGreenstein(inout float state, float g, vec3 direction) {
-    // generate random direction and adjust it so that the angle is HG-sampled
-    vec3 u = random_sphere(state);
-    if (abs(g) < EPS) {
-        return u;
-    }
-    float hgcos = sampleHenyeyGreensteinAngleCosine(state, g);
-    vec3 circle = normalize(u - dot(u, direction) * direction);
-    return sqrt(1.0 - hgcos * hgcos) * circle + hgcos * direction;
-}
-
-void main() {
-    Photon photon;
-    vec2 mappedPosition = vPosition * 0.5 + 0.5;
-    float state = hash(vec3(mappedPosition.x * 123.456, mappedPosition.y * 654.321, uRandSeed));
-
-    photon.direction = texture(uDirection, mappedPosition).xyz;
-    photon.position = texture(uPosition, mappedPosition).xyz;
-
-    float dist = random_exponential(state, uExtinction);
-    photon.position += dist * photon.direction;
-    photon.direction = sampleHenyeyGreenstein(state, uAnisotropy, photon.direction);
-
-    oPosition = vec4(photon.position, 0);
-    // oPosition = vec4(0.7, 0, 0.7, 0);
-    oDirection2 = vec4(photon.direction, 0);
-}
-
 // #part /glsl/shaders/renderers/MCM/integrate/vertex
 
 #version 300 es
@@ -130,7 +44,6 @@ uniform sampler2D uPosition;
 uniform sampler2D uDirection;
 uniform sampler2D uTransmittance;
 uniform sampler2D uRadiance;
-uniform sampler2D uDirection2;
 
 uniform sampler3D uVolume;
 uniform sampler2D uTransferFunction;
@@ -140,6 +53,8 @@ uniform mat4 uMvpInverseMatrix;
 uniform vec2 uInverseResolution;
 uniform float uRandSeed;
 uniform float uBlur;
+uniform float uExtinction;
+uniform float uAnisotropy;
 
 uniform uint uMaxBounces;
 uniform uint uSteps;
@@ -172,6 +87,23 @@ vec4 sampleVolumeColor(vec3 position) {
     return transferSample;
 }
 
+float sampleHenyeyGreensteinAngleCosine(inout float state, float g) {
+    float g2 = g * g;
+    float c = (1.0 - g2) / (1.0 - g + 2.0 * g * random_uniform(state));
+    return (1.0 + g2 - c * c) / (2.0 * g);
+}
+
+vec3 sampleHenyeyGreenstein(inout float state, float g, vec3 direction) {
+    // generate random direction and adjust it so that the angle is HG-sampled
+    vec3 u = random_sphere(state);
+    if (abs(g) < EPS) {
+        return u;
+    }
+    float hgcos = sampleHenyeyGreensteinAngleCosine(state, g);
+    vec3 circle = normalize(u - dot(u, direction) * direction);
+    return sqrt(1.0 - hgcos * hgcos) * circle + hgcos * direction;
+}
+
 float max3(vec3 v) {
     return max(max(v.x, v.y), v.z);
 }
@@ -190,36 +122,44 @@ void main() {
     photon.bounces = uint(directionAndBounces.w + 0.5);
     photon.transmittance = texture(uTransmittance, mappedPosition).rgb;
     
-    vec3 direction2 = texture(uDirection2, mappedPosition).xyz;
+    for (uint i = 0u; i < uSteps; i++) {
+        float dist = random_exponential(state, uExtinction);
+        photon.position += dist * photon.direction;
 
-    vec4 volumeSample = sampleVolumeColor(photon.position);
+        vec4 volumeSample = sampleVolumeColor(photon.position);
 
-    float PNull = 1.0 - volumeSample.a;
-    float PScattering;
-    if (photon.bounces >= uMaxBounces) {
-        PScattering = 0.0;
-    } else {
-        PScattering = volumeSample.a * max3(volumeSample.rgb);
-    }
-    float PAbsorption = 1.0 - PNull - PScattering;
+        // float PNull = 1.0 - volumeSample.a;
+        float PScattering;
+        if (photon.bounces >= uMaxBounces) {
+            PScattering = 0.0;
+        } else {
+            PScattering = volumeSample.a * max3(volumeSample.rgb);
+        }
+        // float PAbsorption = 1.0 - PNull - PScattering;
+        float PAbsorption = volumeSample.a - PScattering;
 
-    float fortuneWheel = random_uniform(state);
-    if (any(greaterThan(photon.position, vec3(1))) || any(lessThan(photon.position, vec3(0)))) {
-        // out of bounds
-        vec4 envSample = sampleEnvironmentMap(photon.direction);
-        vec3 radiance = photon.transmittance * envSample.rgb;
-        photon.samples++;
-        vec3 delta = radiance - photon.radiance;
-        photon.radiance += delta / float(photon.samples);
-        photon.M2 += delta * (radiance - photon.radiance);
-        resetPhoton(state, photon);
-    } else if (fortuneWheel < PAbsorption + PScattering) {
-        // scattering
-        photon.transmittance *= volumeSample.rgb;
-        photon.direction = direction2;
-        photon.bounces++;
-    } else {
-        // null collision
+        float fortuneWheel = random_uniform(state);
+        if (any(greaterThan(photon.position, vec3(1))) || any(lessThan(photon.position, vec3(0)))) {
+            // out of bounds
+            vec4 envSample = sampleEnvironmentMap(photon.direction);
+            vec3 radiance = photon.transmittance * envSample.rgb;
+            photon.samples++;
+            photon.radiance += (radiance - photon.radiance) / float(photon.samples);
+            resetPhoton(state, photon);
+        } else if (fortuneWheel < PAbsorption) {
+            // absorption
+            vec3 radiance = vec3(0);
+            photon.samples++;
+            photon.radiance += (radiance - photon.radiance) / float(photon.samples);
+            resetPhoton(state, photon);
+        } else if (fortuneWheel < volumeSample.a) {
+            // scattering
+            photon.transmittance *= volumeSample.rgb;
+            photon.direction = sampleHenyeyGreenstein(state, uAnisotropy, photon.direction);;
+            photon.bounces++;
+        } else {
+            // null collision
+        }
     }
 
     oPosition = vec4(photon.position, 0);

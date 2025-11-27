@@ -20,7 +20,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'steps',
             label: 'Steps',
             type: 'spinner',
-            value: 60,
+            value: 200,
             min: 1,
         },
         {
@@ -58,7 +58,6 @@ destroy() {
 }
 
 _resetFrame() {
-    console.log("MIP RESET");
     const gl = this._gl;
 
     const { program, uniforms } = this._programs.reset;
@@ -91,7 +90,6 @@ _generateFrame() {
     // console.log(this.VRProjection);
     const viewMatrix = this._VRAnimator ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
     const projectionMatrix = this.VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
-    console.log(this._VRAnimator);
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);
     mat4.multiply(matrix, modelMatrix, matrix);
@@ -99,7 +97,6 @@ _generateFrame() {
     mat4.multiply(matrix, projectionMatrix, matrix);
     mat4.invert(matrix, matrix);
     gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix);
-
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
 

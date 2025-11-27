@@ -255,21 +255,21 @@ _handleVRLoad(e) {
         gl.bindTexture(gl.TEXTURE_2D, null);
         gl.bindTexture(gl.TEXTURE_3D, null);
         navigator.xr.requestSession('immersive-vr', {requiredFeatures: ['local-floor']}).then((session) => {
-            session.addEventListener("inputsourcechange", (event) => {
-                console.log("inputs", event.session.inputSources);
-            });
-            session.addEventListener("selectstart", (event) => {
-                console.log("select start", event);
-                console.log(event.inputSource);
-            });
-            session.addEventListener('select', (event) => {
-                console.log("select", event);
-                console.log(event.inputSource);
-            });
-            session.addEventListener('squeezestart', (event) => {
-                console.log("squeeze start", event);
-                console.log(event.inputSource);
-            });
+            // session.addEventListener("inputsourcechange", (event) => {
+            //     console.log("inputs", event.session.inputSources);
+            // });
+            // session.addEventListener("selectstart", (event) => {
+            //     console.log("select start", event);
+            //     console.log(event.inputSource);
+            // });
+            // session.addEventListener('select', (event) => {
+            //     console.log("select", event);
+            //     console.log(event.inputSource);
+            // });
+            // session.addEventListener('squeezestart', (event) => {
+            //     console.log("squeeze start", event);
+            //     console.log(event.inputSource);
+            // });
             renderingContext.session = session;
             gl.makeXRCompatible().then(() => {
                 // renderingContext.initGL(false);

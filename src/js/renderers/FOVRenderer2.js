@@ -43,7 +43,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'steps',
             label: 'Steps',
             type: 'spinner',
-            value: 10,
+            value: 20,
             min: 0,
         },
         {
@@ -89,7 +89,8 @@ _resetFrame() {
     if(this.mip == null) {
         this.mip = new MIPRenderer(gl, this._volume, this._camera, this._environmentTexture, {
             resolution: this._resolution,
-            transform: this._volumeTransform
+            transform: this._volumeTransform,
+            VRAnimator: this._VRAnimator,
         });
         this.mip.setContext(this._context);
     }
@@ -137,8 +138,8 @@ _resetFrame() {
 
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
     const modelMatrix = this._volumeTransform.globalMatrix;
-    const viewMatrix = this._camera.transform.inverseGlobalMatrix;
-    const projectionMatrix = this._camera.getComponent(PerspectiveCamera).projectionMatrix;
+    const viewMatrix = this._VRAnimator ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
+    const projectionMatrix = this.VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
 
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);
@@ -224,8 +225,8 @@ _integrateFrame() {
 
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
     const modelMatrix = this._volumeTransform.globalMatrix;
-    const viewMatrix = this._camera.transform.inverseGlobalMatrix;
-    const projectionMatrix = this._camera.getComponent(PerspectiveCamera).projectionMatrix;
+    const viewMatrix = this._VRAnimator ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
+    const projectionMatrix = this.VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
 
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);
