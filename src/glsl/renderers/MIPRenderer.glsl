@@ -1,6 +1,7 @@
 // #part /glsl/shaders/renderers/MIP/generate/vertex
 
 #version 300 es
+#extension GL_OVR_multiview2 : require
 
 uniform mat4 uMvpInverseMatrix;
 
@@ -17,6 +18,8 @@ const vec2 vertices[] = vec2[](
 );
 
 void main() {
+    // int viewId = gl_ViewID_OVR;
+
     vec2 position = vertices[gl_VertexID];
     unproject(position, uMvpInverseMatrix, vRayFrom, vRayTo);
     gl_Position = vec4(position, 0, 1);
@@ -25,6 +28,8 @@ void main() {
 // #part /glsl/shaders/renderers/MIP/generate/fragment
 
 #version 300 es
+#extension GL_OVR_multiview2 : require
+
 precision mediump float;
 precision mediump sampler2D;
 precision mediump sampler3D;
@@ -37,7 +42,7 @@ uniform float uOffset;
 in vec3 vRayFrom;
 in vec3 vRayTo;
 
-out float oColor;
+out vec4 oColor;
 
 // #link /glsl/mixins/intersectCube
 @intersectCube
@@ -52,7 +57,7 @@ void main() {
     vec3 rayDirection = vRayTo - vRayFrom;
     vec2 tbounds = max(intersectCube(vRayFrom, rayDirection), 0.0);
     if (tbounds.x >= tbounds.y) {
-        oColor = 0.0;
+        oColor = vec4(0);
     } else {
         vec3 from = mix(vRayFrom, vRayTo, tbounds.x);
         vec3 to = mix(vRayFrom, vRayTo, tbounds.y);
@@ -67,13 +72,14 @@ void main() {
             t += uStepSize;
             offset = mod(offset + uStepSize, 1.0);
         } while (t < 1.0);
-        oColor = val;
+        oColor = vec4(val, 0.0, 0.0, 0.0);
     }
 }
 
 // #part /glsl/shaders/renderers/MIP/integrate/vertex
 
 #version 300 es
+#extension GL_OVR_multiview2 : require
 
 const vec2 vertices[] = vec2[](
     vec2(-1, -1),
@@ -92,25 +98,28 @@ void main() {
 // #part /glsl/shaders/renderers/MIP/integrate/fragment
 
 #version 300 es
-precision mediump float;
-precision mediump sampler2D;
+#extension GL_OVR_multiview2 : require
 
-uniform sampler2D uAccumulator;
-uniform sampler2D uFrame;
+precision mediump float;
+precision mediump sampler2DArray;
+
+uniform sampler2DArray uAccumulator;
+uniform sampler2DArray uFrame;
 
 in vec2 vPosition;
 
-out float oColor;
+out vec4 oColor;
 
 void main() {
-    float acc = texture(uAccumulator, vPosition).r;
-    float frame = texture(uFrame, vPosition).r;
-    oColor = max(acc, frame);
+    float acc = texture(uAccumulator, vec3(vPosition, gl_ViewID_OVR)).r;
+    float frame = texture(uFrame, vec3(vPosition, gl_ViewID_OVR)).r;
+    oColor = vec4(max(acc, frame), 0.0, 0.0, 0.0);
 }
 
 // #part /glsl/shaders/renderers/MIP/render/vertex
 
 #version 300 es
+#extension GL_OVR_multiview2 : require
 
 const vec2 vertices[] = vec2[](
     vec2(-1, -1),
@@ -129,17 +138,19 @@ void main() {
 // #part /glsl/shaders/renderers/MIP/render/fragment
 
 #version 300 es
-precision mediump float;
-precision mediump sampler2D;
+#extension GL_OVR_multiview2 : require
 
-uniform sampler2D uAccumulator;
+precision mediump float;
+precision mediump sampler2DArray;
+
+uniform sampler2DArray uAccumulator;
 
 in vec2 vPosition;
 
 out vec4 oColor;
 
 void main() {
-    float acc = texture(uAccumulator, vPosition).r;
+    float acc = texture(uAccumulator, vec3(vPosition, gl_ViewID_OVR)).r;
 
     //dilation
     float maxVal = 0.0;
@@ -177,6 +188,7 @@ void main() {
 // #part /glsl/shaders/renderers/MIP/reset/vertex
 
 #version 300 es
+#extension GL_OVR_multiview2 : require
 
 const vec2 vertices[] = vec2[](
     vec2(-1, -1),
@@ -185,6 +197,7 @@ const vec2 vertices[] = vec2[](
 );
 
 void main() {
+    uint id = gl_ViewID_OVR;
     vec2 position = vertices[gl_VertexID];
     gl_Position = vec4(position, 0, 1);
 }
@@ -192,10 +205,12 @@ void main() {
 // #part /glsl/shaders/renderers/MIP/reset/fragment
 
 #version 300 es
+#extension GL_OVR_multiview2 : require
+
 precision mediump float;
 
-out float oColor;
+out vec4 oColor;
 
 void main() {
-    oColor = 0.0;
+    oColor = vec4(0);
 }

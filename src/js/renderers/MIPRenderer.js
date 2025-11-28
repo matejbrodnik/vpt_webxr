@@ -57,28 +57,65 @@ destroy() {
     super.destroy();
 }
 
+// setupMultiview() {
+    
+//     const color = gl.createTexture();
+//     gl.bindTexture(gl.TEXTURE_2D_ARRAY, color);
+//     gl.texImage3D(
+//         gl.TEXTURE_2D_ARRAY,
+//         0,
+//         gl.R8,
+//         this._resolution.width,
+//         this._resolution.height,
+//         2,
+//         0,
+//         gl.RED,
+//         gl.UNSIGNED_BYTE,
+//         null
+//     );
+
+//     const fb = gl.createFramebuffer();
+//     gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+//     ext.framebufferTextureMultiviewOVR(
+//         gl.FRAMEBUFFER,
+//         gl.COLOR_ATTACHMENT0,
+//         color,
+//         0,        // mip level
+//         0,        // first layer index
+//         2         // number of views
+//     );
+
+// }
+
 _resetFrame() {
     const gl = this._gl;
+    console.log(gl.getError());
 
     const { program, uniforms } = this._programs.reset;
     gl.useProgram(program);
+    console.log(gl.getError());
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    console.log(gl.getError());
 }
 
 _generateFrame() {
     const gl = this._gl;
+    console.log(gl.getError());
 
     const { program, uniforms } = this._programs.generate;
     gl.useProgram(program);
+    console.log(gl.getError());
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_3D, this._volume.getTexture());
     gl.uniform1i(uniforms.uVolume, 0);
+    console.log(gl.getError());
 
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this._transferFunction);
     gl.uniform1i(uniforms.uTransferFunction, 1);
+    console.log(gl.getError());
 
     gl.uniform1f(uniforms.uStepSize, 1 / this.steps);
     gl.uniform1f(uniforms.uOffset, Math.random());
@@ -97,38 +134,45 @@ _generateFrame() {
     mat4.multiply(matrix, projectionMatrix, matrix);
     mat4.invert(matrix, matrix);
     gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix);
+    console.log(gl.getError());
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    console.log(gl.getError());
 }
 
 _integrateFrame() {
     const gl = this._gl;
+    console.log(gl.getError());
 
     const { program, uniforms } = this._programs.integrate;
     gl.useProgram(program);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[0]);
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, this._frameBuffer.getAttachments().color[0]);
-
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, this._accumulationBuffer.getAttachments().color[0]);
     gl.uniform1i(uniforms.uAccumulator, 0);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, this._frameBuffer.getAttachments().color[0]);
     gl.uniform1i(uniforms.uFrame, 1);
+    console.log(gl.getError());
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    console.log(gl.getError());
 }
 
 _renderFrame() {
     const gl = this._gl;
+    console.log(gl.getError());
 
     const { program, uniforms } = this._programs.render;
     gl.useProgram(program);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[0]);
-
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, this._accumulationBuffer.getAttachments().color[0]);
     gl.uniform1i(uniforms.uAccumulator, 0);
+    console.log(gl.getError());
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    console.log(gl.getError());
 }
 
 _getFrameBufferSpec() {
@@ -138,9 +182,10 @@ _getFrameBufferSpec() {
         height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
-        format  : gl.RED,
-        iformat : gl.R8,
-        type    : gl.UNSIGNED_BYTE,
+        format  : gl.RGBA,
+        iformat : gl.RGBA16F,
+        type    : gl.FLOAT,
+        target  : gl.TEXTURE_2D_ARRAY,
     }];
 }
 
@@ -151,9 +196,26 @@ _getAccumulationBufferSpec() {
         height  : this._resolution.height,
         min     : gl.NEAREST,
         mag     : gl.NEAREST,
-        format  : gl.RED,
-        iformat : gl.R8,
-        type    : gl.UNSIGNED_BYTE,
+        format  : gl.RGBA,
+        iformat : gl.RGBA16F,
+        type    : gl.FLOAT,
+        target  : gl.TEXTURE_2D_ARRAY,
+    }];
+}
+
+_getRenderBufferSpec() {
+    const gl = this._gl;
+    return [{
+        width   : this._resolution.width,
+        height  : this._resolution.height,
+        min     : gl.NEAREST,
+        mag     : gl.NEAREST,
+        wrapS   : gl.CLAMP_TO_EDGE,
+        wrapT   : gl.CLAMP_TO_EDGE,
+        format  : gl.RGBA,
+        iformat : gl.RGBA16F,
+        type    : gl.FLOAT,
+        target  : gl.TEXTURE_2D_ARRAY,
     }];
 }
 

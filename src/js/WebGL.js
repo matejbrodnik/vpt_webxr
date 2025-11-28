@@ -136,8 +136,13 @@ static createTexture(gl, {
         gl.texImage2D(target, level, iformat, format, type, image);
     } else { // if options.data == null, just allocate
         if (target === gl.TEXTURE_3D) {
+            console.log("3D CREATE");
             gl.texImage3D(target, level, iformat, width, height, depth, 0, format, type, data);
+        } else if (target === gl.TEXTURE_2D_ARRAY) {
+            console.log("2D_ARRAY");
+            gl.texImage3D(target, level, iformat, width, height, 2, 0, format, type, data);
         } else {
+            console.log("2D CREATE");
             gl.texImage2D(target, level, iformat, width, height, 0, format, type, data);
         }
     }
@@ -151,10 +156,17 @@ static createTexture(gl, {
     return texture;
 }
 
-static createFramebuffer(gl, attachments) {
+static createFramebuffer(gl, attachments, extMV = null) {
     function attach(attachmentPoint, object) {
         if (object instanceof WebGLTexture) {
-            gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, object, 0);
+            console.log("FB ADD");
+            if(extMV) {
+                console.log(object);
+                extMV.framebufferTextureMultiviewOVR(gl.FRAMEBUFFER, attachmentPoint, object, 0, 0, 2);
+            }
+            else {
+                gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, object, 0);
+            }
         } else if (object instanceof WebGLRenderbuffer) {
             gl.framebufferRenderbuffer(gl.FRAMEBUFFER, attachmentPoint, gl.RENDERBUFFER, object);
         }

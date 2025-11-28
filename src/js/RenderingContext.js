@@ -116,7 +116,10 @@ initGL(inline = true) {
     this.extColorBufferFloat = gl.getExtension('EXT_color_buffer_float');
     this.extTextureFloatLinear = gl.getExtension('OES_texture_float_linear');
     this.extTime = this.gl.getExtension('EXT_disjoint_timer_query_webgl2');
-
+    this.extMV = this.gl.getExtension('OVR_multiview2');
+    if (!this.extMV) {
+        console.error('OES_multiview2 not supported!');
+    }
     if (!this.extTime) {
         console.error('EXT_disjoint_timer_query is not supported');
     }
@@ -215,14 +218,17 @@ chooseRenderer(renderer) {
         resolution: this.resolution,
         transform: this.volumeTransform,
         VRAnimator: this.VRAnimator,
+        extMV: this.isImmersive ? this.extMV : null,
     });
     this.renderer.setContext(this);
     // if(this.renderer instanceof FOVRenderer){
     //     this.disable = true;
     // }
     this.renderer.reset();
-    if (this.toneMapper) {
+    if (this.toneMapper && !this.isImmersive) {
+        console.log(gl.getError());
         this.toneMapper.setTexture(this.renderer.getTexture());
+        console.log(gl.getError());
     }
     this.isTransformationDirty = true;
     this.countMCM = 0;
@@ -272,18 +278,22 @@ chooseToneMapper(toneMapper) {
     }
     const gl = this.gl;
     let texture;
+    console.log(gl.getError());
     if (this.renderer) {
         texture = this.renderer.getTexture();
     } else {
+        console.log("NEW TEXTURE", this.renderer)
         texture = WebGL.createTexture(gl, {
             width  : 1,
             height : 1,
             data   : new Uint8Array([255, 255, 255, 255]),
         });
     }
+    console.log(gl.getError());
     const toneMapperClass = ToneMapperFactory(toneMapper);
     this.toneMapper = new toneMapperClass(gl, texture, {
         resolution: this.resolution,
+        extMV: this.isImmersive ? this.extMV : null,
     });
 
     this.toneMapper.copy = this.copy;
@@ -325,6 +335,7 @@ _update(t, frame) {
     // }
     let session = this.session;
     let gl = this.gl;
+    console.log(gl.getError());
     if(this.VRFirst) {
         this.VRFirst = false;
         console.log("render state:", session.renderState);
@@ -332,10 +343,13 @@ _update(t, frame) {
         console.log("gl layer:", glLayer);
         this.resolution = {width: glLayer.framebufferWidth / 4, height: glLayer.framebufferHeight / 4}
         this.VRAnimator = new VRCameraAnimator();
-        this.chooseRenderer("fov2");
-        this.chooseRenderer2("fov2");
+        this.chooseRenderer("mip");
+        console.log("renderer chosen");
+        // this.chooseRenderer2("mip");
         this.chooseToneMapper("artistic");
-        this.chooseToneMapper2("artistic");
+        console.log("tonemapper chosen");
+        console.log(gl.getError());
+        // this.chooseToneMapper2("artistic");
         this.renderer.VROn = true;
         this.old_t = t;
         // this.ext = this.gl.getExtension('EXT_disjoint_timer_query_webgl2');
@@ -345,36 +359,37 @@ _update(t, frame) {
     this.old_t = t;
     if(frame.session.inputSources.length > 0) {
         let gp = frame.session.inputSources[0].gamepad;
-        this.VRAnimator.update(gp, dt);
+        // this.VRAnimator.update(gp, dt);
     }
     // this.right = true;
     let pose = frame.getViewerPose(this.refSpace);
     // if(this.VRiterations % 10 == 0 && this.VRiterations != 0) {
 
     if (pose) {
-        let glLayer = session.renderState.baseLayer;
-        for (let view of pose.views) {
-            this.viewport = glLayer.getViewport(view);
-                if(!this.right) {
-                    this.changedView = this.VRAnimator.apply(view.transform.matrix)
-                }
-                if(this.changedView) {
-                    if(this.right) {
-                        this.renderer2.reset();
-                        // this.renderer2.VRProjection = view.projectionMatrix;
-                        this.changedView = false;
-                        console.log("RESET 2");
-                    }
-                    else {
-                        this.renderer.reset();
-                        console.log("RESET 1");
-                    }
-                    //continue; // če želimo pri resetu preskočiti render
-                }
+        this.render();
+        // let glLayer = session.renderState.baseLayer;
+        // for (let view of pose.views) {
+        //     this.viewport = glLayer.getViewport(view);
+        //         if(!this.right) {
+        //             this.changedView = this.VRAnimator.apply(view.transform.matrix)
+        //         }
+        //         if(this.changedView) {
+        //             if(this.right) {
+        //                 this.renderer2.reset();
+        //                 // this.renderer2.VRProjection = view.projectionMatrix;
+        //                 this.changedView = false;
+        //                 console.log("RESET 2");
+        //             }
+        //             else {
+        //                 this.renderer.reset();
+        //                 console.log("RESET 1");
+        //             }
+        //             //continue; // če želimo pri resetu preskočiti render
+        //         }
 
-            this.render();
-            this.right = !this.right;
-        }
+        //     this.render();
+        //     this.right = !this.right;
+        // }
     } else {
         console.log("NO POSE!");
     }
@@ -398,7 +413,9 @@ render() {
         this.toneMapper2.render();
     }
     else {
+        console.log(gl.getError());
         this.renderer.render();
+        console.log(gl.getError());
         this.toneMapper.render();
     }
     
@@ -410,13 +427,12 @@ render() {
 
     if(this.isImmersive) {
         let glLayer = this.session.renderState.baseLayer;
-        let viewport = this.viewport;
-        gl.viewport(viewport.x, viewport.y,
-            viewport.width, viewport.height);
+        // let viewport = this.viewport;
+        // gl.viewport(viewport.x, viewport.y,
+        //     viewport.width, viewport.height);
+        gl.viewport(0, 0, glLayer.framebufferWidth, glLayer.framebufferHeight);
         gl.bindFramebuffer(gl.FRAMEBUFFER, glLayer.framebuffer);
-        // gl.clearColor(0, 0, 0, 1);
-        // gl.clear(gl.COLOR_BUFFER_BIT);
-
+        console.log(gl.getError());
     }
     else {
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -424,11 +440,13 @@ render() {
     }
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.right ? this.toneMapper2.getTexture() : this.toneMapper.getTexture());
+    gl.bindTexture(this.VRAnimator ? gl.TEXTURE_2D_ARRAY : gl.TEXTURE_2D, this.toneMapper.getTexture());
+    // gl.bindTexture(gl.TEXTURE_2D, this.right ? this.toneMapper2.getTexture() : this.toneMapper.getTexture());
 
     gl.uniform1i(uniforms.uTexture, 0);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    console.log(gl.getError());
 
 
     // if(!this.useTimer) {
@@ -655,6 +673,9 @@ get resolution() {
 
 set resolution(resolution) {
     this._resolution = resolution;
+    if(this.isImmersive) {
+        return;
+    }
     this.canvas.width = resolution.width;
     this.canvas.height = resolution.height;
     if (this.renderer) {

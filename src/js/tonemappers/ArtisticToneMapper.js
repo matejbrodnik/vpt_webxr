@@ -66,7 +66,7 @@ _renderFrame() {
     gl.useProgram(program);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this._texture);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, this._texture);
     gl.uniform1i(uniforms.uTexture, 0);
 
     gl.uniform1f(uniforms.uLow, this.low);
@@ -76,6 +76,22 @@ _renderFrame() {
     gl.uniform1f(uniforms.uGamma, this.gamma);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+
+_getRenderBufferSpec() {
+    const gl = this._gl;
+    return [{
+        width   : this._resolution.width,
+        height  : this._resolution.height,
+        min     : gl.LINEAR,
+        mag     : gl.LINEAR,
+        wrapS   : gl.CLAMP_TO_EDGE,
+        wrapT   : gl.CLAMP_TO_EDGE,
+        format  : gl.RGBA,
+        iformat : gl.RGBA,
+        type    : gl.UNSIGNED_BYTE,
+        target  : gl.TEXTURE_2D_ARRAY,
+    }];
 }
 
 }

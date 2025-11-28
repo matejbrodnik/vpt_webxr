@@ -26,8 +26,11 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
 
     this._volumeTransform = options.transform ?? new Transform();
     this._VRAnimator = options.VRAnimator;
+    this._extMV = options.extMV;
 
+    console.log(gl.getError());
     this._rebuildBuffers();
+    console.log(gl.getError());
 
     this._transferFunction = WebGL.createTexture(gl, {
         width   : 2,
@@ -77,12 +80,15 @@ render() {
 }
 
 reset() {
+    console.log("reset");
     this._accumulationBuffer.use();
     this._resetFrame();
     this._accumulationBuffer.swap();
+    console.log(this._gl.getError());
 }
 
 _rebuildBuffers() {
+    console.log("REBUILD R");
     this.count = 0;
     if (this._frameBuffer) {
         this._frameBuffer.destroy();
@@ -94,9 +100,9 @@ _rebuildBuffers() {
         this._renderBuffer.destroy();
     }
     const gl = this._gl;
-    this._frameBuffer = new SingleBuffer(gl, this._getFrameBufferSpec());
-    this._accumulationBuffer = new DoubleBuffer(gl, this._getAccumulationBufferSpec());
-    this._renderBuffer = new SingleBuffer(gl, this._getRenderBufferSpec());
+    this._frameBuffer = new SingleBuffer(gl, this._getFrameBufferSpec(), this._extMV);
+    this._accumulationBuffer = new DoubleBuffer(gl, this._getAccumulationBufferSpec(), this._extMV);
+    this._renderBuffer = new SingleBuffer(gl, this._getRenderBufferSpec(), this._extMV);
 }
 
 _rebuildRender() {
@@ -105,7 +111,7 @@ _rebuildRender() {
         this._renderBuffer.destroy();
     }
     const gl = this._gl;
-    this._renderBuffer = new SingleBuffer(gl, this._getRenderBufferSpec());
+    this._renderBuffer = new SingleBuffer(gl, this._getRenderBufferSpec(), this._extMV);
     if(this._context.toneMapper) {
         this._context.toneMapper.setTexture(this.getTexture());
     }
@@ -124,6 +130,7 @@ setTransferFunction(transferFunction) {
 }
 
 setResolution(resolution) {
+    console.log("RESOLUTION");
     if (resolution !== this._resolution) {
         this._resolution = resolution;
         this._rebuildBuffers();

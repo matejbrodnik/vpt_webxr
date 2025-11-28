@@ -16,8 +16,11 @@ constructor(gl, texture, options = {}) {
 
     this._gl = gl;
     this._texture = texture;
+    this._extMV = options.extMV;
 
+    console.log(gl.getError());
     this._rebuildBuffers();
+    console.log(gl.getError());
 
     this._clipQuadProgram = WebGL.buildPrograms(gl, {
         quad: SHADERS.quad
@@ -26,6 +29,7 @@ constructor(gl, texture, options = {}) {
 
 destroy() {
     const gl = this._gl;
+    console.log(gl.getError());
 
     this._renderBuffer.destroy();
     gl.deleteProgram(this._clipQuadProgram.program);
@@ -50,7 +54,7 @@ _rebuildBuffers() {
     }
     const gl = this._gl;
     console.log("render buffer", this._getRenderBufferSpec())
-    this._renderBuffer = new SingleBuffer(gl, this._getRenderBufferSpec());
+    this._renderBuffer = new SingleBuffer(gl, this._getRenderBufferSpec(), this._extMV);
 }
 
 setResolution(resolution) {

@@ -245,6 +245,8 @@ _handleVRLoad(e) {
         this.refSpace = null;
         this.renderingContext.session.end();
         this.renderingContext.VRiterations = 0;
+        this.renderingContext.isImmersive = false;
+
         // Ticker.reset(); // remove???
     }
     else {
@@ -292,15 +294,11 @@ _handleVRLoad(e) {
 
         });
     }
-
-    // resetiraj Ticker?
-    console.log("VR LOAD");
 }
 
 _reset() {
     // console.log("session:", this.renderingContext.session);
     this.renderingContext.VRFirst = true;
-    console.log("RESET");
     Ticker.reset();
     Ticker.add(this.renderingContext._update);
     Ticker.start(this.renderingContext.session, this.renderingContext.gl);

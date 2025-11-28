@@ -1,6 +1,9 @@
 // #part /glsl/shaders/tonemappers/ArtisticToneMapper/vertex
 
 #version 300 es
+#extension GL_OVR_multiview2 : require
+
+layout(num_views = 2) in;
 
 const vec2 vertices[] = vec2[](
     vec2(-1, -1),
@@ -8,11 +11,11 @@ const vec2 vertices[] = vec2[](
     vec2(-1,  3)
 );
 
-const vec2 uv[3] = vec2[](
-    vec2(0.0, 0.0),
-    vec2(2.0, 0.0),
-    vec2(0.0, 2.0)
-);
+// const vec2 uv[3] = vec2[](
+//     vec2(0.0, 0.0),
+//     vec2(2.0, 0.0),
+//     vec2(0.0, 2.0)
+// );
 
 out vec2 vPosition;
 
@@ -20,21 +23,18 @@ void main() {
     vec2 position = vertices[gl_VertexID];
     vPosition = position * 0.5 + 0.5;
     gl_Position = vec4(position, 0, 1);
-
-    // vec2 position = vertices[gl_VertexID];
-    // vPosition = uv[gl_VertexID];
-    // gl_Position = vec4(position, 0, 1);
 }
 
 // #part /glsl/shaders/tonemappers/ArtisticToneMapper/fragment
 
 #version 300 es
+#extension GL_OVR_multiview2 : require
+
 precision highp float;
 
 #define M_PI 3.1415926535897932384626
 
-uniform highp sampler2D uTexture;
-uniform highp sampler2D uEnvironment;
+uniform highp sampler2DArray uTexture;
 uniform float uLow;
 uniform float uMid;
 uniform float uHigh;
@@ -46,7 +46,7 @@ in vec2 vPosition;
 out vec4 oColor;
 
 void main() {
-    vec4 color = texture(uTexture, vPosition);
+    vec4 color = texture(uTexture, vec3(vPosition, gl_ViewID_OVR));
 
     color = vec4(color.rgb / color.a, 1.0); 
     color = (color - uLow) / (uHigh - uLow);

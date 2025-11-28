@@ -2,14 +2,14 @@ import { WebGL } from './WebGL.js';
 
 export class DoubleBuffer {
 
-constructor(gl, spec) {
+constructor(gl, spec, extMV = null) {
     this._gl = gl;
     this._spec = spec;
 
     this._readAttachments = this._createAttachmentsFromSpec(gl, this._spec);
-    this._readFramebuffer = WebGL.createFramebuffer(gl, this._readAttachments);
+    this._readFramebuffer = WebGL.createFramebuffer(gl, this._readAttachments, extMV);
     this._writeAttachments = this._createAttachmentsFromSpec(gl, this._spec);
-    this._writeFramebuffer = WebGL.createFramebuffer(gl, this._writeAttachments);
+    this._writeFramebuffer = WebGL.createFramebuffer(gl, this._writeAttachments, extMV);
 
     this._width = this._spec[0].width;
     this._height = this._spec[0].height;
@@ -19,6 +19,7 @@ constructor(gl, spec) {
 
 destroy() {
     const gl = this._gl;
+    console.log(gl.getError());
     gl.deleteFramebuffer(this._readFramebuffer);
     for (let texture of this._readAttachments.color) {
         gl.deleteTexture(texture);
@@ -27,6 +28,7 @@ destroy() {
     for (let texture of this._writeAttachments.color) {
         gl.deleteTexture(texture);
     }
+    console.log(gl.getError());
 }
 
 _createAttachmentsFromSpec(gl, spec) {
@@ -35,8 +37,10 @@ _createAttachmentsFromSpec(gl, spec) {
 
 use() {
     const gl = this._gl;
+    console.log(gl.getError());
     gl.bindFramebuffer(gl.FRAMEBUFFER, this._writeFramebuffer);
     gl.viewport(0, 0, this._width, this._height);
+    console.log(gl.getError());
 }
 
 swap() {
