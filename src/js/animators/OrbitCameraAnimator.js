@@ -15,7 +15,7 @@ constructor(camera, domElement, options = {}) {
     Object.assign(this, {
         rotationSpeed: 0.005,
         translationSpeed: 0.005,
-        moveSpeed: 0.001,
+        moveSpeed: 0.002,
         zoomSpeed: 0.001,
     }, options);
 
@@ -41,6 +41,8 @@ constructor(camera, domElement, options = {}) {
     this._addEventListeners();
     Ticker.add(this._update);
     console.log("CAMERA START")
+    this.count = 0;
+    this.ref = 0;
 }
 
 _addEventListeners() {
@@ -130,8 +132,6 @@ _updateCamera() {
     transform.localRotation = rotation;
     transform.localTranslation = vec3.add(vec3.create(), this._focus, translation);
     console.log(this._focus);
-    // console.log("camera", translation);
-    // console.log(rotation);
 }
 
 _rotateAroundFocus(dx, dy) {
@@ -151,14 +151,8 @@ _move(v) {
     const rotation = quat.create();
     quat.rotateY(rotation, rotation, this._yaw);
     quat.rotateX(rotation, rotation, this._pitch);
-    // console.log("------------");
-    // console.log(this._yaw);
-    // console.log(this._pitch);
-    // console.log(v);
     vec3.transformQuat(v, v, rotation);
-    // console.log(v);
     vec3.add(this._focus, this._focus, v);
-    // console.log(this._focus);
 
     this._updateCamera();
 }
@@ -172,11 +166,14 @@ _update() {
     const t = Date.now();
     const dt = t - this._time;
     this._time = t;
+    this.count++;
 
     let dx = 0;
     let dz = 0;
-    if (this._forward) {
+    if (this._forward && this.ref + 10 < this.count) {
         dz -= this.moveSpeed * this._focusDistance * dt;
+        this._forward = false;
+        this.ref = this.count;
     }
     if (this._backward) {
         dz += this.moveSpeed * this._focusDistance * dt;
@@ -184,8 +181,10 @@ _update() {
     if (this._left) {
         dx -= this.moveSpeed * this._focusDistance * dt;
     }
-    if (this._right) {
+    if (this._right && this.ref + 10 < this.count) {
         dx += this.moveSpeed * this._focusDistance * dt;
+        this._right = false;
+        this.ref = this.count;
     }
 
     if (dx !== 0 || dz !== 0) {

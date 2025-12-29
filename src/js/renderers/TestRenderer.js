@@ -85,13 +85,44 @@ _integrateFrame() {
     }
 }
 
+
+// Draw loop
+render(t) {
+  t *= 0.001;
+  const dt = t - last; last = t;
+  angle += dt * 0.7; // radians per second
+
+  gl.clearColor(0.12,0.12,0.12,1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  // Build MVP
+  const aspect = canvas.width / canvas.height;
+  const proj = Mat4.perspective(Math.PI/4, aspect, 0.1, 100);
+  const view = Mat4.translate(0,0,-6);
+  const rotX = Mat4.rotateX(angle * 0.6);
+  const rotY = Mat4.rotateY(angle * 0.9);
+  const model = Mat4.multiply(rotY, rotX); // model = rotY * rotX
+  const mv = Mat4.multiply(view, model);   // mv = view * model
+  const mvp = Mat4.multiply(proj, mv);     // mvp = proj * mv
+
+  gl.uniformMatrix4fv(uMVP, false, mvp);
+
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, idxBuf);
+  gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+
+  requestAnimationFrame(render);
+}
+
 _renderFrame() {
+
+
+
     // console.log("TEST RENDER");
     
-    const gl = this._gl;
+
     // console.log(gl.getError());
 
-    const { program, uniforms } = this._programs.render;
+    
     gl.useProgram(program);
 
     gl.activeTexture(gl.TEXTURE0);

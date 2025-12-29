@@ -42,38 +42,54 @@ void main() {
 
 #version 300 es
 
-const vec2 vertices[] = vec2[](
-    vec2(-1, -1),
-    vec2( 3, -1),
-    vec2(-1,  3)
-);
+// const vec2 vertices[] = vec2[](
+//     vec2(-1, -1),
+//     vec2( 3, -1),
+//     vec2(-1,  3)
+// );
 
-out vec2 vPosition;
+// out vec2 vPosition;
+
+// void main() {
+//     vec2 position = vertices[gl_VertexID];
+//     vPosition = position * 0.5 + 0.5;
+//     gl_Position = vec4(position, 0, 1);
+// }
+
+attribute vec3 aPosition;
+attribute vec3 aColor;
+uniform mat4 uMVP;
+varying vec3 vColor;
 
 void main() {
-    vec2 position = vertices[gl_VertexID];
-    vPosition = position * 0.5 + 0.5;
-    gl_Position = vec4(position, 0, 1);
+  vColor = aColor;
+  gl_Position = uMVP * vec4(aPosition, 1.0);
 }
 
 // #part /glsl/shaders/renderers/TEST/render/fragment
 
 #version 300 es
+// precision mediump float;
+// precision highp sampler2D;
+
+// uniform highp sampler2D uTexture;
+
+// in vec2 vPosition;
+
+// out vec4 oColor;
+
+// void main() {
+//     vec4 color = texture(uTexture, vPosition);
+//     // if(color.g > 0.04) {
+//     //     color = vec4(0.6, color.g, 0.6, 1.0);
+//     // }
+//     oColor = color;
+// }
+
 precision mediump float;
-precision highp sampler2D;
-
-uniform highp sampler2D uTexture;
-
-in vec2 vPosition;
-
-out vec4 oColor;
-
+varying vec3 vColor;
 void main() {
-    vec4 color = texture(uTexture, vPosition);
-    // if(color.g > 0.04) {
-    //     color = vec4(0.6, color.g, 0.6, 1.0);
-    // }
-    oColor = color;
+  gl_FragColor = vec4(vColor, 1.0);
 }
 
 

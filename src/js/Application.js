@@ -102,6 +102,7 @@ constructor() {
     this._handleToneMapperChange();
 
     this.mainDialog.addEventListener('recordanimation', this._handleRecordAnimation);
+    // this.renderingContext.startRendering();
 }
 
 async _handleRecordAnimation(e) {

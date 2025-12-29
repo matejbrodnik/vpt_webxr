@@ -14,7 +14,7 @@ void unprojectRandFloat(
 
     // sample a square on the far plane (antialiasing)
     vec2 antialiasing = (random_square(state) * 2.0 - 1.0) * inverseResolution;
-    vec4 farPosition = vec4(position + antialiasing, 1.0, 1.0);
+    vec4 farPosition = vec4(position, 1.0, 1.0);
 
     // map to world space
     vec4 fromDirty = inverseMvp * nearPosition;

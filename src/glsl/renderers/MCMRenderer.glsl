@@ -44,6 +44,9 @@ uniform sampler2D uPosition;
 uniform sampler2D uDirection;
 uniform sampler2D uTransmittance;
 uniform sampler2D uRadiance;
+uniform sampler2D uDepth;
+uniform sampler2D uFrom;
+uniform sampler2D uAcc;
 
 uniform sampler3D uVolume;
 uniform sampler2D uTransferFunction;
@@ -65,6 +68,9 @@ layout (location = 0) out vec4 oPosition;
 layout (location = 1) out vec4 oDirection;
 layout (location = 2) out vec4 oTransmittance;
 layout (location = 3) out vec4 oRadiance;
+layout (location = 4) out vec4 oDepth;
+layout (location = 5) out vec4 oFrom;
+layout (location = 6) out vec4 oAcc;
 
 void resetPhoton(inout float state, inout Photon photon) {
     vec3 from, to;
@@ -74,6 +80,7 @@ void resetPhoton(inout float state, inout Photon photon) {
     vec2 tbounds = max(intersectCube(from, photon.direction), 0.0);
     photon.position = from + tbounds.x * photon.direction;
     photon.transmittance = vec3(1);
+    photon.from = from;
 }
 
 vec4 sampleEnvironmentMap(vec3 d) {
@@ -121,7 +128,10 @@ void main() {
     photon.direction = directionAndBounces.xyz;
     photon.bounces = uint(directionAndBounces.w + 0.5);
     photon.transmittance = texture(uTransmittance, mappedPosition).rgb;
-    
+    photon.depth = texture(uDepth, mappedPosition).rgb;
+    photon.from = texture(uFrom, mappedPosition).rgb;
+    photon.acc = texture(uAcc, mappedPosition).rgb;
+
     for (uint i = 0u; i < uSteps; i++) {
         float dist = random_exponential(state, uExtinction);
         photon.position += dist * photon.direction;
@@ -145,13 +155,19 @@ void main() {
             vec3 radiance = photon.transmittance * envSample.rgb;
             photon.samples++;
             photon.radiance += (radiance - photon.radiance) / float(photon.samples);
+            vec3 pos = photon.position;
+            photon.acc += (photon.position - photon.acc) / float(photon.samples);
             resetPhoton(state, photon);
+            photon.depth += (vec3(dot(pos - photon.from, photon.direction)) - photon.depth) / float(photon.samples);
         } else if (fortuneWheel < PAbsorption) {
             // absorption
             vec3 radiance = vec3(0);
             photon.samples++;
             photon.radiance += (radiance - photon.radiance) / float(photon.samples);
+            vec3 pos = photon.position;
+            photon.acc += (photon.position - photon.acc) / float(photon.samples);
             resetPhoton(state, photon);
+            photon.depth += (vec3(dot(pos - photon.from, photon.direction)) - photon.depth) / float(photon.samples);
         } else if (fortuneWheel < volumeSample.a) {
             // scattering
             photon.transmittance *= volumeSample.rgb;
@@ -166,6 +182,9 @@ void main() {
     oDirection = vec4(photon.direction, float(photon.bounces));
     oTransmittance = vec4(photon.transmittance, 0);
     oRadiance = vec4(photon.radiance, float(photon.samples));
+    oDepth = vec4(photon.depth, 1);
+    oFrom = vec4(photon.from, 1);
+    oAcc = vec4(photon.acc, 1);
 }
 
 // #part /glsl/shaders/renderers/MCM/render/vertex
@@ -193,12 +212,52 @@ precision highp float;
 precision highp sampler2D;
 
 uniform sampler2D uColor;
+uniform sampler2D uDepth;
 
 in vec2 vPosition;
 
 out vec4 oColor;
 
 void main() {
+    // float d = texture(uDepth, vPosition).r;
+    // vec3 color = vec3(0);
+    // if(d >= 0.9) {
+    //     color = vec3(1, 0, 0);
+    // }
+    // else if(d >= 0.8) {
+    //     color = vec3(0.66, 0, 0);
+    // }
+    // else if(d >= 0.7) {
+    //     color = vec3(0.33, 0, 0);
+    // }
+    // else if(d >= 0.6) {
+    //     color = vec3(0, 1, 0);
+    // }
+    // else if(d >= 0.5) {
+    //     color = vec3(0, 0.66, 0);
+    // }
+    // else if(d >= 0.5) {
+    //     color = vec3(0, 0.33, 0);
+    // }
+    // else if(d >= 0.4) {
+    //     color = vec3(0, 0, 1);
+    // }
+    // else if(d >= 0.3) {
+    //     color = vec3(0, 0, 0.66);
+    // }
+    // else if(d >= 0.2) {
+    //     color = vec3(0, 0, 0.33);
+    // }
+    // else if(d >= 0.1) {
+    //     color = vec3(0.33, 0.33, 0.33);
+    // }
+    // // else {
+    // //     d = 0.0;
+    // // }
+
+    // oColor = vec4(texture(uDepth, vPosition));
+    // oColor = vec4(d, d, d, 1);
+    // oColor = vec4(color, 1);
     oColor = vec4(texture(uColor, vPosition).rgb, 1);
 }
 
@@ -241,9 +300,13 @@ precision highp float;
 @unprojectRandFloat
 
 uniform mat4 uMvpInverseMatrix;
+uniform mat4 uMvpForwardMatrix;
 uniform vec2 uInverseResolution;
 uniform float uRandSeed;
 uniform float uBlur;
+
+uniform sampler2D uRadiance;
+uniform sampler2D uAcc;
 
 in vec2 vPosition;
 
@@ -251,6 +314,9 @@ layout (location = 0) out vec4 oPosition;
 layout (location = 1) out vec4 oDirection;
 layout (location = 2) out vec4 oTransmittance;
 layout (location = 3) out vec4 oRadiance;
+layout (location = 4) out vec4 oDepth;
+layout (location = 5) out vec4 oFrom;
+layout (location = 6) out vec4 oAcc;
 
 void main() {
     Photon photon;
@@ -262,13 +328,38 @@ void main() {
     photon.direction = normalize(to - from);
     vec2 tbounds = max(intersectCube(from, photon.direction), 0.0);
     photon.position = from + tbounds.x * photon.direction;
+
+
+    vec2 mappedPosition = vPosition * 0.5 + 0.5;
+    vec4 acc = texture(uAcc, mappedPosition);
+    vec4 acc2 = vec4(texture(uAcc, mappedPosition).rgb - from, 1);
+    vec3 radiance = vec3(1);
+    uint samples = 0u;
+    // if(acc != vec4(0)) {
+    //     // acc = vec4(acc.rgb - 0.5, 1.0);
+    //     vec4 clip = uMvpForwardMatrix * acc2;
+    //     vec3 ndc = clip.xyz / clip.w;
+    //     vec2 uv  = ndc.xy * 0.5 + 0.5;
+    //     radiance = texture(uRadiance, uv).rgb;
+    //     samples = 500u;
+    //     // if(mappedPosition.x + 0.0001 > uv.x && mappedPosition.x - 0.0001 < uv.x && mappedPosition.y + 0.0001 > uv.y && mappedPosition.y - 0.0001 < uv.y) {
+    //     //     radiance = vec3(0, 1, 0);
+    //     // }
+    // }
+
     photon.transmittance = vec3(1);
-    photon.radiance = vec3(1);
+    photon.radiance = radiance;
+    photon.depth = vec3(1);
+    photon.from = from;
+    photon.acc = vec3(0);
     photon.bounces = 0u;
-    photon.samples = 0u;
+    photon.samples = samples;
     photon.M2 = vec3(0);
     oPosition = vec4(photon.position, 0);
     oDirection = vec4(photon.direction, float(photon.bounces));
     oTransmittance = vec4(photon.transmittance, 0);
     oRadiance = vec4(photon.radiance, float(photon.samples));
+    oDepth = vec4(photon.depth, 1);
+    oFrom = vec4(photon.from, 1);
+    oAcc = vec4(photon.acc, 1);
 }

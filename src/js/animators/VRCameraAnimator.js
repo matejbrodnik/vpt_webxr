@@ -16,7 +16,7 @@ constructor() {
     this.yaw = 0;
     this.pitch = 0;
     this.thr = 0.6;
-    this.thrAuto = 0.15;
+    this.thrAuto = 0.05;
     this.focusDistance = 2;
 
     this.translation = [0, 0, 0];
@@ -59,7 +59,7 @@ update(gp, dt) {
     // console.log(this.dx, this.dz);
 }
 
-apply(viewMatrix = null) {
+apply(viewMatrix = null, force = false) {
     if(viewMatrix) {
         // ROLL + T[1] ZAVRŽEMO
         let r = quat.create();
@@ -71,7 +71,7 @@ apply(viewMatrix = null) {
         let angles = this.quatToEuler(r);
         console.log(angles);
         console.log(this.angles);
-        if(this.angles && (Math.abs(this.angles.yaw - angles.yaw) > this.thrAuto || Math.abs(this.angles.pitch - angles.pitch) > this.thrAuto)) {
+        if(force || (this.angles && (Math.abs(this.angles.yaw - angles.yaw) > this.thrAuto || Math.abs(this.angles.pitch - angles.pitch) > this.thrAuto))) {
             const rotation = quat.create();
             quat.rotateY(rotation, rotation, angles.yaw);
             quat.rotateX(rotation, rotation, angles.pitch);
@@ -86,8 +86,10 @@ apply(viewMatrix = null) {
             this.angles = angles;
             return true;
         }
-        if(!this.angles)
+        if(!this.angles){
             this.angles = angles;
+            this.t = t;
+        }
     }
     else {
         const translation = [this.dx, 0, this.dz];

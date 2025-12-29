@@ -88,6 +88,14 @@ _resetFrame() {
     const { program, uniforms } = this._programs.reset;
     gl.useProgram(program);
 
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[3]);
+    gl.uniform1i(uniforms.uRadiance, 0);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[6]);
+    gl.uniform1i(uniforms.uAcc, 1);
+
     gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution.width, 1 / this._resolution.height);
     gl.uniform1f(uniforms.uRandSeed, Math.random());
     gl.uniform1f(uniforms.uBlur, 0);
@@ -98,18 +106,29 @@ _resetFrame() {
     const projectionMatrix = this.VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
 
     const matrix = mat4.create();
+    console.log("prv: ", this.matrix);
+    
     mat4.multiply(matrix, centerMatrix, matrix);
     mat4.multiply(matrix, modelMatrix, matrix);
     mat4.multiply(matrix, viewMatrix, matrix);
     mat4.multiply(matrix, projectionMatrix, matrix);
+    console.log("fwd: ");
+    console.log(JSON.parse(JSON.stringify(matrix)))
+    if(this.matrix == matrix)
+        console.log("SAME");
+    gl.uniformMatrix4fv(uniforms.uMvpForwardMatrix, false, matrix);
     mat4.invert(matrix, matrix);
     gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix);
-
+    console.log("inv: ");
+    console.log(JSON.parse(JSON.stringify(matrix)))
     gl.drawBuffers([
         gl.COLOR_ATTACHMENT0,
         gl.COLOR_ATTACHMENT1,
         gl.COLOR_ATTACHMENT2,
         gl.COLOR_ATTACHMENT3,
+        gl.COLOR_ATTACHMENT4,
+        gl.COLOR_ATTACHMENT5,
+        gl.COLOR_ATTACHMENT6,
     ]);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -152,6 +171,18 @@ _integrateFrame() {
     gl.bindTexture(gl.TEXTURE_2D, this._transferFunction);
     gl.uniform1i(uniforms.uTransferFunction, 6);
 
+    gl.activeTexture(gl.TEXTURE7);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[4]);
+    gl.uniform1i(uniforms.uDepth, 7);
+
+    gl.activeTexture(gl.TEXTURE8);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[5]);
+    gl.uniform1i(uniforms.uFrom, 8);
+    
+    gl.activeTexture(gl.TEXTURE9);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[6]);
+    gl.uniform1i(uniforms.uAcc, 9);
+
     gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution.width, 1 / this._resolution.height);
     gl.uniform1f(uniforms.uRandSeed, Math.random());
     gl.uniform1f(uniforms.uBlur, 0);
@@ -165,20 +196,30 @@ _integrateFrame() {
     const modelMatrix = this._volumeTransform.globalMatrix;
     const viewMatrix = this._VRAnimator ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
     const projectionMatrix = this.VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
-
+    // console.log("int");
+    // console.log(centerMatrix);
+    // console.log(modelMatrix);
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);
     mat4.multiply(matrix, modelMatrix, matrix);
     mat4.multiply(matrix, viewMatrix, matrix);
     mat4.multiply(matrix, projectionMatrix, matrix);
-    mat4.invert(matrix, matrix);
-    gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix);
+    
+    this.matrix = matrix;
+    // console.log("int", matrix);
+    const matrix2 = mat4.create();
+
+    mat4.invert(matrix2, matrix);
+    gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix2);
 
     gl.drawBuffers([
         gl.COLOR_ATTACHMENT0,
         gl.COLOR_ATTACHMENT1,
         gl.COLOR_ATTACHMENT2,
         gl.COLOR_ATTACHMENT3,
+        gl.COLOR_ATTACHMENT4,
+        gl.COLOR_ATTACHMENT5,
+        gl.COLOR_ATTACHMENT6,
     ]);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -193,6 +234,10 @@ _renderFrame() {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[3]);
     gl.uniform1i(uniforms.uColor, 0);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[4]);
+    gl.uniform1i(uniforms.uDepth, 1);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
@@ -253,11 +298,44 @@ _getAccumulationBufferSpec() {
         type    : gl.FLOAT,
     };
 
+    const depthBufferSpec = {
+        width   : this._resolution.width,
+        height  : this._resolution.height,
+        min     : gl.NEAREST,
+        mag     : gl.NEAREST,
+        format  : gl.RGBA,
+        iformat : gl.RGBA32F,
+        type    : gl.FLOAT,
+    };
+
+    const fromBufferSpec = {
+        width   : this._resolution.width,
+        height  : this._resolution.height,
+        min     : gl.NEAREST,
+        mag     : gl.NEAREST,
+        format  : gl.RGBA,
+        iformat : gl.RGBA32F,
+        type    : gl.FLOAT,
+    };
+
+    const accBufferSpec = {
+        width   : this._resolution.width,
+        height  : this._resolution.height,
+        min     : gl.NEAREST,
+        mag     : gl.NEAREST,
+        format  : gl.RGBA,
+        iformat : gl.RGBA32F,
+        type    : gl.FLOAT,
+    };
+
     return [
         positionBufferSpec,
         directionBufferSpec,
         transmittanceBufferSpec,
         radianceBufferSpec,
+        depthBufferSpec,
+        fromBufferSpec,
+        accBufferSpec,
     ];
 }
 
