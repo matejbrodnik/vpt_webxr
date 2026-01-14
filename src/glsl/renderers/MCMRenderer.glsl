@@ -47,17 +47,20 @@ uniform sampler2D uRadiance;
 uniform sampler2D uDepth;
 uniform sampler2D uFrom;
 uniform sampler2D uAcc;
+uniform sampler2D uOld;
 
 uniform sampler3D uVolume;
 uniform sampler2D uTransferFunction;
 uniform sampler2D uEnvironment;
 
 uniform mat4 uMvpInverseMatrix;
+uniform mat4 uMvpA;
 uniform vec2 uInverseResolution;
 uniform float uRandSeed;
 uniform float uBlur;
 uniform float uExtinction;
 uniform float uAnisotropy;
+uniform uint reproject;
 
 uniform uint uMaxBounces;
 uniform uint uSteps;
@@ -132,6 +135,7 @@ void main() {
     photon.from = texture(uFrom, mappedPosition).rgb;
     photon.acc = texture(uAcc, mappedPosition).rgb;
 
+    vec3 saved = vec3(0);
     for (uint i = 0u; i < uSteps; i++) {
         float dist = random_exponential(state, uExtinction);
         photon.position += dist * photon.direction;
@@ -151,6 +155,10 @@ void main() {
         float fortuneWheel = random_uniform(state);
         if (any(greaterThan(photon.position, vec3(1))) || any(lessThan(photon.position, vec3(0)))) {
             // out of bounds
+            if(saved == vec3(0)) {
+                saved = photon.position;
+            }
+
             vec4 envSample = sampleEnvironmentMap(photon.direction);
             vec3 radiance = photon.transmittance * envSample.rgb;
             photon.samples++;
@@ -161,6 +169,9 @@ void main() {
             photon.depth += (vec3(dot(pos - photon.from, photon.direction)) - photon.depth) / float(photon.samples);
         } else if (fortuneWheel < PAbsorption) {
             // absorption
+            if(saved == vec3(0)) {
+                saved = photon.position;
+            }
             vec3 radiance = vec3(0);
             photon.samples++;
             photon.radiance += (radiance - photon.radiance) / float(photon.samples);
@@ -170,13 +181,30 @@ void main() {
             photon.depth += (vec3(dot(pos - photon.from, photon.direction)) - photon.depth) / float(photon.samples);
         } else if (fortuneWheel < volumeSample.a) {
             // scattering
+            if(saved == vec3(0)) {
+                saved = photon.position;
+            }
             photon.transmittance *= volumeSample.rgb;
-            photon.direction = sampleHenyeyGreenstein(state, uAnisotropy, photon.direction);;
+            photon.direction = sampleHenyeyGreenstein(state, uAnisotropy, photon.direction);
             photon.bounces++;
         } else {
             // null collision
         }
     }
+    // photon.depth = vec3(0);
+    vec2 uvA = vec2(0);
+    vec3 old = texture(uOld, mappedPosition).rgb;
+    if(reproject > 0u && saved != vec3(0)) {
+        vec4 clipA = uMvpA * vec4(saved, 1.0);
+        vec3 ndcA = clipA.xyz / clipA.w;
+        uvA = ndcA.xy * 0.5 + 0.5;
+        old = texture(uOld, uvA).rgb;
+        uint s = 1u;
+        photon.radiance = (photon.radiance * float(photon.samples) + old * float(s)) / float(photon.samples + s);
+        photon.samples += s;
+        photon.radiance = old;
+    }
+    // photon.depth = abs(photon.radiance - old);
 
     oPosition = vec4(photon.position, 0);
     oDirection = vec4(photon.direction, float(photon.bounces));
@@ -185,6 +213,9 @@ void main() {
     oDepth = vec4(photon.depth, 1);
     oFrom = vec4(photon.from, 1);
     oAcc = vec4(photon.acc, 1);
+    // if(texture(uDirection, mappedPosition) == texture(uDirection, uvA)) {
+    //     oRadiance = vec4(0.0, 1.0, 0.0, 1.0);
+    // }
 }
 
 // #part /glsl/shaders/renderers/MCM/render/vertex
@@ -317,6 +348,7 @@ layout (location = 3) out vec4 oRadiance;
 layout (location = 4) out vec4 oDepth;
 layout (location = 5) out vec4 oFrom;
 layout (location = 6) out vec4 oAcc;
+layout (location = 7) out vec4 oOld;
 
 void main() {
     Photon photon;
@@ -362,4 +394,5 @@ void main() {
     oDepth = vec4(photon.depth, 1);
     oFrom = vec4(photon.from, 1);
     oAcc = vec4(photon.acc, 1);
+    oOld = texture(uRadiance, mappedPosition);
 }

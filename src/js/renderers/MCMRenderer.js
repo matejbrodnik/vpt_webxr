@@ -42,7 +42,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'steps',
             label: 'Steps',
             type: 'spinner',
-            value: 20,
+            value: 60,
             min: 0,
         },
         {
@@ -71,6 +71,9 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     });
 
     this._programs = WebGL.buildPrograms(gl, SHADERS.renderers.MCM, MIXINS);
+    this.forwardMatrix = null;
+    this.forwardMatrixOld = null;
+    this.reproject = -1;
 }
 
 destroy() {
@@ -80,6 +83,13 @@ destroy() {
     });
 
     super.destroy();
+}
+
+log(matrix) {
+    console.log(parseFloat(matrix[0].toFixed(3)), parseFloat(matrix[4].toFixed(3)), parseFloat(matrix[8].toFixed(3)), parseFloat(matrix[12].toFixed(3)));
+    console.log(parseFloat(matrix[1].toFixed(3)), parseFloat(matrix[5].toFixed(3)), parseFloat(matrix[9].toFixed(3)), parseFloat(matrix[13].toFixed(3)));
+    console.log(parseFloat(matrix[2].toFixed(3)), parseFloat(matrix[6].toFixed(3)), parseFloat(matrix[10].toFixed(3)), parseFloat(matrix[14].toFixed(3)));
+    console.log(parseFloat(matrix[3].toFixed(3)), parseFloat(matrix[7].toFixed(3)), parseFloat(matrix[11].toFixed(3)), parseFloat(matrix[15].toFixed(3)));
 }
 
 _resetFrame() {
@@ -101,26 +111,37 @@ _resetFrame() {
     gl.uniform1f(uniforms.uBlur, 0);
 
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
-    const modelMatrix = this._volumeTransform.globalMatrix;
+    const modelMatrix = this._VRAnimator ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
     const viewMatrix = this._VRAnimator ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
     const projectionMatrix = this.VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
 
     const matrix = mat4.create();
-    console.log("prv: ", this.matrix);
+    // console.log("prv: ", this.matrix);
     
     mat4.multiply(matrix, centerMatrix, matrix);
     mat4.multiply(matrix, modelMatrix, matrix);
     mat4.multiply(matrix, viewMatrix, matrix);
     mat4.multiply(matrix, projectionMatrix, matrix);
-    console.log("fwd: ");
-    console.log(JSON.parse(JSON.stringify(matrix)))
+    this.log(modelMatrix);
+    console.log("---");
+    this.log(viewMatrix);
+    console.log("---------");
+
+    // console.log("fwd: ");
+    // console.log(JSON.parse(JSON.stringify(matrix)))
     if(this.matrix == matrix)
         console.log("SAME");
     gl.uniformMatrix4fv(uniforms.uMvpForwardMatrix, false, matrix);
+    if(this.forwardMatrix) {
+        this.forwardMatrixOld = mat4.clone(this.forwardMatrix);
+    }
+    this.forwardMatrix = mat4.clone(matrix);
     mat4.invert(matrix, matrix);
     gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix);
-    console.log("inv: ");
-    console.log(JSON.parse(JSON.stringify(matrix)))
+    this.log(matrix);
+
+    // console.log("inv: ");
+    // console.log(JSON.parse(JSON.stringify(matrix)))
     gl.drawBuffers([
         gl.COLOR_ATTACHMENT0,
         gl.COLOR_ATTACHMENT1,
@@ -129,9 +150,16 @@ _resetFrame() {
         gl.COLOR_ATTACHMENT4,
         gl.COLOR_ATTACHMENT5,
         gl.COLOR_ATTACHMENT6,
+        gl.COLOR_ATTACHMENT7,
     ]);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    if(this.reproject == -1)
+        this.reproject = 0;
+    else
+        this.reproject = 1;
+
 }
 
 _generateFrame() {
@@ -183,6 +211,10 @@ _integrateFrame() {
     gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[6]);
     gl.uniform1i(uniforms.uAcc, 9);
 
+    gl.activeTexture(gl.TEXTURE10);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[7]);
+    gl.uniform1i(uniforms.uOld, 10);
+
     gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution.width, 1 / this._resolution.height);
     gl.uniform1f(uniforms.uRandSeed, Math.random());
     gl.uniform1f(uniforms.uBlur, 0);
@@ -191,14 +223,17 @@ _integrateFrame() {
     gl.uniform1f(uniforms.uAnisotropy, this.anisotropy);
     gl.uniform1ui(uniforms.uMaxBounces, this.bounces);
     gl.uniform1ui(uniforms.uSteps, this.steps);
+    gl.uniform1ui(uniforms.reproject, this.reproject);
+    this.reproject = 0;
 
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
-    const modelMatrix = this._volumeTransform.globalMatrix;
+    // const modelMatrix = this._volumeTransform.globalMatrix;
+    const modelMatrix = this._VRAnimator ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
     const viewMatrix = this._VRAnimator ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
     const projectionMatrix = this.VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
     // console.log("int");
     // console.log(centerMatrix);
-    // console.log(modelMatrix);
+    console.log("model", modelMatrix);
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);
     mat4.multiply(matrix, modelMatrix, matrix);
@@ -207,8 +242,16 @@ _integrateFrame() {
     
     this.matrix = matrix;
     // console.log("int", matrix);
+    this.log(mat4.clone(matrix))
+    if(this.forwardMatrixOld) {
+        this.log(this.forwardMatrixOld)
+        gl.uniformMatrix4fv(uniforms.uMvpA, false, this.forwardMatrixOld);
+        // this._context.brick = true;
+    }
+    else
+        gl.uniformMatrix4fv(uniforms.uMvpA, false, mat4.create());
+    
     const matrix2 = mat4.create();
-
     mat4.invert(matrix2, matrix);
     gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix2);
 
@@ -328,6 +371,16 @@ _getAccumulationBufferSpec() {
         type    : gl.FLOAT,
     };
 
+    const oldRadianceBufferSpec = {
+        width   : this._resolution.width,
+        height  : this._resolution.height,
+        min     : gl.NEAREST,
+        mag     : gl.NEAREST,
+        format  : gl.RGBA,
+        iformat : gl.RGBA32F,
+        type    : gl.FLOAT,
+    };
+
     return [
         positionBufferSpec,
         directionBufferSpec,
@@ -336,6 +389,7 @@ _getAccumulationBufferSpec() {
         depthBufferSpec,
         fromBufferSpec,
         accBufferSpec,
+        oldRadianceBufferSpec,
     ];
 }
 

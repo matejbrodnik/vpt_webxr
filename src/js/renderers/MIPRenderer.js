@@ -84,7 +84,7 @@ _generateFrame() {
     gl.uniform1f(uniforms.uOffset, Math.random());
 
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
-    const modelMatrix = this._volumeTransform.globalMatrix;
+    const modelMatrix = this._VRAnimator ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
     // console.log("matrices:")
     // console.log(this.VRView);
     // console.log(this.VRProjection);

@@ -44,6 +44,7 @@ constructor(options = {}) {
     this.session = WebXR.createSession(this.gl);
     this.volume = new Volume(this.gl);
     this.volumeTransform = new Transform(new Node());
+    // this.volumeTransform.localTranslation = [0, 0, -2];
 
     this.isImmersive = false;
     this.useTimer = false;
@@ -54,13 +55,13 @@ constructor(options = {}) {
     this.filter = options.filter ?? 'linear';
 
     this.camera = new Node();
-    this.camera.transform.localTranslation = [0, 0, 2];
+    this.camera.transform.localTranslation = [0, 0, 0];
     this.camera.components.push(new PerspectiveCamera(this.camera));
 
     this.camera.transform.addEventListener('change', e => {
         console.log("CAMERA CHANGE")
         if (this.renderer && !this.disable) {
-            this.renderer.reset();
+            this.renderer.reset(); //move outside to prevent stuttering on reset
 
         }
     });
@@ -70,11 +71,11 @@ constructor(options = {}) {
     //    radius: 0.01,
     //    frequency: 1,
     //});
-    this.cameraAnimator = new OrbitCameraAnimator(this.camera, this.canvas);
-    // this.cameraAnimator._rotateAroundFocus(1.25, 0);
+    this.cameraAnimator = new OrbitCameraAnimator(this.camera, this.canvas, this.volumeTransform);
+    this.cameraAnimator._rotateAroundFocus(1.25, 0);
     // this.cameraAnimator._rotateAroundFocus(2.6, 0);
     // this.cameraAnimator._zoom(-0.7, 0);
-    // this.cameraAnimator._zoom(-0.6, 0);
+    this.cameraAnimator._zoom(-0.2, 0);
 
 
     this.once = false;
@@ -323,6 +324,7 @@ _update(t, frame) {
     //     Ticker.remove(this._update);
     //     return;
     // }
+    
     let session = this.session;
     let gl = this.gl;
     if(this.VRFirst) {
@@ -331,7 +333,7 @@ _update(t, frame) {
         let glLayer = session.renderState.baseLayer;
         console.log("gl layer:", glLayer);
         this.resolution = {width: glLayer.framebufferWidth / 4, height: glLayer.framebufferHeight / 4}
-        this.VRAnimator = new VRCameraAnimator();
+        this.VRAnimator = new VRCameraAnimator(this.volumeTransform);
         this.chooseRenderer("fov2");
         this.chooseRenderer2("fov2");
         this.chooseToneMapper("artistic");
@@ -352,6 +354,7 @@ _update(t, frame) {
     // if(this.VRiterations % 10 == 0 && this.VRiterations != 0) {
 
     if (pose) {
+        console.log("volume", this.volumeTransform.globalMatrix);
         let glLayer = session.renderState.baseLayer;
         for (let view of pose.views) {
             this.viewport = glLayer.getViewport(view);
@@ -430,6 +433,9 @@ render() {
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
+    if(this.brick) {
+        Ticker.reset();
+    }
 
     // if(!this.useTimer) {
     //     return;

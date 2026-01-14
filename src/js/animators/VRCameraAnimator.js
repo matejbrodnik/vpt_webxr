@@ -4,23 +4,27 @@ import { Transform } from '../Transform.js';
 
 export class VRCameraAnimator {
 
-constructor() {
+constructor(volumeTransform) {
     this.transform = new Transform(new Node());
+
+    this.model = new Transform(new Node());
     this.translationSpeed = 0.0008;
     this.rotationSpeed = 0.005;
 
     this.dx = 0;
+    this.dy = 0;
     this.dz = 0;
     this.focus = [0, 0, 0]; //[0, 0, 2]
     this.focusDistance = vec3.distance([0, 0, 0], this.transform.globalTranslation);
     this.yaw = 0;
     this.pitch = 0;
     this.thr = 0.6;
-    this.thrAuto = 0.05;
+    this.thrAuto = 0.02;
     this.focusDistance = 2;
 
     this.translation = [0, 0, 0];
     this.angles = null;
+    this.change = 0;
 }
 
 update(gp, dt) {
@@ -41,18 +45,24 @@ update(gp, dt) {
         this.pitch += 0.02;
     }
 
+    console.log(axes[2])
+    console.log(axes[3])
     if(axes[2] > thr) {
-        this.dx -= this.translationSpeed * this.focusDistance * dt;
+        this.dy -= 0.02;
+        this.change++;
     }
     else if(axes[2] < -thr) {
-        this.dx += this.translationSpeed * this.focusDistance * dt;
+        this.dy += 0.02;
+        this.change++;
     }
 
     if(axes[3] > thr) {
-        this.dz -= this.translationSpeed * this.focusDistance * dt;
+        this.dx -= 0.02;
+        this.change++;
     }
     else if(axes[3] < -thr) {
-        this.dz += this.translationSpeed * this.focusDistance * dt;
+        this.dx += 0.02;
+        this.change++;
     }
     // console.log(axes);
     // console.log(dt);
@@ -71,17 +81,24 @@ apply(viewMatrix = null, force = false) {
         let angles = this.quatToEuler(r);
         console.log(angles);
         console.log(this.angles);
-        if(force || (this.angles && (Math.abs(this.angles.yaw - angles.yaw) > this.thrAuto || Math.abs(this.angles.pitch - angles.pitch) > this.thrAuto))) {
+        if(force || this.change > 2 || (this.angles && (Math.abs(this.angles.yaw - angles.yaw) > this.thrAuto || Math.abs(this.angles.pitch - angles.pitch) > this.thrAuto))) {
             const rotation = quat.create();
             quat.rotateY(rotation, rotation, angles.yaw);
             quat.rotateX(rotation, rotation, angles.pitch);
             
-            const translation = vec3.transformQuat(vec3.create(),
-            [0, 0, this.focusDistance], rotation);
-    
+            const translation = vec3.create();
+            // vec3.transformQuat(translation, [0, 0, this.focusDistance], rotation);
             this.transform.localRotation = rotation;
-            this.transform.localTranslation = vec3.add(vec3.create, t, translation);
+            this.transform.localTranslation = vec3.add(vec3.create, t, [0, 0, this.focusDistance]);
             
+            const rotationM = quat.create();
+            console.log(this.dx)
+            console.log(this.dy)
+            quat.rotateX(rotationM, rotationM, this.dx);
+            quat.rotateY(rotationM, rotationM, this.dy);
+            this.model.localRotation = rotationM;
+            this.change = 0;
+
             this.translation = t;
             this.angles = angles;
             return true;

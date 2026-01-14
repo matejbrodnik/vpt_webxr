@@ -3,7 +3,7 @@ import { Ticker } from '../Ticker.js';
 
 export class OrbitCameraAnimator {
 
-constructor(camera, domElement, options = {}) {
+constructor(camera, domElement, volumeTransform, options = {}) {
     this._update = this._update.bind(this);
     this._handlePointerDown = this._handlePointerDown.bind(this);
     this._handlePointerUp = this._handlePointerUp.bind(this);
@@ -23,7 +23,7 @@ constructor(camera, domElement, options = {}) {
     this._domElement = domElement;
 
     this._focus = [0, 0, 0];
-    this._focusDistance = vec3.distance(this._focus, this._camera.transform.globalTranslation);
+    this._focusDistance = 2;//vec3.distance(this._focus, this._camera.transform.globalTranslation);
     console.log(this._focusDistance);
     this._yaw = 0;
     this._pitch = 0;
@@ -43,6 +43,8 @@ constructor(camera, domElement, options = {}) {
     console.log("CAMERA START")
     this.count = 0;
     this.ref = 0;
+
+    this.volumeTransform = volumeTransform;
 }
 
 _addEventListeners() {
@@ -129,9 +131,12 @@ _updateCamera() {
     const translation = vec3.transformQuat(vec3.create(),
         [0, 0, this._focusDistance], rotation);
         
-    transform.localRotation = rotation;
-    transform.localTranslation = vec3.add(vec3.create(), this._focus, translation);
-    console.log(this._focus);
+    // transform.localRotation = rotation;
+    this.volumeTransform.localRotation = rotation;
+    // this.volumeTransform.localTranslation = translation;
+    // transform.localTranslation = vec3.add(vec3.create(), this._focus, translation);
+    transform.localTranslation = vec3.add(vec3.create(), this._focus, [0, 0, this._focusDistance]);
+    console.log("translation",translation);
 }
 
 _rotateAroundFocus(dx, dy) {
@@ -153,7 +158,7 @@ _move(v) {
     quat.rotateX(rotation, rotation, this._pitch);
     vec3.transformQuat(v, v, rotation);
     vec3.add(this._focus, this._focus, v);
-
+    console.log("focus", this._focus);
     this._updateCamera();
 }
 
