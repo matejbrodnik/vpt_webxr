@@ -21,7 +21,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'extinction',
             label: 'Extinction',
             type: 'spinner',
-            value: 100,
+            value: 70,
             min: 0,
         },
         {
@@ -43,7 +43,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'steps',
             label: 'Steps',
             type: 'spinner',
-            value: 20,
+            value: 30,
             min: 0,
         },
         {
@@ -72,6 +72,10 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     });
 
     this._programs = WebGL.buildPrograms(gl, SHADERS.renderers.FOV2, MIXINS);
+    this.forwardMatrix = null;
+    this.forwardMatrixOld = null;
+    this.reproject = -1;
+    this.iter = 0;
 }
 
 destroy() {
@@ -132,6 +136,10 @@ _resetFrame() {
     gl.bindTexture(gl.TEXTURE_2D, this._MIPmap.color[0]);
     gl.uniform1i(uniforms.uMIP, 0);
 
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[3]);
+    gl.uniform1i(uniforms.uRadiance, 1);
+
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
     //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.generateMipmap(gl.TEXTURE_2D);
@@ -146,6 +154,11 @@ _resetFrame() {
     mat4.multiply(matrix, modelMatrix, matrix);
     mat4.multiply(matrix, viewMatrix, matrix);
     mat4.multiply(matrix, projectionMatrix, matrix);
+    if(this.forwardMatrix) {
+        this.forwardMatrixOld = mat4.clone(this.forwardMatrix);
+    }
+    this.forwardMatrix = mat4.clone(matrix);
+
     mat4.invert(matrix, matrix);;
     gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix);
 
@@ -155,11 +168,21 @@ _resetFrame() {
         gl.COLOR_ATTACHMENT2,
         gl.COLOR_ATTACHMENT3,
         gl.COLOR_ATTACHMENT4,
+        gl.COLOR_ATTACHMENT5,
     ]);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     this.cycles = 0;
     this.thr = 100;
+
+    if(this.reproject == -1)
+        this.reproject = 0;
+    else if(this.iter > 1 && this._VRAnimator && this._VRAnimator.reproject)
+        this.reproject = 1;
+
+    this.iter = 0;
+    if(this._VRAnimator)
+        console.log(this._VRAnimator.reproject);
 }
 
 _generateFrame() {
@@ -207,6 +230,10 @@ _integrateFrame() {
     gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[4]);
     gl.uniform1i(uniforms.uMIP, 7);
 
+    gl.activeTexture(gl.TEXTURE8);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[5]);
+    gl.uniform1i(uniforms.uOld, 8);
+
     if(this.cycles <= 1) {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
         gl.generateMipmap(gl.TEXTURE_2D);
@@ -222,6 +249,8 @@ _integrateFrame() {
     gl.uniform1f(uniforms.uAnisotropy, this.anisotropy);
     gl.uniform1ui(uniforms.uMaxBounces, this.bounces);
     gl.uniform1ui(uniforms.uSteps, this.steps);
+    gl.uniform1ui(uniforms.reproject, this.reproject);
+    this.reproject = 0;
 
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
     const modelMatrix = this._VRAnimator ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
@@ -233,6 +262,15 @@ _integrateFrame() {
     mat4.multiply(matrix, modelMatrix, matrix);
     mat4.multiply(matrix, viewMatrix, matrix);
     mat4.multiply(matrix, projectionMatrix, matrix);
+
+    if(this.forwardMatrixOld) {
+        // this.log(this.forwardMatrixOld)
+        gl.uniformMatrix4fv(uniforms.uMvpA, false, this.forwardMatrixOld);
+        // this._context.brick = true;
+    }
+    else
+        gl.uniformMatrix4fv(uniforms.uMvpA, false, mat4.create());
+
     mat4.invert(matrix, matrix);
     // console.log("MODEL")
     // console.log(modelMatrix);
@@ -249,6 +287,7 @@ _integrateFrame() {
     ]);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    this.iter++;
 }
 
 _renderFrame() {
@@ -365,12 +404,23 @@ _getAccumulationBufferSpec() {
         type    : gl.FLOAT,
     };
 
+    const oldRadianceBufferSpec = {
+        width   : this._resolution.width,
+        height  : this._resolution.height,
+        min     : gl.NEAREST,
+        mag     : gl.NEAREST,
+        format  : gl.RGBA,
+        iformat : gl.RGBA32F,
+        type    : gl.FLOAT,
+    };
+
     return [
         positionBufferSpec,
         directionBufferSpec,
         transmittanceBufferSpec,
         radianceBufferSpec,
         mipBufferSpec,
+        oldRadianceBufferSpec,
     ];
 }
 

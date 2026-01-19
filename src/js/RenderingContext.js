@@ -59,7 +59,7 @@ constructor(options = {}) {
     this.camera.components.push(new PerspectiveCamera(this.camera));
 
     this.camera.transform.addEventListener('change', e => {
-        console.log("CAMERA CHANGE")
+        // console.log("CAMERA CHANGE")
         if (this.renderer && !this.disable) {
             this.renderer.reset(); //move outside to prevent stuttering on reset
 
@@ -111,7 +111,7 @@ initGL(inline = true) {
 
     }
     const gl = this.gl;
-    console.log(gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT).precision);
+    // console.log(gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT).precision);
     console.log(gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS));
     this.extLoseContext = gl.getExtension('WEBGL_lose_context');
     this.extColorBufferFloat = gl.getExtension('EXT_color_buffer_float');
@@ -332,7 +332,7 @@ _update(t, frame) {
         console.log("render state:", session.renderState);
         let glLayer = session.renderState.baseLayer;
         console.log("gl layer:", glLayer);
-        this.resolution = {width: glLayer.framebufferWidth / 4, height: glLayer.framebufferHeight / 4}
+        this.resolution = {width: glLayer.framebufferWidth / 3, height: glLayer.framebufferHeight / 4}
         this.VRAnimator = new VRCameraAnimator(this.volumeTransform);
         this.chooseRenderer("fov2");
         this.chooseRenderer2("fov2");
@@ -343,7 +343,8 @@ _update(t, frame) {
         // this.ext = this.gl.getExtension('EXT_disjoint_timer_query_webgl2');
     }
     let dt = t - this.old_t;
-    console.log("t", dt.toFixed(1), this.VRiterations);
+    if(this.VRiterations % 20 == 0)
+        console.log("t", dt.toFixed(1), this.VRiterations);
     this.old_t = t;
     if(frame.session.inputSources.length > 0) {
         let gp = frame.session.inputSources[0].gamepad;
@@ -354,7 +355,7 @@ _update(t, frame) {
     // if(this.VRiterations % 10 == 0 && this.VRiterations != 0) {
 
     if (pose) {
-        console.log("volume", this.volumeTransform.globalMatrix);
+        // console.log("volume", this.volumeTransform.globalMatrix);
         let glLayer = session.renderState.baseLayer;
         for (let view of pose.views) {
             this.viewport = glLayer.getViewport(view);
@@ -366,11 +367,11 @@ _update(t, frame) {
                         this.renderer2.reset();
                         // this.renderer2.VRProjection = view.projectionMatrix;
                         this.changedView = false;
-                        console.log("RESET 2");
+                        // console.log("RESET 2");
                     }
                     else {
                         this.renderer.reset();
-                        console.log("RESET 1");
+                        // console.log("RESET 1");
                     }
                     //continue; // če želimo pri resetu preskočiti render
                 }
@@ -436,6 +437,8 @@ render() {
     if(this.brick) {
         Ticker.reset();
     }
+    
+    this.cameraAnimator._rotateAroundFocus(0.02, 0);
 
     // if(!this.useTimer) {
     //     return;

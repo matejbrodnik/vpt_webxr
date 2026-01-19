@@ -49,8 +49,10 @@ uniform sampler3D uVolume;
 uniform sampler2D uTransferFunction;
 uniform sampler2D uEnvironment;
 uniform sampler2D uMIP;
+uniform sampler2D uOld;
 
 uniform mat4 uMvpInverseMatrix;
+uniform mat4 uMvpA;
 uniform vec2 uInverseResolution;
 uniform float uRandSeed;
 uniform float uBlur;
@@ -61,6 +63,7 @@ uniform uint uMaxBounces;
 uniform uint uSteps;
 uniform uint uCycles;
 uniform uint uThr;
+uniform uint reproject;
 
 in vec2 vPosition;
 
@@ -159,6 +162,9 @@ void main() {
     if(steps > 250u) {
         steps = 250u;
     }
+    photon.acc = vec3(0);
+    vec3 saved = vec3(0);
+
     for (uint i = 0u; i < steps; i++) {
         float dist = random_exponential(state, uExtinction);
         photon.position += dist * photon.direction;
@@ -177,29 +183,54 @@ void main() {
         float fortuneWheel = random_uniform(state);
         if (any(greaterThan(photon.position, vec3(1))) || any(lessThan(photon.position, vec3(0)))) {
             // out of bounds
+            if(saved == vec3(0)) {
+                saved = photon.position;
+            }
             vec4 envSample = sampleEnvironmentMap(photon.direction);
             vec3 radiance = photon.transmittance * envSample.rgb;
             photon.samples++;
             vec3 delta = radiance - photon.radiance;
             photon.radiance += delta / float(photon.samples);
             photon.M2 += delta * (radiance - photon.radiance);
+            photon.acc += (photon.position - photon.acc) / float(photon.samples);
             resetPhoton(state, photon);
         } else if (fortuneWheel < PAbsorption) {
             // absorption
+            if(saved == vec3(0)) {
+                saved = photon.position;
+            }
             vec3 radiance = vec3(0);
             photon.samples++;
             vec3 delta = radiance - photon.radiance;
             photon.radiance += delta / float(photon.samples);
             photon.M2 += delta * (radiance - photon.radiance);
+            photon.acc += (photon.position - photon.acc) / float(photon.samples);
             resetPhoton(state, photon);
         } else if (fortuneWheel < PAbsorption + PScattering) {
             // scattering
+            if(saved == vec3(0)) {
+                saved = photon.position;
+            }
             photon.transmittance *= volumeSample.rgb;
             photon.direction = sampleHenyeyGreenstein(state, uAnisotropy, photon.direction);
             photon.bounces++;
         } else {
             // null collision
         }
+    }
+
+    vec2 uvA = vec2(0);
+    vec3 old = texture(uOld, mappedPosition).rgb;
+    // saved = photon.acc;
+    if(reproject > 0u && saved != vec3(0)) {
+        vec4 clipA = uMvpA * vec4(saved, 1.0);
+        vec3 ndcA = clipA.xyz / clipA.w;
+        uvA = ndcA.xy * 0.5 + 0.5;
+        old = texture(uOld, uvA).rgb;
+        uint s = 2u;
+        photon.radiance = (photon.radiance * float(photon.samples) + old * float(s)) / float(photon.samples + s);
+        photon.samples += s;
+        // photon.radiance = old;
     }
 
     oPosition = vec4(photon.position, avg);
@@ -342,6 +373,7 @@ precision highp float;
 @unprojectRandFloat
 
 uniform sampler2D uMIP;
+uniform sampler2D uRadiance;
 uniform mat4 uMvpInverseMatrix;
 uniform vec2 uInverseResolution;
 uniform float uRandSeed;
@@ -354,6 +386,7 @@ layout (location = 1) out vec4 oDirection;
 layout (location = 2) out vec4 oTransmittance;
 layout (location = 3) out vec4 oRadiance;
 layout (location = 4) out vec4 oMIP;
+layout (location = 5) out vec4 oOld;
 
 void main() {
     vec2 mappedPosition = vPosition * 0.5 + 0.5;
@@ -378,4 +411,5 @@ void main() {
     oRadiance = vec4(photon.radiance, float(photon.samples));
     oMIP = vec4(photon.M2, texture(uMIP, mappedPosition).r);
     // oMIP = texture(uMIP, mappedPosition);
+    oOld = texture(uRadiance, mappedPosition);
 }

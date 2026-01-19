@@ -19,12 +19,16 @@ constructor(volumeTransform) {
     this.yaw = 0;
     this.pitch = 0;
     this.thr = 0.6;
-    this.thrAuto = 0.02;
+    this.thrAuto = 0.01;
+    this.step = 0.03;
     this.focusDistance = 2;
 
     this.translation = [0, 0, 0];
     this.angles = null;
     this.change = 0;
+
+    this.reproject = true;
+    this.reproCount = 0;
 }
 
 update(gp, dt) {
@@ -39,29 +43,35 @@ update(gp, dt) {
         this.yaw -= 0.02;
     }
     if(btns[4].pressed) { // A
-        this.yaw += 0.02;
+        // this.yaw += 0.02;
+        if(this.reproCount == 0)
+            this.reproject = !this.reproject;
+        console.log("BUTTON A", this.reproject);
+        this.reproCount++;
     }
+    else
+        this.reproCount = 0;
     if(btns[5].pressed) { // B
         this.pitch += 0.02;
     }
 
-    console.log(axes[2])
-    console.log(axes[3])
+    // console.log(axes[2])
+    // console.log(axes[3])
     if(axes[2] > thr) {
-        this.dy -= 0.02;
+        this.dy -= this.step;
         this.change++;
     }
     else if(axes[2] < -thr) {
-        this.dy += 0.02;
+        this.dy += this.step;
         this.change++;
     }
 
     if(axes[3] > thr) {
-        this.dx -= 0.02;
+        this.dx -= this.step;
         this.change++;
     }
     else if(axes[3] < -thr) {
-        this.dx += 0.02;
+        this.dx += this.step;
         this.change++;
     }
     // console.log(axes);
@@ -79,8 +89,8 @@ apply(viewMatrix = null, force = false) {
         t = [t[0] * 1.2, t[1] * 0, t[2] * 1.2];
         // vec3.add(t, t, this.focus);
         let angles = this.quatToEuler(r);
-        console.log(angles);
-        console.log(this.angles);
+        // console.log(angles);
+        // console.log(this.angles);
         if(force || this.change > 2 || (this.angles && (Math.abs(this.angles.yaw - angles.yaw) > this.thrAuto || Math.abs(this.angles.pitch - angles.pitch) > this.thrAuto))) {
             const rotation = quat.create();
             quat.rotateY(rotation, rotation, angles.yaw);
@@ -92,8 +102,8 @@ apply(viewMatrix = null, force = false) {
             this.transform.localTranslation = vec3.add(vec3.create, t, [0, 0, this.focusDistance]);
             
             const rotationM = quat.create();
-            console.log(this.dx)
-            console.log(this.dy)
+            // console.log(this.dx)
+            // console.log(this.dy)
             quat.rotateX(rotationM, rotationM, this.dx);
             quat.rotateY(rotationM, rotationM, this.dy);
             this.model.localRotation = rotationM;

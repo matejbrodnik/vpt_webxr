@@ -20,7 +20,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'extinction',
             label: 'Extinction',
             type: 'spinner',
-            value: 50,
+            value: 60,
             min: 0,
         },
         {
@@ -74,6 +74,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     this.forwardMatrix = null;
     this.forwardMatrixOld = null;
     this.reproject = -1;
+    this.iter = 0;
 }
 
 destroy() {
@@ -157,8 +158,10 @@ _resetFrame() {
 
     if(this.reproject == -1)
         this.reproject = 0;
-    else
+    else if(this.iter > 1)
         this.reproject = 1;
+
+    this.iter = 0;
 
 }
 
@@ -245,7 +248,7 @@ _integrateFrame() {
     this.log(mat4.clone(matrix))
     if(this.forwardMatrixOld) {
         this.log(this.forwardMatrixOld)
-        gl.uniformMatrix4fv(uniforms.uMvpA, false, this.forwardMatrixOld);
+        gl.uniformMatrix4fv(uniforms.uMvpA, false, matrix);
         // this._context.brick = true;
     }
     else
@@ -266,6 +269,8 @@ _integrateFrame() {
     ]);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    this.iter++;
+
 }
 
 _renderFrame() {

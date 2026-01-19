@@ -136,6 +136,7 @@ void main() {
     photon.acc = texture(uAcc, mappedPosition).rgb;
 
     vec3 saved = vec3(0);
+    uint changed = 0u;
     for (uint i = 0u; i < uSteps; i++) {
         float dist = random_exponential(state, uExtinction);
         photon.position += dist * photon.direction;
@@ -187,22 +188,31 @@ void main() {
             photon.transmittance *= volumeSample.rgb;
             photon.direction = sampleHenyeyGreenstein(state, uAnisotropy, photon.direction);
             photon.bounces++;
+            changed = 1u;
         } else {
             // null collision
         }
     }
     // photon.depth = vec3(0);
     vec2 uvA = vec2(0);
-    vec3 old = texture(uOld, mappedPosition).rgb;
+    vec3 old1 = texture(uOld, mappedPosition).rgb;
+    vec3 old = old1;
+    // saved = photon.acc;
     if(reproject > 0u && saved != vec3(0)) {
         vec4 clipA = uMvpA * vec4(saved, 1.0);
         vec3 ndcA = clipA.xyz / clipA.w;
         uvA = ndcA.xy * 0.5 + 0.5;
         old = texture(uOld, uvA).rgb;
-        uint s = 1u;
+        uint s = 2u;
+        // if(old == vec3(1)) {
+        //     s = 1u;
+        // }
         photon.radiance = (photon.radiance * float(photon.samples) + old * float(s)) / float(photon.samples + s);
         photon.samples += s;
-        photon.radiance = old;
+        // photon.radiance = old;
+    }
+    else if(reproject > 0u){
+        photon.radiance = vec3(0, 0, 1.0);
     }
     // photon.depth = abs(photon.radiance - old);
 
