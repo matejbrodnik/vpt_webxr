@@ -162,7 +162,6 @@ void main() {
     if(steps > 250u) {
         steps = 250u;
     }
-    photon.acc = vec3(0);
     vec3 saved = vec3(0);
 
     for (uint i = 0u; i < steps; i++) {
@@ -192,7 +191,6 @@ void main() {
             vec3 delta = radiance - photon.radiance;
             photon.radiance += delta / float(photon.samples);
             photon.M2 += delta * (radiance - photon.radiance);
-            photon.acc += (photon.position - photon.acc) / float(photon.samples);
             resetPhoton(state, photon);
         } else if (fortuneWheel < PAbsorption) {
             // absorption
@@ -204,7 +202,6 @@ void main() {
             vec3 delta = radiance - photon.radiance;
             photon.radiance += delta / float(photon.samples);
             photon.M2 += delta * (radiance - photon.radiance);
-            photon.acc += (photon.position - photon.acc) / float(photon.samples);
             resetPhoton(state, photon);
         } else if (fortuneWheel < PAbsorption + PScattering) {
             // scattering
@@ -227,15 +224,22 @@ void main() {
         vec3 ndcA = clipA.xyz / clipA.w;
         uvA = ndcA.xy * 0.5 + 0.5;
         old = texture(uOld, uvA).rgb;
-        uint s = 2u;
-        photon.radiance = (photon.radiance * float(photon.samples) + old * float(s)) / float(photon.samples + s);
-        photon.samples += s;
+        // if(abs(mappedPosition.x - uvA.x) > 0.1) {
+        if(texture(uOld, mappedPosition).rgb == vec3(1)) {
+            old = texture(uOld, uvA).rgb;
+        }
+        if (uvA.x >= 0.0 && uvA.x <= 1.0 && uvA.y >= 0.0 && uvA.y <= 1.0) {
+            uint s = 4u;
+            photon.radiance = (photon.radiance * float(photon.samples) + old * float(s)) / float(photon.samples + s);
+            photon.samples += s;
+        }
         // photon.radiance = old;
     }
 
     oPosition = vec4(photon.position, avg);
     oDirection = vec4(photon.direction, float(photon.bounces));
     oRadiance = vec4(photon.radiance, float(photon.samples));
+    // oRadiance = vec4(photon.radiance, float(photon.samples));
     // oMIP = vec4(mip, mip, mip, 1);
     oMIP = vec4(photon.M2, mip);
 
@@ -378,6 +382,7 @@ uniform mat4 uMvpInverseMatrix;
 uniform vec2 uInverseResolution;
 uniform float uRandSeed;
 uniform float uBlur;
+uniform uint reproject;
 
 in vec2 vPosition;
 

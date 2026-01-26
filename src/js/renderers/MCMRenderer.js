@@ -2,6 +2,7 @@ import { mat4 } from '../../lib/gl-matrix-module.js';
 
 import { WebGL } from '../WebGL.js';
 import { AbstractRenderer } from './AbstractRenderer.js';
+import { MIPRenderer } from './MIPRenderer.js';
 
 import { PerspectiveCamera } from '../PerspectiveCamera.js';
 
@@ -84,13 +85,6 @@ destroy() {
     });
 
     super.destroy();
-}
-
-log(matrix) {
-    console.log(parseFloat(matrix[0].toFixed(3)), parseFloat(matrix[4].toFixed(3)), parseFloat(matrix[8].toFixed(3)), parseFloat(matrix[12].toFixed(3)));
-    console.log(parseFloat(matrix[1].toFixed(3)), parseFloat(matrix[5].toFixed(3)), parseFloat(matrix[9].toFixed(3)), parseFloat(matrix[13].toFixed(3)));
-    console.log(parseFloat(matrix[2].toFixed(3)), parseFloat(matrix[6].toFixed(3)), parseFloat(matrix[10].toFixed(3)), parseFloat(matrix[14].toFixed(3)));
-    console.log(parseFloat(matrix[3].toFixed(3)), parseFloat(matrix[7].toFixed(3)), parseFloat(matrix[11].toFixed(3)), parseFloat(matrix[15].toFixed(3)));
 }
 
 _resetFrame() {

@@ -136,7 +136,7 @@ _handleRendererChange() {
     }
 
     const which = this.mainDialog.getSelectedRenderer();
-    this.renderingContext.chooseRenderer(which);
+    this.renderingContext.chooseRenderer(which, false);
     const renderer = this.renderingContext.renderer;
     const object = DialogConstructor.construct(renderer.properties);
     const binds = DOMUtils.bind(object);
@@ -187,18 +187,18 @@ async _handleVolumeLoad(e) {
             const loader = new loaderClass(options.file);
             let dim = options.file.name.split("_")[1].split("x");
             console.log(dim);
-            // const reader = new readerClass(loader, {
-            //     width  : dim[0],
-            //     height : dim[1],
-            //     depth  : dim[2],
-            //     bits   : options.precision,
-            // });
             const reader = new readerClass(loader, {
-                width  : options.dimensions[0],
-                height : options.dimensions[1],
-                depth  : options.dimensions[2],
+                width  : dim[0],
+                height : dim[1],
+                depth  : dim[2],
                 bits   : options.precision,
             });
+            // const reader = new readerClass(loader, {
+            //     width  : options.dimensions[0],
+            //     height : options.dimensions[1],
+            //     depth  : options.dimensions[2],
+            //     bits   : options.precision,
+            // });
             this.renderingContext.stopRendering();
             await this.renderingContext.setVolume(reader);
             this.renderingContext.startRendering();

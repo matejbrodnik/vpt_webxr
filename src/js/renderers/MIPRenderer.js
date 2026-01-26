@@ -115,6 +115,7 @@ _integrateFrame() {
     gl.uniform1i(uniforms.uFrame, 1);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    console.log("MIP")
 }
 
 _renderFrame() {

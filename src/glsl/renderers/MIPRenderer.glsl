@@ -172,6 +172,7 @@ void main() {
     // }
 
     oColor = vec4(acc, acc, acc, 1);
+    // oColor = vec4(0, 1, 1, 1);
 }
 
 // #part /glsl/shaders/renderers/MIP/reset/vertex

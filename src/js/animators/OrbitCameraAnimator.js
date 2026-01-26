@@ -136,7 +136,7 @@ _updateCamera() {
     // this.volumeTransform.localTranslation = translation;
     // transform.localTranslation = vec3.add(vec3.create(), this._focus, translation);
     transform.localTranslation = vec3.add(vec3.create(), this._focus, [0, 0, this._focusDistance]);
-    console.log("translation",translation);
+    // console.log("translation",translation);
 }
 
 _rotateAroundFocus(dx, dy) {
@@ -158,7 +158,7 @@ _move(v) {
     quat.rotateX(rotation, rotation, this._pitch);
     vec3.transformQuat(v, v, rotation);
     vec3.add(this._focus, this._focus, v);
-    console.log("focus", this._focus);
+    // console.log("focus", this._focus);
     this._updateCamera();
 }
 

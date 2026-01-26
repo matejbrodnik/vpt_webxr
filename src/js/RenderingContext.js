@@ -47,7 +47,7 @@ constructor(options = {}) {
     // this.volumeTransform.localTranslation = [0, 0, -2];
 
     this.isImmersive = false;
-    this.useTimer = false;
+    this.useTimer = true; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     this.right = false;
     this.changedView = false;
 
@@ -61,6 +61,7 @@ constructor(options = {}) {
     this.camera.transform.addEventListener('change', e => {
         // console.log("CAMERA CHANGE")
         if (this.renderer && !this.disable) {
+            console.log("RESET1")
             this.renderer.reset(); //move outside to prevent stuttering on reset
 
         }
@@ -75,7 +76,7 @@ constructor(options = {}) {
     this.cameraAnimator._rotateAroundFocus(1.25, 0);
     // this.cameraAnimator._rotateAroundFocus(2.6, 0);
     // this.cameraAnimator._zoom(-0.7, 0);
-    this.cameraAnimator._zoom(-0.2, 0);
+    this.cameraAnimator._zoom(-0.3, 0);
 
 
     this.once = false;
@@ -91,6 +92,11 @@ constructor(options = {}) {
 
     this._update = this._update.bind(this);
     this.VRiterations = 0;
+
+    this.loop = 3;
+    this.reproList = [];
+    this.benchList = [];
+    this.iter = 0;
 }
 
 // ============================ WEBGL SUBSYSTEM ============================ //
@@ -207,7 +213,7 @@ setAuto(auto) {
     this.autoMeasure = auto;
 }
 
-chooseRenderer(renderer) {
+chooseRenderer(renderer, reset=true) {
     if (this.renderer) {
         this.renderer.destroy();
     }
@@ -221,7 +227,11 @@ chooseRenderer(renderer) {
     // if(this.renderer instanceof FOVRenderer){
     //     this.disable = true;
     // }
-    this.renderer.reset();
+    if(reset) {
+        this.renderer.reset();
+        this.renderer.iter = 10;
+    }
+
     if (this.toneMapper) {
         this.toneMapper.setTexture(this.renderer.getTexture());
     }
@@ -245,6 +255,10 @@ chooseRenderer(renderer) {
     // if(this.renderer instanceof FOVRenderer){
     //     this.disable = false;
     // }
+    if(this.renderer instanceof FOVRenderer2){ 
+        this.iter = 0;
+        this.bench = true;
+    }
 }
 
 chooseRenderer2(renderer) {
@@ -332,7 +346,7 @@ _update(t, frame) {
         console.log("render state:", session.renderState);
         let glLayer = session.renderState.baseLayer;
         console.log("gl layer:", glLayer);
-        this.resolution = {width: glLayer.framebufferWidth / 3, height: glLayer.framebufferHeight / 4}
+        this.resolution = {width: glLayer.framebufferWidth / 4, height: glLayer.framebufferHeight / 4}
         this.VRAnimator = new VRCameraAnimator(this.volumeTransform);
         this.chooseRenderer("fov2");
         this.chooseRenderer2("fov2");
@@ -437,50 +451,172 @@ render() {
     if(this.brick) {
         Ticker.reset();
     }
+
+    // if(this.loop == 0) {
+    //     this.cameraAnimator._rotateAroundFocus(0.04, 0);
+    //     this.loop = 1;
+    // }
+    // this.loop--;
+
+    if(!this.useTimer) {
+        return;
+    }
+    gl.endQuery(ext.TIME_ELAPSED_EXT);
+    this.queries.push(this.query);
+    this.query = null;
+
+    // this.pendingQueries.push(query);
+    // const readyQueries = [];
+    // for (let q of this.pendingQueries) {
+    //     console.log(this.query);
+    if (this.queries.length > 0) {
+        const q = this.queries[0];
+        const available = gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE);
+        const disjoint = gl.getParameter(ext.GPU_DISJOINT_EXT);
+
+        if (available) {
+            if (!disjoint) {
+                const elapsedTime = gl.getQueryParameter(q, gl.QUERY_RESULT);
+                this.timer += elapsedTime;
+                // console.log("TIME: ", (elapsedTime / 1000000.0).toFixed(2));
+                if((this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3) && this.countMCM > 500 && this.countMCM < 1001) {
+                // if(this.renderer instanceof MCMRenderer && this.countMCM < 501) {
+                    if(this.first)
+                        this.timerMCM2 += elapsedTime;
+                    else
+                        this.timerMCM += elapsedTime;
+                }
+                if((this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2) && this.countFOV < 501)
+                    this.timerFOV += elapsedTime;
+                this.count++;
+            }
+            else
+                console.log("DISJOINT");
+
+            gl.deleteQuery(q);
+            // q = null;
+            this.queries.shift();
+        }
+        else
+            console.log("NOT READY");
+    }
+    // }
+
+    if(this.renderer instanceof FOVRenderer2) {
+        let angle = 0.1;
+        let frames = 10;
+        // console.log(this.iter);
+        if(this.iter >= 0 && this.iter <= 100) { // reprojekcija OFF
+            if(this.bench) {
+                let pixelsBench = new Uint8Array(this.resolution.width * this.resolution.height * 4);
+                gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsBench);
+                this.benchList.push(pixelsBench);
+
+                if(this.iter == 100) {
+                    this.bench = false;
+                    this.renderer.allow = false;
+                    this.cameraAnimator._move([0, 0, angle]);
+                    // this.cameraAnimator._rotateAroundFocus(angle, 0);
+                    this.iter = -1 - frames;
+                    console.log("STEP 1");
+                }
+            }
+            else if(this.renderer.allow) { // reprojekcija ON
+                let pixelsRepro = new Uint8Array(this.resolution.width * this.resolution.height * 4);
+                gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsRepro);
+                this.reproList.push(pixelsRepro);
+                
+                if(this.iter == 100) {
+                    this.renderer.allow = false;
+                    this.iter = -1;
+                    this.renderer.reset();
+                    console.log("STEP 4");
+                }
+            }
+            
+        }
+        else if(this.iter == -1) {
+            // this.brick = true;
+            // return;
+            this.renderer.allow = true;
+            this.cameraAnimator._move([0, 0, -angle]);
+            // this.cameraAnimator._rotateAroundFocus(-angle, 0);
+            console.log("STEP 2,3");
+        }
+
+        if(this.iter == 1000){
+            console.log("STEP 5,6");
+            this.pixels = new Uint8Array(this.resolution.width * this.resolution.height * 4);
+            gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, this.pixels);
+            let ratio = 1.00;
+            let resultsRepro = "";
+            let resultsBench = "";
+            let bpRepro = "";
+            let bpBench = "";
+            let diff = "";
+            let div = "";
+            let mseR_all = [];
+            let mseB_all = [];
+            let iterDiff = "";
+            for(let k = 0; k < this.reproList.length; k++) {
+                // if(k % 5 != 0)
+                //     continue;
+                let k2 = Math.round(k * ratio);
+                if(k2 >= this.benchList.length)
+                    break;
+                let mseR = 0;
+                let mseB = 0;
+                for(let i = 0; i < this.canvas.height; i++) {
+                    for(let j = 0; j < this.canvas.width; j++) {
+                        let index = (i * this.canvas.height + j) * 4;
+                        let R = this.pixels[index];
+                        let G = this.pixels[index+1];
+                        let B = this.pixels[index+2];
     
-    this.cameraAnimator._rotateAroundFocus(0.02, 0);
+                        let r = this.reproList[k][index];
+                        let g = this.reproList[k][index+1];
+                        let b = this.reproList[k][index+2];
+    
+                        let rr = this.benchList[k2][index];
+                        let gg = this.benchList[k2][index+1];
+                        let bb = this.benchList[k2][index+2];
+    
+                        mseR += ((R - r) ** 2 + (G - g) ** 2 + (B - b) ** 2) / 3.0;
+                        mseB += ((R - rr) ** 2 + (G - gg) ** 2 + (B - bb) ** 2) / 3.0;
 
-    // if(!this.useTimer) {
-    //     return;
-    // }
-    // gl.endQuery(ext.TIME_ELAPSED_EXT);
-    // this.queries.push(this.query);
-    // this.query = null;
+                    }
+                }
+                mseR /= (this.resolution.width * this.resolution.height);
+                mseB /= (this.resolution.width * this.resolution.height);
+                
+                mseB_all.push(mseB);
+                mseR_all.push(mseR);
+                let d = 0;
+                let c = 0;
+                while(d >= 0 && mseR_all.length > k-c) {
+                    d = mseB - mseR_all[k-c];
+                    c++;
+                }
+                if(mseR_all.length > c-1) {
+                    d = mseB - mseR_all[k-c+1];
+                    console.log(d.toFixed(2) + " / (" + mseR_all[k-c+2] + " - " + mseR_all[k-c+1] + ")")
+                    c += 1 - Math.abs(d / (mseR_all[k-c+2] - mseR_all[k-c+1]));
+                }
+                diff += (mseR - mseB).toFixed(2) + "\n";
+                div += (mseR / mseB).toFixed(2) + "\n";
+                iterDiff += (c-2).toFixed(2) + "\n";
+                console.log("Repro " + k + " Bench " + k2); // + " iter ahead " + (c-2).toFixed(4));
+                console.log(mseR);
+                console.log(mseB);
+            }
+            console.log("RATIO (used):", ratio.toFixed(2));
+            // console.log("DIFFERENCE:\n" + diff);
+            console.log("R/B RATIO:\n" + div);
+            console.log("ITERATIONS AHEAD:\n" + iterDiff);
+        }
 
-    // // this.pendingQueries.push(query);
-    // // const readyQueries = [];
-    // // for (let q of this.pendingQueries) {
-    // // console.log(this.query);
-    // if (this.queries.length > 0) {
-    //     const q = this.queries[0];
-    //     const available = gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE);
-    //     const disjoint = gl.getParameter(this.ext.GPU_DISJOINT_EXT);
-
-    //     if (available) {
-    //         if (!disjoint) {
-    //             const elapsedTime = gl.getQueryParameter(q, gl.QUERY_RESULT);
-    //             this.timer += elapsedTime;
-    //             if((this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3) && this.countMCM > 500 && this.countMCM < 1001) {
-    //             // if(this.renderer instanceof MCMRenderer && this.countMCM < 501) {
-    //                 if(this.first)
-    //                     this.timerMCM2 += elapsedTime;
-    //                 else
-    //                     this.timerMCM += elapsedTime;
-    //             }
-    //             if((this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2) && this.countFOV < 501)
-    //                 this.timerFOV += elapsedTime;
-    //             this.count++;
-    //         }
-    //         else
-    //             console.log("DISJOINT");
-
-    //         gl.deleteQuery(q);
-    //         // q = null;
-    //         this.queries.shift();
-    //     }
-    //     else
-    //         console.log("NOT READY");
-    // }
+        this.iter++;
+    }
 
     // if((this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3)) {
     //     if(this.countMCM == 5000) {

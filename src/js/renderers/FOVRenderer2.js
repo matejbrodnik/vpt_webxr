@@ -75,7 +75,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     this.forwardMatrix = null;
     this.forwardMatrixOld = null;
     this.reproject = -1;
-    this.iter = 0;
+    this.allow = true;
 }
 
 destroy() {
@@ -90,6 +90,14 @@ destroy() {
 _resetFrame() {
     const gl = this._gl;
 
+    if(this.reproject == -1)
+        this.reproject = 0;
+    else if(this.iter >= 2 && this.allow) // && this._VRAnimator && this._VRAnimator.reproject)
+        this.reproject = 1;
+    console.log("reset");
+    if(this._VRAnimator)
+        console.log(this._VRAnimator.reproject);
+
     if(this.mip == null) {
         this.mip = new MIPRenderer(gl, this._volume, this._camera, this._environmentTexture, {
             resolution: this._resolution,
@@ -98,9 +106,9 @@ _resetFrame() {
         });
         this.mip.setContext(this._context);
     }
-
+    
     this.mip.reset();
-
+    
     this.mip.render();
 
     this._MIPmap = { ...this.mip._renderBuffer.getAttachments() };
@@ -131,6 +139,7 @@ _resetFrame() {
     gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution.width, 1 / this._resolution.height);
     gl.uniform1f(uniforms.uRandSeed, Math.random());
     gl.uniform1f(uniforms.uBlur, 0);
+    gl.uniform1ui(uniforms.reproject, this.reproject);
     
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this._MIPmap.color[0]);
@@ -143,6 +152,7 @@ _resetFrame() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
     //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.generateMipmap(gl.TEXTURE_2D);
+
 
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
     const modelMatrix = this._VRAnimator ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
@@ -175,14 +185,18 @@ _resetFrame() {
     this.cycles = 0;
     this.thr = 100;
 
-    if(this.reproject == -1)
-        this.reproject = 0;
-    else if(this.iter > 1 && this._VRAnimator && this._VRAnimator.reproject)
-        this.reproject = 1;
+    // if(this.reproject) {
+    //     this._frameBuffer.use();
+    //     const { program, uniforms } = this._programs.generate;
+    //     gl.useProgram(program);
+    //     console.log(uniforms)
 
-    this.iter = 0;
-    if(this._VRAnimator)
-        console.log(this._VRAnimator.reproject);
+    //     gl.activeTexture(gl.TEXTURE0);
+    //     gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[3]);
+    //     gl.uniform1i(uniforms.uRadiance, 0);
+
+    //     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    // }
 }
 
 _generateFrame() {
@@ -250,6 +264,11 @@ _integrateFrame() {
     gl.uniform1ui(uniforms.uMaxBounces, this.bounces);
     gl.uniform1ui(uniforms.uSteps, this.steps);
     gl.uniform1ui(uniforms.reproject, this.reproject);
+    if(this.reproject) {
+        // this.log(this.forwardMatrixOld);
+        // console.log("---------------");
+    }
+    console.log(this.reproject);
     this.reproject = 0;
 
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
@@ -266,6 +285,7 @@ _integrateFrame() {
     if(this.forwardMatrixOld) {
         // this.log(this.forwardMatrixOld)
         gl.uniformMatrix4fv(uniforms.uMvpA, false, this.forwardMatrixOld);
+        
         // this._context.brick = true;
     }
     else
@@ -287,7 +307,6 @@ _integrateFrame() {
     ]);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
-    this.iter++;
 }
 
 _renderFrame() {
@@ -306,7 +325,6 @@ _renderFrame() {
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     this.cycles++;
-    
 }
 
 _getFrameBufferSpec() {

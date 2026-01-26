@@ -6,6 +6,7 @@ import { SingleBuffer } from '../SingleBuffer.js';
 import { DoubleBuffer } from '../DoubleBuffer.js';
 
 import { Transform } from '../Transform.js';
+import { MIPRenderer } from './MIPRenderer.js';
 
 const [ SHADERS, MIXINS ] = await Promise.all([
     'shaders.json',
@@ -50,6 +51,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     this.ready = true;
     this.ext = gl.getExtension('EXT_disjoint_timer_query_webgl2');
     this.VROn = false;
+    this.iter = 10;
 }
 
 destroy(destroyRender = true) {
@@ -73,13 +75,22 @@ render() {
     this._renderBuffer.use();
     this._renderFrame();
 
-    this.ready = !this.ready;
+    this.ready = true;
+    this.iter++;
 }
 
 reset() {
+    if(this instanceof MIPRenderer) {
+        console.log("MIP",this.iter)
+    }
+    console.log("reset", this.iter, this.ready);
+    if(!(this instanceof MIPRenderer) && (this.iter < 1))
+        return;
     this._accumulationBuffer.use();
     this._resetFrame();
     this._accumulationBuffer.swap();
+    // this.ready = false;
+    this.iter = 0;
 }
 
 _rebuildBuffers() {
@@ -97,6 +108,7 @@ _rebuildBuffers() {
     this._frameBuffer = new SingleBuffer(gl, this._getFrameBufferSpec());
     this._accumulationBuffer = new DoubleBuffer(gl, this._getAccumulationBufferSpec());
     this._renderBuffer = new SingleBuffer(gl, this._getRenderBufferSpec());
+    this.iter = 10;
 }
 
 _rebuildRender() {
@@ -109,6 +121,7 @@ _rebuildRender() {
     if(this._context.toneMapper) {
         this._context.toneMapper.setTexture(this.getTexture());
     }
+    console.log(this.iter)
 }
 
 setVolume(volume) {
@@ -133,6 +146,13 @@ setResolution(resolution) {
 
 setContext(context) {
     this._context = context;
+}
+
+log(matrix) {
+    console.log(parseFloat(matrix[0].toFixed(3)), parseFloat(matrix[4].toFixed(3)), parseFloat(matrix[8].toFixed(3)), parseFloat(matrix[12].toFixed(3)));
+    console.log(parseFloat(matrix[1].toFixed(3)), parseFloat(matrix[5].toFixed(3)), parseFloat(matrix[9].toFixed(3)), parseFloat(matrix[13].toFixed(3)));
+    console.log(parseFloat(matrix[2].toFixed(3)), parseFloat(matrix[6].toFixed(3)), parseFloat(matrix[10].toFixed(3)), parseFloat(matrix[14].toFixed(3)));
+    console.log(parseFloat(matrix[3].toFixed(3)), parseFloat(matrix[7].toFixed(3)), parseFloat(matrix[11].toFixed(3)), parseFloat(matrix[15].toFixed(3)));
 }
 
 getTexture() {

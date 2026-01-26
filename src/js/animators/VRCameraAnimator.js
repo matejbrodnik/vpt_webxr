@@ -21,7 +21,7 @@ constructor(volumeTransform) {
     this.thr = 0.6;
     this.thrAuto = 0.01;
     this.step = 0.03;
-    this.focusDistance = 2;
+    this.focusDistance = 1;
 
     this.translation = [0, 0, 0];
     this.angles = null;
