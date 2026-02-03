@@ -47,7 +47,7 @@ constructor(options = {}) {
     // this.volumeTransform.localTranslation = [0, 0, -2];
 
     this.isImmersive = false;
-    this.useTimer = true; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    this.useTimer = false; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     this.right = false;
     this.changedView = false;
 
@@ -61,7 +61,7 @@ constructor(options = {}) {
     this.camera.transform.addEventListener('change', e => {
         // console.log("CAMERA CHANGE")
         if (this.renderer && !this.disable) {
-            console.log("RESET1")
+            // console.log("RESET1")
             this.renderer.reset(); //move outside to prevent stuttering on reset
 
         }
@@ -76,7 +76,7 @@ constructor(options = {}) {
     this.cameraAnimator._rotateAroundFocus(1.25, 0);
     // this.cameraAnimator._rotateAroundFocus(2.6, 0);
     // this.cameraAnimator._zoom(-0.7, 0);
-    this.cameraAnimator._zoom(-0.3, 0);
+    this.cameraAnimator._zoom(-0.4, 0);
 
 
     this.once = false;
@@ -97,6 +97,7 @@ constructor(options = {}) {
     this.reproList = [];
     this.benchList = [];
     this.iter = 0;
+    this.initial = 100;
 }
 
 // ============================ WEBGL SUBSYSTEM ============================ //
@@ -338,7 +339,6 @@ _update(t, frame) {
     //     Ticker.remove(this._update);
     //     return;
     // }
-    
     let session = this.session;
     let gl = this.gl;
     if(this.VRFirst) {
@@ -357,8 +357,15 @@ _update(t, frame) {
         // this.ext = this.gl.getExtension('EXT_disjoint_timer_query_webgl2');
     }
     let dt = t - this.old_t;
-    if(this.VRiterations % 20 == 0)
-        console.log("t", dt.toFixed(1), this.VRiterations);
+
+    if(this.VRiterations < 15)
+        this.VRAnimator.steps = 2;
+    if(this.VRiterations == 15)
+        this.VRAnimator.steps = 30;
+
+    if(this.VRiterations % 5 == 0)
+        console.log("t", dt.toFixed(1), this.VRAnimator.steps);
+        // console.log("t", dt.toFixed(1), this.VRiterations);
     this.old_t = t;
     if(frame.session.inputSources.length > 0) {
         let gp = frame.session.inputSources[0].gamepad;
@@ -387,7 +394,7 @@ _update(t, frame) {
                         this.renderer.reset();
                         // console.log("RESET 1");
                     }
-                    //continue; // če želimo pri resetu preskočiti render
+                    // continue; // če želimo pri resetu preskočiti render
                 }
 
             this.render();
@@ -497,17 +504,30 @@ render() {
             // q = null;
             this.queries.shift();
         }
-        else
-            console.log("NOT READY");
+        // else
+        //     console.log("NOT READY");
     }
     // }
 
     if(this.renderer instanceof FOVRenderer2) {
+        if(this.initial > 0) {
+            this.initial--;
+            return;
+        }
+        if(this.initial == 0) {
+            this.renderer.allow = false;
+            this.renderer.reset();
+            this.initial--;
+            return;
+        }
         let angle = 0.1;
         let frames = 10;
         // console.log(this.iter);
         if(this.iter >= 0 && this.iter <= 100) { // reprojekcija OFF
             if(this.bench) {
+                if(this.iter == 0) {
+                    console.log("START1")
+                }
                 let pixelsBench = new Uint8Array(this.resolution.width * this.resolution.height * 4);
                 gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsBench);
                 this.benchList.push(pixelsBench);
@@ -522,6 +542,9 @@ render() {
                 }
             }
             else if(this.renderer.allow) { // reprojekcija ON
+                if(this.iter == 0) {
+                    console.log("START2")
+                }
                 let pixelsRepro = new Uint8Array(this.resolution.width * this.resolution.height * 4);
                 gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsRepro);
                 this.reproList.push(pixelsRepro);
@@ -599,12 +622,13 @@ render() {
                 }
                 if(mseR_all.length > c-1) {
                     d = mseB - mseR_all[k-c+1];
-                    console.log(d.toFixed(2) + " / (" + mseR_all[k-c+2] + " - " + mseR_all[k-c+1] + ")")
+                    // console.log(d.toFixed(2) + " / (" + mseR_all[k-c+2] + " - " + mseR_all[k-c+1] + ")")
                     c += 1 - Math.abs(d / (mseR_all[k-c+2] - mseR_all[k-c+1]));
                 }
                 diff += (mseR - mseB).toFixed(2) + "\n";
                 div += (mseR / mseB).toFixed(2) + "\n";
-                iterDiff += (c-2).toFixed(2) + "\n";
+                if(k < 40)
+                    iterDiff += (c-2).toFixed(2) + "\n";
                 console.log("Repro " + k + " Bench " + k2); // + " iter ahead " + (c-2).toFixed(4));
                 console.log(mseR);
                 console.log(mseB);

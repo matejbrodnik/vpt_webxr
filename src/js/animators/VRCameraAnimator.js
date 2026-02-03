@@ -29,6 +29,8 @@ constructor(volumeTransform) {
 
     this.reproject = true;
     this.reproCount = 0;
+
+    this.steps = 20;
 }
 
 update(gp, dt) {
@@ -37,23 +39,29 @@ update(gp, dt) {
     let thr = this.thr;
 
     if(btns[0].pressed) { // up hold
-        this.pitch -= 0.02;
+        this.reproject = true;
     }
+    else {
+        this.reproject = false;
+    }
+
     if(btns[1].pressed) { // down hold
-        this.yaw -= 0.02;
+    
     }
     if(btns[4].pressed) { // A
-        // this.yaw += 0.02;
-        if(this.reproCount == 0)
-            this.reproject = !this.reproject;
-        console.log("BUTTON A", this.reproject);
-        this.reproCount++;
+        // if(this.reproCount == 0)
+        //     this.reproject = !this.reproject;
+        // console.log("BUTTON A", this.reproject);
+        // this.reproCount++;
     }
     else
         this.reproCount = 0;
     if(btns[5].pressed) { // B
-        this.pitch += 0.02;
-    }
+        this.steps++;
+        if(this.steps > 80) {
+            this.steps = 30;
+        }
+    }   
 
     // console.log(axes[2])
     // console.log(axes[3])
@@ -74,6 +82,8 @@ update(gp, dt) {
         this.dx += this.step;
         this.change++;
     }
+
+    
     // console.log(axes);
     // console.log(dt);
     // console.log(this.dx, this.dz);
@@ -89,12 +99,12 @@ apply(viewMatrix = null, force = false) {
         t = [t[0] * 1.2, t[1] * 0, t[2] * 1.2];
         // vec3.add(t, t, this.focus);
         let angles = this.quatToEuler(r);
-        // console.log(angles);
         // console.log(this.angles);
-        if(force || this.change > 2 || (this.angles && (Math.abs(this.angles.yaw - angles.yaw) > this.thrAuto || Math.abs(this.angles.pitch - angles.pitch) > this.thrAuto))) {
+        if(force || this.change > 1 || (this.angles && (Math.abs(this.angles.yaw - angles.yaw) > this.thrAuto || Math.abs(this.angles.pitch - angles.pitch) > this.thrAuto))) {  // || Math.abs(this.angles.roll - angles.roll) > this.thrAuto
             const rotation = quat.create();
             quat.rotateY(rotation, rotation, angles.yaw);
             quat.rotateX(rotation, rotation, angles.pitch);
+            quat.rotateZ(rotation, rotation, angles.roll);
             
             const translation = vec3.create();
             // vec3.transformQuat(translation, [0, 0, this.focusDistance], rotation);
@@ -118,20 +128,20 @@ apply(viewMatrix = null, force = false) {
             this.t = t;
         }
     }
-    else {
-        const translation = [this.dx, 0, this.dz];
-        const rotation = quat.create();
-        quat.rotateY(rotation, rotation, this.yaw);
-        quat.rotateX(rotation, rotation, this.pitch);
-        vec3.transformQuat(translation, translation, rotation);
-        vec3.add(this.focus, this.focus, translation);
+    // else {
+    //     const translation = [this.dx, 0, this.dz];
+    //     const rotation = quat.create();
+    //     quat.rotateY(rotation, rotation, this.yaw);
+    //     quat.rotateX(rotation, rotation, this.pitch);
+    //     vec3.transformQuat(translation, translation, rotation);
+    //     vec3.add(this.focus, this.focus, translation);
     
-        this.transform.localTranslation = this.focus;
-        this.transform.localRotation = rotation;
-        // console.log(translation);
-        this.dx = 0;
-        this.dz = 0;
-    }
+    //     this.transform.localTranslation = this.focus;
+    //     this.transform.localRotation = rotation;
+    //     // console.log(translation);
+    //     this.dx = 0;
+    //     this.dz = 0;
+    // }
     return false;
 }
 
@@ -149,10 +159,10 @@ quatToEuler(q) {
     const yaw = yawsingularity ? Math.sign(siny) * (Math.PI / 2) : Math.asin(siny);
 
   // roll (Z-axis)
-//   const sinr = 2 * (w*z + x*y);
-//   const cosr = 1 - 2 * (y*y + z*z);
-//   const roll = Math.atan2(sinr, cosr);
-    const roll = 0;
+    const sinr = 2 * (w*z + x*y);
+    const cosr = 1 - 2 * (y*y + z*z);
+    const roll = Math.atan2(sinr, cosr);
+    // const roll = 0;
 
   return { yaw, pitch, roll };
 }

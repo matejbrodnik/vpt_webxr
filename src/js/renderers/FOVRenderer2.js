@@ -43,7 +43,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'steps',
             label: 'Steps',
             type: 'spinner',
-            value: 30,
+            value: 60,
             min: 0,
         },
         {
@@ -76,6 +76,8 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     this.forwardMatrixOld = null;
     this.reproject = -1;
     this.allow = true;
+    this.lod = Math.floor(Math.log2(Math.max(this._resolution.width, this._resolution.height)));
+    console.log("LOD:", this.lod);
 }
 
 destroy() {
@@ -92,11 +94,16 @@ _resetFrame() {
 
     if(this.reproject == -1)
         this.reproject = 0;
-    else if(this.iter >= 2 && this.allow) // && this._VRAnimator && this._VRAnimator.reproject)
+    else if(this.iter >= 2 && this.allow && this._VRAnimator && this._VRAnimator.reproject) {
         this.reproject = 1;
-    console.log("reset");
-    if(this._VRAnimator)
-        console.log(this._VRAnimator.reproject);
+        // console.log("REPROJECT SET TO 1");
+    }
+    // else if (this.iter >= 2 && this.allow) {
+    //     this.reproject = 1;
+    //     console.log("REPROJECT SET TO 1");
+    // }
+
+    // console.log("reset");
 
     if(this.mip == null) {
         this.mip = new MIPRenderer(gl, this._volume, this._camera, this._environmentTexture, {
@@ -149,6 +156,10 @@ _resetFrame() {
     gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[3]);
     gl.uniform1i(uniforms.uRadiance, 1);
 
+    // gl.activeTexture(gl.TEXTURE2);
+    // gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[0]);
+    // gl.uniform1i(uniforms.uPosition, 2);
+
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
     //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.generateMipmap(gl.TEXTURE_2D);
@@ -179,6 +190,7 @@ _resetFrame() {
         gl.COLOR_ATTACHMENT3,
         gl.COLOR_ATTACHMENT4,
         gl.COLOR_ATTACHMENT5,
+        // gl.COLOR_ATTACHMENT6,
     ]);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -244,16 +256,17 @@ _integrateFrame() {
     gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[4]);
     gl.uniform1i(uniforms.uMIP, 7);
 
-    gl.activeTexture(gl.TEXTURE8);
-    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[5]);
-    gl.uniform1i(uniforms.uOld, 8);
-
     if(this.cycles <= 1) {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
         gl.generateMipmap(gl.TEXTURE_2D);
     }
 
+    gl.activeTexture(gl.TEXTURE8);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[5]);
+    gl.uniform1i(uniforms.uOld, 8);
+
     gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution.width, 1 / this._resolution.height);
+    gl.uniform1i(uniforms.uLod, this.lod);
     gl.uniform1f(uniforms.uRandSeed, Math.random());
     gl.uniform1f(uniforms.uBlur, 0);
     gl.uniform1ui(uniforms.uCycles, this.cycles);
@@ -262,13 +275,14 @@ _integrateFrame() {
     gl.uniform1f(uniforms.uExtinction, this.extinction);
     gl.uniform1f(uniforms.uAnisotropy, this.anisotropy);
     gl.uniform1ui(uniforms.uMaxBounces, this.bounces);
-    gl.uniform1ui(uniforms.uSteps, this.steps);
+    gl.uniform1ui(uniforms.uSteps, this._VRAnimator ? this._VRAnimator.steps : this.steps);
     gl.uniform1ui(uniforms.reproject, this.reproject);
     if(this.reproject) {
+        // this._context.brick = true;
         // this.log(this.forwardMatrixOld);
         // console.log("---------------");
     }
-    console.log(this.reproject);
+    // console.log(this.reproject);
     this.reproject = 0;
 
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
@@ -432,6 +446,16 @@ _getAccumulationBufferSpec() {
         type    : gl.FLOAT,
     };
 
+    // const oldStepsBufferSpec = {
+    //     width   : this._resolution.width,
+    //     height  : this._resolution.height,
+    //     min     : gl.NEAREST,
+    //     mag     : gl.NEAREST,
+    //     format  : gl.RGBA,
+    //     iformat : gl.RGBA32F,
+    //     type    : gl.FLOAT,
+    // };
+
     return [
         positionBufferSpec,
         directionBufferSpec,
@@ -439,6 +463,7 @@ _getAccumulationBufferSpec() {
         radianceBufferSpec,
         mipBufferSpec,
         oldRadianceBufferSpec,
+        // oldStepsBufferSpec,
     ];
 }
 

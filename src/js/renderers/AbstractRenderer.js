@@ -80,11 +80,11 @@ render() {
 }
 
 reset() {
-    if(this instanceof MIPRenderer) {
-        console.log("MIP",this.iter)
-    }
-    console.log("reset", this.iter, this.ready);
-    if(!(this instanceof MIPRenderer) && (this.iter < 1))
+    // if(this instanceof MIPRenderer) {
+    //     console.log("MIP",this.iter)
+    // }
+    // console.log("reset", this.iter, this.ready);
+    if(!(this instanceof MIPRenderer) && (this.iter <= 1))
         return;
     this._accumulationBuffer.use();
     this._resetFrame();

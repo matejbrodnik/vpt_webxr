@@ -12,5 +12,6 @@ struct Photon {
     vec2 positionA;
     uint bounces;
     uint samples;
+    float samples2;
     float pdf;
 };
