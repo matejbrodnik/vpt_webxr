@@ -43,7 +43,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'steps',
             label: 'Steps',
             type: 'spinner',
-            value: 60,
+            value: 30,
             min: 0,
         },
         {
@@ -94,14 +94,12 @@ _resetFrame() {
 
     if(this.reproject == -1)
         this.reproject = 0;
-    else if(this.iter >= 2 && this.allow && this._VRAnimator && this._VRAnimator.reproject) {
-        this.reproject = 1;
-        // console.log("REPROJECT SET TO 1");
-    }
-    // else if (this.iter >= 2 && this.allow) {
+    // else if(this.iter >= 2 && this.allow && this._VRAnimator && this._VRAnimator.reproject) {
     //     this.reproject = 1;
-    //     console.log("REPROJECT SET TO 1");
     // }
+    else if (this.iter >= 2 && this.allow) {
+        this.reproject = 1;
+    }
 
     // console.log("reset");
 
@@ -180,7 +178,7 @@ _resetFrame() {
     }
     this.forwardMatrix = mat4.clone(matrix);
 
-    mat4.invert(matrix, matrix);;
+    mat4.invert(matrix, matrix);
     gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix);
 
     gl.drawBuffers([
@@ -272,7 +270,7 @@ _integrateFrame() {
     gl.uniform1ui(uniforms.uCycles, this.cycles);
     gl.uniform1ui(uniforms.uThr, this.thr);
 
-    gl.uniform1f(uniforms.uExtinction, this.extinction);
+    gl.uniform1f(uniforms.uExtinction, this._VRAnimator ? this._VRAnimator.extinction : this.extinction);
     gl.uniform1f(uniforms.uAnisotropy, this.anisotropy);
     gl.uniform1ui(uniforms.uMaxBounces, this.bounces);
     gl.uniform1ui(uniforms.uSteps, this._VRAnimator ? this._VRAnimator.steps : this.steps);
@@ -307,7 +305,6 @@ _integrateFrame() {
 
     mat4.invert(matrix, matrix);
     // console.log("MODEL")
-    // console.log(modelMatrix);
     // console.log("VIEW", viewMatrix);
     // console.log("PROJ", projectionMatrix)
     gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix);

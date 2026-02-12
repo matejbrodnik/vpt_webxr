@@ -28,62 +28,120 @@ constructor(volumeTransform) {
     this.change = 0;
 
     this.reproject = true;
-    this.reproCount = 0;
+    this.uiActive = false;
+    this.uiCount = 0;
 
-    this.steps = 20;
+    this.steps = 30;
+    this.extinction = 70;
+
 }
 
-update(gp, dt) {
-    let axes = gp.axes;
-    let btns = gp.buttons;
+update(inputs, dt) {
+    let gpR;
+    let gpL;
+    if(inputs.length > 1)
+        gpR = inputs[1].gamepad;
+    else
+        gpR = inputs[0].gamepad;
+
+    let axesR = gpR.axes;
+    let btnsR = gpR.buttons;
     let thr = this.thr;
 
-    if(btns[0].pressed) { // up hold
+    if(btnsR[0].pressed) { // up hold
         this.reproject = true;
     }
     else {
         this.reproject = false;
     }
 
-    if(btns[1].pressed) { // down hold
-    
-    }
-    if(btns[4].pressed) { // A
-        // if(this.reproCount == 0)
-        //     this.reproject = !this.reproject;
-        // console.log("BUTTON A", this.reproject);
-        // this.reproCount++;
+    if(btnsR[1].pressed) { // down hold
+        if(this.uiCount == 0)
+            this.uiActive = !this.uiActive;
+        console.log("BUTTON A", this.uiActive);
+        this.uiCount++;
     }
     else
-        this.reproCount = 0;
-    if(btns[5].pressed) { // B
+        this.uiCount = 0;
+
+    if(btnsR[4].pressed) { // A
+        this.extinction += 2;
+        if(this.extinction > 200) {
+            this.extinction = 50;
+        }
+    }
+
+    if(btnsR[5].pressed) { // B
         this.steps++;
-        if(this.steps > 80) {
-            this.steps = 30;
+        if(this.steps > 70) {
+            this.steps = 20;
         }
     }   
 
-    // console.log(axes[2])
-    // console.log(axes[3])
-    if(axes[2] > thr) {
+    if(axesR[2] > thr) {
         this.dy -= this.step;
         this.change++;
     }
-    else if(axes[2] < -thr) {
+    else if(axesR[2] < -thr) {
         this.dy += this.step;
         this.change++;
     }
 
-    if(axes[3] > thr) {
+    if(axesR[3] > thr) {
         this.dx -= this.step;
         this.change++;
     }
-    else if(axes[3] < -thr) {
+    else if(axesR[3] < -thr) {
         this.dx += this.step;
         this.change++;
     }
 
     
+    if(inputs.length > 1) {
+        let gpL = inputs[0].gamepad;
+        let axesL = gpL.axes;
+        let btnsL = gpL.buttons;
+
+        if(btnsL[0].pressed) { // up hold
+            this.reproject = true;
+        }
+        else {
+            this.reproject = false;
+        }
+
+        if(btnsL[1].pressed) { // down hold
+        
+        }
+        if(btnsL[4].pressed) { // A
+            // if(this.reproCount == 0)
+            //     this.reproject = !this.reproject;
+            // console.log("BUTTON A", this.reproject);
+            // this.reproCount++;
+        }
+        else
+            this.reproCount = 0;
+        if(btnsL[5].pressed) { // B
+
+        }   
+
+        if(axesL[2] > thr) {
+            this.dy -= this.step;
+            this.change++;
+        }
+        else if(axesL[2] < -thr) {
+            this.dy += this.step;
+            this.change++;
+        }
+
+        if(axesL[3] > thr) {
+            this.dx -= this.step;
+            this.change++;
+        }
+        else if(axesL[3] < -thr) {
+            this.dx += this.step;
+            this.c
+        }
+    }
     // console.log(axes);
     // console.log(dt);
     // console.log(this.dx, this.dz);

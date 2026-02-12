@@ -219,13 +219,13 @@ void main() {
     }
 
     vec2 uvA = vec2(0);
-    vec3 old = texture(uOld, mappedPosition).rgb;
+    // vec3 old = texture(uOld, mappedPosition).rgb;
     // saved = photon.acc;
     if(reproject > 0u && saved != vec3(0)) {
         vec4 clipA = uMvpA * vec4(saved, 1.0);
         vec3 ndcA = clipA.xyz / clipA.w;
         uvA = ndcA.xy * 0.5 + 0.5;
-        old = texture(uOld, uvA).rgb;
+        vec3 old = texture(uOld, uvA).rgb;
         float prevSamples = texture(uOld, uvA).a;
         // float prevSteps = texture(uOldSteps, uvA).a + 0.5;
         // if(abs(mappedPosition.x - uvA.x) > 0.1) {
@@ -233,7 +233,7 @@ void main() {
             old = texture(uOld, uvA).rgb;
         }
         if (prevSamples >= 1.0 && uvA.x >= 0.0 && uvA.x <= 1.0 && uvA.y >= 0.0 && uvA.y <= 1.0) {
-            float s = min(10.0, (log(prevSamples + 1.0) * (mip + 0.1) / (avg * 4.0)) + 1.5);
+            float s = min(10.0, (log(prevSamples + 1.0) * (mip + 0.1) / (avg * 3.0)) + 1.2);
             // float s = 4.0;
             photon.radiance = (photon.radiance * photon.samples2 + old * s) / (photon.samples2 + s);
             photon.samples2 += s;

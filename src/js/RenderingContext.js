@@ -22,6 +22,8 @@ import { MCMRenderer } from './renderers/MCMRenderer.js';
 import { FOVRenderer2 } from './renderers/FOVRenderer2.js';
 import { FOVRenderer3 } from './renderers/FOVRenderer3.js';
 
+import { UIRenderer } from './UIRenderer.js';
+
 const [ SHADERS, MIXINS ] = await Promise.all([
     'shaders.json',
     'mixins.json',
@@ -45,7 +47,7 @@ constructor(options = {}) {
     this.volume = new Volume(this.gl);
     this.volumeTransform = new Transform(new Node());
     // this.volumeTransform.localTranslation = [0, 0, -2];
-
+    
     this.isImmersive = false;
     this.useTimer = false; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     this.right = false;
@@ -73,7 +75,7 @@ constructor(options = {}) {
     //    frequency: 1,
     //});
     this.cameraAnimator = new OrbitCameraAnimator(this.camera, this.canvas, this.volumeTransform);
-    this.cameraAnimator._rotateAroundFocus(1.25, 0);
+    this.cameraAnimator._rotateAroundFocus(0.25, 0);
     // this.cameraAnimator._rotateAroundFocus(2.6, 0);
     // this.cameraAnimator._zoom(-0.7, 0);
     this.cameraAnimator._zoom(-0.4, 0);
@@ -98,6 +100,9 @@ constructor(options = {}) {
     this.benchList = [];
     this.iter = 0;
     this.initial = 100;
+    this.UIinit = false;
+
+    this.VRAnimator = new VRCameraAnimator(this.volumeTransform);
 }
 
 // ============================ WEBGL SUBSYSTEM ============================ //
@@ -332,6 +337,17 @@ chooseToneMapper2(toneMapper) {
     this.toneMapper2.copy = this.copy;
 }
 
+setupUI(toneMapper, renderer) {
+    let ui = new UIRenderer(this.gl, toneMapper.getTexture(), renderer, {
+        resolution: this.resolution,
+        extinction: this.renderer.extinction,
+        steps: this.renderer.steps,
+        VRAnimator: this.VRAnimator,
+    });
+    ui.reset();
+    return ui;
+}
+
 _update(t, frame) {
     // console.log("update", this.gl.getError());
     // if(this.VRiterations > 100) {
@@ -352,6 +368,7 @@ _update(t, frame) {
         this.chooseRenderer2("fov2");
         this.chooseToneMapper("artistic");
         this.chooseToneMapper2("artistic");
+        this.UIinit = false;
         this.renderer.VROn = true;
         this.old_t = t;
         // this.ext = this.gl.getExtension('EXT_disjoint_timer_query_webgl2');
@@ -368,8 +385,8 @@ _update(t, frame) {
         // console.log("t", dt.toFixed(1), this.VRiterations);
     this.old_t = t;
     if(frame.session.inputSources.length > 0) {
-        let gp = frame.session.inputSources[0].gamepad;
-        this.VRAnimator.update(gp, dt);
+        let inputs = frame.session.inputSources;
+        this.VRAnimator.update(inputs, dt);
     }
     // this.right = true;
     let pose = frame.getViewerPose(this.refSpace);
@@ -408,6 +425,7 @@ _update(t, frame) {
 
 render() {
     const gl = this.gl;
+
     if (!gl || !this.renderer || !this.toneMapper) {
         return;
     }
@@ -417,16 +435,25 @@ render() {
         this.query = gl.createQuery();
         gl.beginQuery(ext.TIME_ELAPSED_EXT, this.query);
     }
-
+    
+    if(!this.UIinit) {
+        this.uiRenderer = this.setupUI(this.toneMapper, this.renderer);
+        if(this.toneMapper2)
+            this.uiRenderer2 = this.setupUI(this.toneMapper2, this.renderer2);
+        this.UIinit = true;
+    }
+    
     if(this.right) {
         this.renderer2.render();
         this.toneMapper2.render();
+        this.uiRenderer2.render();
     }
     else {
         this.renderer.render();
         this.toneMapper.render();
+        this.uiRenderer.render();
     }
-    
+
     this.program = this.programs.quad;
     
     const { program, uniforms } = this.program;
@@ -449,11 +476,15 @@ render() {
     }
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.right ? this.toneMapper2.getTexture() : this.toneMapper.getTexture());
+    if(this.VRAnimator && this.VRAnimator.uiActive) // || this.toneMapper2 === undefined)
+        gl.bindTexture(gl.TEXTURE_2D, this.right ? this.uiRenderer2.getTexture() : this.uiRenderer.getTexture());
+    else
+        gl.bindTexture(gl.TEXTURE_2D, this.right ? this.toneMapper2.getTexture() : this.toneMapper.getTexture());
 
     gl.uniform1i(uniforms.uTexture, 0);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+
 
     if(this.brick) {
         Ticker.reset();
@@ -521,7 +552,7 @@ render() {
             return;
         }
         let angle = 0.1;
-        let frames = 10;
+        let frames = 2;
         // console.log(this.iter);
         if(this.iter >= 0 && this.iter <= 100) { // reprojekcija OFF
             if(this.bench) {
@@ -535,8 +566,9 @@ render() {
                 if(this.iter == 100) {
                     this.bench = false;
                     this.renderer.allow = false;
-                    this.cameraAnimator._move([0, 0, angle]);
-                    // this.cameraAnimator._rotateAroundFocus(angle, 0);
+                    // this.cameraAnimator._move([0, 0, angle]);
+                    // this.cameraAnimator._move([angle, 0, 0]);
+                    this.cameraAnimator._rotateAroundFocus(angle, 0);
                     this.iter = -1 - frames;
                     console.log("STEP 1");
                 }
@@ -562,8 +594,10 @@ render() {
             // this.brick = true;
             // return;
             this.renderer.allow = true;
-            this.cameraAnimator._move([0, 0, -angle]);
-            // this.cameraAnimator._rotateAroundFocus(-angle, 0);
+            // this.cameraAnimator._move([0, 0, -angle]);
+            // this.cameraAnimator._move([-angle, 0, 0]);
+            this.cameraAnimator._rotateAroundFocus(-angle, 0);
+
             console.log("STEP 2,3");
         }
 
