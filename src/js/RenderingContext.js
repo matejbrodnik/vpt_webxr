@@ -23,6 +23,7 @@ import { FOVRenderer2 } from './renderers/FOVRenderer2.js';
 import { FOVRenderer3 } from './renderers/FOVRenderer3.js';
 
 import { UIRenderer } from './UIRenderer.js';
+import { EyeReproject } from './EyeReproject.js';
 
 const [ SHADERS, MIXINS ] = await Promise.all([
     'shaders.json',
@@ -64,6 +65,7 @@ constructor(options = {}) {
         // console.log("CAMERA CHANGE")
         if (this.renderer && !this.disable) {
             // console.log("RESET1")
+            this.renderer.random = Math.random();
             this.renderer.reset(); //move outside to prevent stuttering on reset
 
         }
@@ -75,7 +77,7 @@ constructor(options = {}) {
     //    frequency: 1,
     //});
     this.cameraAnimator = new OrbitCameraAnimator(this.camera, this.canvas, this.volumeTransform);
-    this.cameraAnimator._rotateAroundFocus(0.25, 0);
+    this.cameraAnimator._rotateAroundFocus(1.25, 0);
     // this.cameraAnimator._rotateAroundFocus(2.6, 0);
     // this.cameraAnimator._zoom(-0.7, 0);
     this.cameraAnimator._zoom(-0.4, 0);
@@ -100,9 +102,9 @@ constructor(options = {}) {
     this.benchList = [];
     this.iter = 0;
     this.initial = 100;
-    this.UIinit = false;
+    this.UIinit = true;
 
-    this.VRAnimator = new VRCameraAnimator(this.volumeTransform);
+    // this.VRAnimator = new VRCameraAnimator(this.volumeTransform);
 }
 
 // ============================ WEBGL SUBSYSTEM ============================ //
@@ -123,8 +125,9 @@ initGL(inline = true) {
 
     }
     const gl = this.gl;
+    console.log(gl)
     // console.log(gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT).precision);
-    console.log(gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS));
+    // console.log(gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS));
     this.extLoseContext = gl.getExtension('WEBGL_lose_context');
     this.extColorBufferFloat = gl.getExtension('EXT_color_buffer_float');
     this.extTextureFloatLinear = gl.getExtension('OES_texture_float_linear');
@@ -233,6 +236,7 @@ chooseRenderer(renderer, reset=true) {
     // if(this.renderer instanceof FOVRenderer){
     //     this.disable = true;
     // }
+    this.renderer.random = this.random || Math.random();
     if(reset) {
         this.renderer.reset();
         this.renderer.iter = 10;
@@ -267,7 +271,7 @@ chooseRenderer(renderer, reset=true) {
     }
 }
 
-chooseRenderer2(renderer) {
+chooseRenderer2(renderer, reset=true) {
     if (this.renderer2) {
         this.renderer2.destroy();
     }
@@ -281,7 +285,12 @@ chooseRenderer2(renderer) {
     // if(this.renderer instanceof FOVRenderer){
     //     this.disable = true;
     // }
-    this.renderer2.reset();
+    this.renderer2.random = this.random || Math.random();
+    // this.renderer2.reset();
+    if(reset) {
+        this.renderer2.reset();
+        this.renderer2.iter = 10;
+    }
     if (this.toneMapper2) {
         this.toneMapper2.setTexture(this.renderer2.getTexture());
     }
@@ -337,8 +346,8 @@ chooseToneMapper2(toneMapper) {
     this.toneMapper2.copy = this.copy;
 }
 
-setupUI(toneMapper, renderer) {
-    let ui = new UIRenderer(this.gl, toneMapper.getTexture(), renderer, {
+setupUI(toneMapper) {
+    let ui = new UIRenderer(this.gl, toneMapper.getTexture(), {
         resolution: this.resolution,
         extinction: this.renderer.extinction,
         steps: this.renderer.steps,
@@ -346,6 +355,14 @@ setupUI(toneMapper, renderer) {
     });
     ui.reset();
     return ui;
+}
+
+setupReprojection() {
+    this.reproject = new EyeReproject(this.gl, this.volume, this.renderer, this.toneMapper, {
+        resolution: this.resolution,
+        VRAnimator: this.VRAnimator,
+    });
+    this.reproject.reset(mat4.create());
 }
 
 _update(t, frame) {
@@ -364,12 +381,17 @@ _update(t, frame) {
         console.log("gl layer:", glLayer);
         this.resolution = {width: glLayer.framebufferWidth / 4, height: glLayer.framebufferHeight / 4}
         this.VRAnimator = new VRCameraAnimator(this.volumeTransform);
+        this.random = Math.random();
         this.chooseRenderer("fov2");
-        this.chooseRenderer2("fov2");
         this.chooseToneMapper("artistic");
-        this.chooseToneMapper2("artistic");
-        this.UIinit = false;
+        this.renderer.setName("1");
         this.renderer.VROn = true;
+        // this.chooseRenderer2("fov2");
+        // this.chooseToneMapper2("artistic");
+        // this.renderer2.setName("2");
+        // this.renderer2.VROn = true;
+        this.setupReprojection();
+        this.UIinit = true;
         this.old_t = t;
         // this.ext = this.gl.getExtension('EXT_disjoint_timer_query_webgl2');
     }
@@ -391,24 +413,42 @@ _update(t, frame) {
     // this.right = true;
     let pose = frame.getViewerPose(this.refSpace);
     // if(this.VRiterations % 10 == 0 && this.VRiterations != 0) {
-
     if (pose) {
+        if(this.VRiterations == 0)
+            this.reproject.reset(pose.views[1].projectionMatrix);
         // console.log("volume", this.volumeTransform.globalMatrix);
         let glLayer = session.renderState.baseLayer;
         for (let view of pose.views) {
+            this.renderer.log(view.projectionMatrix)
             this.viewport = glLayer.getViewport(view);
                 if(!this.right) {
                     this.changedView = this.VRAnimator.apply(view.transform.matrix)
                 }
                 if(this.changedView) {
                     if(this.right) {
-                        this.renderer2.reset();
-                        // this.renderer2.VRProjection = view.projectionMatrix;
+                        // this.renderer.random = Math.random();
+                        console.log("proj right");
+                        // if(this.VRAnimator.reproject)
+                        //     this.renderer2.VRProjection = this.camera.getComponent(PerspectiveCamera).projectionMatrix;
+                        // else
+                            // this.renderer2.VRProjection = view.projectionMatrix;
+                        // this.renderer2.reset();
+                        this.reproject.reset(view.projectionMatrix);
                         this.changedView = false;
                         // console.log("RESET 2");
                     }
                     else {
+                        console.log("proj left");
+                        // if(this.VRAnimator.reproject)
+                        //     this.renderer.VRProjection = this.camera.getComponent(PerspectiveCamera).projectionMatrix;
+                        // else
+                            this.renderer.VRProjection = view.projectionMatrix;
+                        // this.renderer.log(view.projectionMatrix)
+                        let random = Math.random();
+                        this.renderer.random = random;
+                        // this.renderer2.random = random;
                         this.renderer.reset();
+                        this.reproject.setMVPleft(view.projectionMatrix);
                         // console.log("RESET 1");
                     }
                     // continue; // če želimo pri resetu preskočiti render
@@ -425,6 +465,7 @@ _update(t, frame) {
 
 render() {
     const gl = this.gl;
+    
 
     if (!gl || !this.renderer || !this.toneMapper) {
         return;
@@ -436,19 +477,28 @@ render() {
         gl.beginQuery(ext.TIME_ELAPSED_EXT, this.query);
     }
     
-    if(!this.UIinit) {
-        this.uiRenderer = this.setupUI(this.toneMapper, this.renderer);
-        if(this.toneMapper2)
-            this.uiRenderer2 = this.setupUI(this.toneMapper2, this.renderer2);
-        this.UIinit = true;
+    if(this.UIinit) {
+        this.uiRenderer = this.setupUI(this.toneMapper);
+        //     this.uiRenderer2 = this.setupUI(this.reproject);
+        if(this.toneMapper2) {
+            this.uiRenderer2 = this.setupUI(this.toneMapper2);
+        }
+        else if(this.reproject)
+            this.uiRenderer2 = this.setupUI(this.reproject);
+        this.UIinit = false;
     }
-    
+    this.random = Math.random();
     if(this.right) {
-        this.renderer2.render();
-        this.toneMapper2.render();
+        // this.renderer2.random = this.random;
+        this.reproject.render();
+
+        // this.renderer.render(); //2
+        // this.toneMapper.render(); //2
+
         this.uiRenderer2.render();
     }
     else {
+        this.renderer.random = this.random;
         this.renderer.render();
         this.toneMapper.render();
         this.uiRenderer.render();
@@ -476,10 +526,26 @@ render() {
     }
 
     gl.activeTexture(gl.TEXTURE0);
-    if(this.VRAnimator && this.VRAnimator.uiActive) // || this.toneMapper2 === undefined)
-        gl.bindTexture(gl.TEXTURE_2D, this.right ? this.uiRenderer2.getTexture() : this.uiRenderer.getTexture());
-    else
-        gl.bindTexture(gl.TEXTURE_2D, this.right ? this.toneMapper2.getTexture() : this.toneMapper.getTexture());
+    if(this.VRAnimator)
+        console.log(this.VRAnimator.uiActive, this.VRAnimator.reproject);
+    // true true   ok
+    // true false  broken
+    // false true  ok
+    // false false broken
+    if(this.VRAnimator && this.VRAnimator.reproject) {
+        if(this.VRAnimator && this.VRAnimator.uiActive) 
+            gl.bindTexture(gl.TEXTURE_2D, this.right ? this.uiRenderer2.getTexture() : this.uiRenderer.getTexture());
+        else
+            gl.bindTexture(gl.TEXTURE_2D, this.right ? this.reproject.getTexture() : this.toneMapper.getTexture());
+    }
+    else {
+        if(this.VRAnimator && this.VRAnimator.uiActive)
+            gl.bindTexture(gl.TEXTURE_2D, this.right ? this.uiRenderer.getTexture() : this.uiRenderer.getTexture());
+        else
+            gl.bindTexture(gl.TEXTURE_2D, this.right ? this.toneMapper.getTexture() : this.toneMapper.getTexture());
+    }
+    // gl.bindTexture(gl.TEXTURE_2D, this.right ? this.toneMapper2.getTexture() : this.toneMapper.getTexture());
+    // gl.bindTexture(gl.TEXTURE_2D, this.right ? this.uiRenderer.getTexture() : this.uiRenderer.getTexture());
 
     gl.uniform1i(uniforms.uTexture, 0);
 

@@ -89,6 +89,7 @@ _generateFrame() {
     // console.log(this.VRView);
     // console.log(this.VRProjection);
     const viewMatrix = this._VRAnimator ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
+    console.log("RESET ", this.name);
     const projectionMatrix = this.VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);
@@ -96,6 +97,7 @@ _generateFrame() {
     mat4.multiply(matrix, viewMatrix, matrix);
     mat4.multiply(matrix, projectionMatrix, matrix);
     mat4.invert(matrix, matrix);
+    // this.log(matrix);
     gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 }

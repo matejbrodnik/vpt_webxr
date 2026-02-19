@@ -52,6 +52,12 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     this.ext = gl.getExtension('EXT_disjoint_timer_query_webgl2');
     this.VROn = false;
     this.iter = 10;
+    this.name = "0";
+    console.log("CREATED: ", this);
+}
+
+setName(name) {
+    this.name = name;
 }
 
 destroy(destroyRender = true) {

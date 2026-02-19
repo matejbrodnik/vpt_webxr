@@ -11,6 +11,8 @@ constructor(volumeTransform) {
     this.translationSpeed = 0.0008;
     this.rotationSpeed = 0.005;
 
+    this.yaw = 0;
+    this.pitch = 0;
     this.dx = 0;
     this.dy = 0;
     this.dz = 0;
@@ -27,13 +29,14 @@ constructor(volumeTransform) {
     this.angles = null;
     this.change = 0;
 
-    this.reproject = true;
+    this.reproject = false;
     this.uiActive = false;
     this.uiCount = 0;
 
     this.steps = 30;
     this.extinction = 70;
 
+    this.uiState = -1; // 0 - steps, 1 - extinction, 2 - renderer, 3 - tonemapper
 }
 
 update(inputs, dt) {
@@ -79,21 +82,37 @@ update(inputs, dt) {
     }   
 
     if(axesR[2] > thr) {
-        this.dy -= this.step;
+        this.pitch -= this.step;
         this.change++;
     }
     else if(axesR[2] < -thr) {
-        this.dy += this.step;
+        this.pitch += this.step;
         this.change++;
     }
 
     if(axesR[3] > thr) {
-        this.dx -= this.step;
-        this.change++;
+        if(this.uiActive) {
+            if(this.uiState == 0)
+                this.extinction++;
+            else if(this.uiState == 1)
+                this.steps++;
+        }
+        else {
+            this.yaw -= this.step;
+            this.change++;
+        }
     }
     else if(axesR[3] < -thr) {
-        this.dx += this.step;
-        this.change++;
+        if(this.uiActive) {
+            if(this.uiState == 0)
+                this.extinction--;
+            else if(this.uiState == 1)
+                this.steps--;
+        }
+        else {
+            this.yaw += this.step;
+            this.change++;
+        }
     }
 
     
@@ -134,12 +153,12 @@ update(inputs, dt) {
         }
 
         if(axesL[3] > thr) {
-            this.dx -= this.step;
+            this.dz -= this.step;
             this.change++;
         }
         else if(axesL[3] < -thr) {
-            this.dx += this.step;
-            this.c
+            this.dz += this.step;
+            this.change++;
         }
     }
     // console.log(axes);
@@ -164,17 +183,20 @@ apply(viewMatrix = null, force = false) {
             quat.rotateX(rotation, rotation, angles.pitch);
             quat.rotateZ(rotation, rotation, angles.roll);
             
-            const translation = vec3.create();
             // vec3.transformQuat(translation, [0, 0, this.focusDistance], rotation);
             this.transform.localRotation = rotation;
             this.transform.localTranslation = vec3.add(vec3.create, t, [0, 0, this.focusDistance]);
             
+            const translation = vec3.create();
             const rotationM = quat.create();
             // console.log(this.dx)
             // console.log(this.dy)
-            quat.rotateX(rotationM, rotationM, this.dx);
-            quat.rotateY(rotationM, rotationM, this.dy);
+            quat.rotateX(rotationM, rotationM, this.yaw);
+            quat.rotateY(rotationM, rotationM, this.pitch);
             this.model.localRotation = rotationM;
+            vec3.add(translation, translation, [0, this.dy, this.dz])
+            this.model.localTranslation = translation;
+
             this.change = 0;
 
             this.translation = t;

@@ -91,6 +91,7 @@ destroy() {
 
 _resetFrame() {
     const gl = this._gl;
+    console.log("FOV RESET ", this.name);
 
     if(this.reproject == -1)
         this.reproject = 0;
@@ -111,7 +112,9 @@ _resetFrame() {
         });
         this.mip.setContext(this._context);
     }
-    
+    this.mip.setName(this.name);
+    this.mip.VRProjection = this.VRProjection;
+
     this.mip.reset();
     
     this.mip.render();
@@ -142,12 +145,12 @@ _resetFrame() {
     gl.useProgram(program);
 
     gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution.width, 1 / this._resolution.height);
-    gl.uniform1f(uniforms.uRandSeed, Math.random());
+    gl.uniform1f(uniforms.uRandSeed, this.random);
     gl.uniform1f(uniforms.uBlur, 0);
     gl.uniform1ui(uniforms.reproject, this.reproject);
     
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this._MIPmap.color[0]);
+    gl.bindTexture(gl.TEXTURE_2D, this.mip._renderBuffer.getAttachments().color[0]);
     gl.uniform1i(uniforms.uMIP, 0);
 
     gl.activeTexture(gl.TEXTURE1);
@@ -167,7 +170,7 @@ _resetFrame() {
     const modelMatrix = this._VRAnimator ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
     const viewMatrix = this._VRAnimator ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
     const projectionMatrix = this.VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
-
+    // this.log(this._camera.getComponent(PerspectiveCamera).projectionMatrix);
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);
     mat4.multiply(matrix, modelMatrix, matrix);
@@ -265,15 +268,15 @@ _integrateFrame() {
 
     gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution.width, 1 / this._resolution.height);
     gl.uniform1i(uniforms.uLod, this.lod);
-    gl.uniform1f(uniforms.uRandSeed, Math.random());
+    gl.uniform1f(uniforms.uRandSeed, this.random);
     gl.uniform1f(uniforms.uBlur, 0);
     gl.uniform1ui(uniforms.uCycles, this.cycles);
     gl.uniform1ui(uniforms.uThr, this.thr);
 
-    gl.uniform1f(uniforms.uExtinction, this._VRAnimator ? this._VRAnimator.extinction : this.extinction);
+    gl.uniform1f(uniforms.uExtinction, this.VROn ? this._VRAnimator.extinction : this.extinction);
     gl.uniform1f(uniforms.uAnisotropy, this.anisotropy);
     gl.uniform1ui(uniforms.uMaxBounces, this.bounces);
-    gl.uniform1ui(uniforms.uSteps, this._VRAnimator ? this._VRAnimator.steps : this.steps);
+    gl.uniform1ui(uniforms.uSteps, this.VROn ? this._VRAnimator.steps : this.steps);
     gl.uniform1ui(uniforms.reproject, this.reproject);
     if(this.reproject) {
         // this._context.brick = true;
@@ -284,8 +287,8 @@ _integrateFrame() {
     this.reproject = 0;
 
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
-    const modelMatrix = this._VRAnimator ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
-    const viewMatrix = this._VRAnimator ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
+    const modelMatrix = this.VROn ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
+    const viewMatrix = this.VROn ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
     const projectionMatrix = this.VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
 
     const matrix = mat4.create();
@@ -315,6 +318,8 @@ _integrateFrame() {
         gl.COLOR_ATTACHMENT2,
         gl.COLOR_ATTACHMENT3,
         gl.COLOR_ATTACHMENT4,
+        gl.NONE,
+        gl.COLOR_ATTACHMENT6,
     ]);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -331,7 +336,8 @@ _renderFrame() {
     gl.uniform1i(uniforms.uColor, 0);
     
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[2]);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[0]);
+    // gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[2]);
     gl.uniform1i(uniforms.uMIP, 1);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -443,6 +449,16 @@ _getAccumulationBufferSpec() {
         type    : gl.FLOAT,
     };
 
+    const depthBufferSpec = {
+        width   : this._resolution.width,
+        height  : this._resolution.height,
+        min     : gl.NEAREST,
+        mag     : gl.NEAREST,
+        format  : gl.RGBA,
+        iformat : gl.RGBA32F,
+        type    : gl.FLOAT,
+    };
+
     // const oldStepsBufferSpec = {
     //     width   : this._resolution.width,
     //     height  : this._resolution.height,
@@ -460,6 +476,7 @@ _getAccumulationBufferSpec() {
         radianceBufferSpec,
         mipBufferSpec,
         oldRadianceBufferSpec,
+        depthBufferSpec,
         // oldStepsBufferSpec,
     ];
 }

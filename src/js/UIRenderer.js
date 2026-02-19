@@ -9,8 +9,8 @@ const [ SHADERS, MIXINS ] = await Promise.all([
 
 export class UIRenderer {
 
-constructor(gl, texture, renderer, options = {}) {
-    this._program = WebGL.buildPrograms(gl, SHADERS.UIRenderer, MIXINS);
+constructor(gl, texture, options = {}) {
+    this._programs = WebGL.buildPrograms(gl, SHADERS.UIRenderer, MIXINS);
     this._resolution = options.resolution ?? {width: 512, height: 512};
     this._gl = gl;
     
@@ -28,19 +28,11 @@ constructor(gl, texture, renderer, options = {}) {
 
     this.VRAnimator = options.VRAnimator;
 
-    this.renderer = renderer;
-    // this.binds = DOMUtils.bind(document.body);
-
-    // this.binds.uiCanvas.appendChild(this.uiCanvas);
-}
-
-updateRenderer(renderer) {
-    this.renderer = renderer;
 }
 
 destroy() {
     const gl = this._gl;
-    gl.deleteProgram(this._program.program);
+    gl.deleteProgram(this._programs.program);
 
     super.destroy();
 }
@@ -53,9 +45,9 @@ reset() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    
+    this._drawUIText(true);
 
-
-    this._drawUIText("TEST test");
     gl.texImage2D(
         gl.TEXTURE_2D,
         0,
@@ -64,18 +56,16 @@ reset() {
         gl.UNSIGNED_BYTE,
         this.uiCanvas
     );
-    console.log(this.renderer);
 }
 
 render() {
     if(!(this.VRAnimator && this.VRAnimator.uiActive))
         return;
-
     const gl = this._gl;
 
     this._renderBuffer.use();
 
-    const { program, uniforms } = this._program.base;
+    const { program, uniforms } = this._programs.base;
     
     this._drawUIText();
     
@@ -110,7 +100,7 @@ render() {
 
 }
 
-_drawUIText() {
+_drawUIText(reset = false) {
     let ctx = this.uiCtx;
     ctx.clearRect(0, 0, this._resolution.width, this._resolution.height);
 
@@ -122,9 +112,13 @@ _drawUIText() {
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
     // Line 1
-    ctx.fillText("Extinction: " + this.VRAnimator.extinction, this.uiCanvas.width - 140, 195);
-    // Line 2
-    ctx.fillText("Steps: " + this.VRAnimator.steps, this.uiCanvas.width - 140, 225);
+    if(reset || !(this.VRAnimator))
+        ctx.fillText("TEST test", this.uiCanvas.width - 140, 195);
+    else {
+        ctx.fillText("Extinction: " + this.VRAnimator.extinction, this.uiCanvas.width - 140, 195);
+        // Line 2
+        ctx.fillText("Steps: " + this.VRAnimator.steps, this.uiCanvas.width - 140, 225);
+    }
 }
 
 getTexture() {

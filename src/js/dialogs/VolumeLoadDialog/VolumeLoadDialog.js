@@ -77,7 +77,7 @@ _handleLoadFile() {
     const dimensions = this.binds.dimensions.value;
     const precisionChecked = this.binds.precision.querySelector('input:checked');
     const precision = parseInt(precisionChecked.value, 10);
-
+    console.log(file);
     this.dispatchEvent(new CustomEvent('load', {
         detail: {
             type       : 'file',

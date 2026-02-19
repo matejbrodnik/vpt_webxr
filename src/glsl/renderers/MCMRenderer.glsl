@@ -211,9 +211,9 @@ void main() {
         photon.samples += s;
         // photon.radiance = old;
     }
-    else if(reproject > 0u){
-        photon.radiance = vec3(0, 0, 1.0);
-    }
+    // else if(reproject > 0u){
+    //     photon.radiance = vec3(0, 0, 1.0);
+    // }
     // photon.depth = abs(photon.radiance - old);
 
     oPosition = vec4(photon.position, 0);

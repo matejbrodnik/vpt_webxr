@@ -74,6 +74,7 @@ layout (location = 1) out vec4 oDirection;
 layout (location = 2) out vec4 oTransmittance;
 layout (location = 3) out vec4 oRadiance;
 layout (location = 4) out vec4 oMIP;
+layout (location = 6) out vec4 oDepth;
 
 void resetPhoton(inout float state, inout Photon photon) {
     vec3 from, to;
@@ -229,9 +230,9 @@ void main() {
         float prevSamples = texture(uOld, uvA).a;
         // float prevSteps = texture(uOldSteps, uvA).a + 0.5;
         // if(abs(mappedPosition.x - uvA.x) > 0.1) {
-        if(texture(uOld, mappedPosition).rgb == vec3(1)) {
-            old = texture(uOld, uvA).rgb;
-        }
+        // if(texture(uOld, mappedPosition).rgb == vec3(1)) {
+        //     old = texture(uOld, uvA).rgb;
+        // }
         if (prevSamples >= 1.0 && uvA.x >= 0.0 && uvA.x <= 1.0 && uvA.y >= 0.0 && uvA.y <= 1.0) {
             float s = min(10.0, (log(prevSamples + 1.0) * (mip + 0.1) / (avg * 3.0)) + 1.2);
             // float s = 4.0;
@@ -256,6 +257,8 @@ void main() {
     oRadiance = vec4(photon.radiance, photon.samples2);
     // oMIP = vec4(mip, mip, mip, 1);
     oMIP = vec4(photon.M2, mip);
+
+    oDepth = vec4(saved, 0);
 
     vec3 variance = photon.M2 / (photon.samples2 - 1.0);
     float sum = variance.r + variance.g + variance.b;
@@ -341,6 +344,7 @@ out vec4 oColor;
 
 void main() {
     oColor = vec4(texture(uColor, vPosition).rgb, 1);
+    // oColor = vec4(texture(uMIP, vPosition).a / 250.0, 0, 0, 1);
     // float acc = texture(uMIP, vPosition).a;
     // oColor = vec4(acc, acc, acc, 1);
     // if(acc >= 0.8) {
