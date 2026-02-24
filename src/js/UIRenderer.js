@@ -27,7 +27,14 @@ constructor(gl, texture, options = {}) {
     this.uiCtx = this.uiCanvas.getContext('2d', { alpha: true });
 
     this.VRAnimator = options.VRAnimator;
+    this.chosen = 0;
 
+    this.renderers = ["FOV2", "MIP", "MCM"];
+    this.views = ["MONO", "STEREO", "REPROJ"];
+}
+
+setTexture(texture) {
+    this._scene = texture;
 }
 
 destroy() {
@@ -58,7 +65,9 @@ reset() {
     );
 }
 
-render() {
+render(texture = null) {
+    if(texture)
+        this.setTexture(texture);
     if(!(this.VRAnimator && this.VRAnimator.uiActive))
         return;
     const gl = this._gl;
@@ -108,16 +117,37 @@ _drawUIText(reset = false) {
     ctx.fillRect(0, 0, this._resolution.width, this._resolution.height);
 
     ctx.fillStyle = 'black';
-    ctx.font = '28px sans-serif';
+    ctx.font = '24px sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
-    // Line 1
     if(reset || !(this.VRAnimator))
         ctx.fillText("TEST test", this.uiCanvas.width - 140, 195);
     else {
-        ctx.fillText("Extinction: " + this.VRAnimator.extinction, this.uiCanvas.width - 140, 195);
-        // Line 2
-        ctx.fillText("Steps: " + this.VRAnimator.steps, this.uiCanvas.width - 140, 225);
+        // this.chosen = this.VRAnimator.uiState;
+        let cursor = ["", "", "", "", ""];
+        cursor[this.VRAnimator.uiState] = "> ";
+        let count = 0;
+        if(this.VRAnimator.uiState == count)
+            ctx.fillStyle = 'blue';
+        else
+            ctx.fillStyle = 'black';
+        ctx.fillText(cursor[count++] + "Extinction: " + this.VRAnimator.extinction, this.uiCanvas.width - 140, 190);
+        if(this.VRAnimator.uiState == count)
+            ctx.fillStyle = 'blue';
+        else
+            ctx.fillStyle = 'black';
+        ctx.fillText(cursor[count++] + "Steps: " + this.VRAnimator.steps, this.uiCanvas.width - 140, 215);
+        if(this.VRAnimator.uiState == count)
+            ctx.fillStyle = 'blue';
+        else
+            ctx.fillStyle = 'black';
+        ctx.fillText(cursor[count++] + this.renderers[this.VRAnimator.chosenRenderer] + " renderer", this.uiCanvas.width - 140, 240);
+        if(this.VRAnimator.uiState == count)
+            ctx.fillStyle = 'blue';
+        else
+            ctx.fillStyle = 'black';
+        ctx.fillText(cursor[count++] + this.views[this.VRAnimator.renderState] + " view", this.uiCanvas.width - 140, 265);
+
     }
 }
 

@@ -20,7 +20,7 @@ constructor(volumeTransform) {
     this.focusDistance = vec3.distance([0, 0, 0], this.transform.globalTranslation);
     this.yaw = 0;
     this.pitch = 0;
-    this.thr = 0.6;
+    this.thr = 0.66;
     this.thrAuto = 0.01;
     this.step = 0.03;
     this.focusDistance = 1;
@@ -36,16 +36,61 @@ constructor(volumeTransform) {
     this.steps = 30;
     this.extinction = 70;
 
-    this.uiState = -1; // 0 - steps, 1 - extinction, 2 - renderer, 3 - tonemapper
+    this.uiState = 0; // 0 - steps, 1 - extinction, 2 - renderer, 3 - tonemapper
+    this.uiStateTimeout = 0;
+
+    this.renderState = 0; // 0 - mono, 1 - stereo, 2 - reprojection
+    this.renderStateTimeout = 0;
+
+    this.chosenRenderer = 0; // 0 - FOV2, 1 - MIP, 2 - MCM
+    this.rendererTimeout = 0;
+}
+
+safeIncrement(val, num) {
+    if(val == "ui") {
+        this.uiState++;
+        if(this.uiState >= num)
+            this.uiState = 0;
+    }
+    else if(val == "renderer") {
+        this.chosenRenderer++;
+        if(this.chosenRenderer >= num)
+            this.chosenRenderer = 0;
+    }
+    else if(val == "state") {
+        this.renderState++;
+        if(this.renderState >= num)
+            this.renderState = 0;
+    }
+}
+
+safeDecrement(val, num) {
+    if(val == "ui") {
+        this.uiState--;
+        if(this.uiState < 0)
+            this.uiState = num - 1;
+    }
+    else if(val == "renderer") {
+        this.chosenRenderer--;
+        if(this.chosenRenderer < 0)
+            this.chosenRenderer = num - 1;
+    }
+    else if(val == "state") {
+        this.renderState--;
+        if(this.renderState < 0)
+            this.renderState = num - 1;
+    }
 }
 
 update(inputs, dt) {
     let gpR;
     let gpL;
+    // if(inputs[0].handedness == "right")
     if(inputs.length > 1)
         gpR = inputs[1].gamepad;
     else
         gpR = inputs[0].gamepad;
+
 
     let axesR = gpR.axes;
     let btnsR = gpR.buttons;
@@ -61,7 +106,6 @@ update(inputs, dt) {
     if(btnsR[1].pressed) { // down hold
         if(this.uiCount == 0)
             this.uiActive = !this.uiActive;
-        console.log("BUTTON A", this.uiActive);
         this.uiCount++;
     }
     else
@@ -75,27 +119,73 @@ update(inputs, dt) {
     }
 
     if(btnsR[5].pressed) { // B
-        this.steps++;
-        if(this.steps > 70) {
-            this.steps = 20;
-        }
+        // this.steps++;
+        // if(this.steps > 70) {
+        //     this.steps = 20;
+        // }
+        // this.uiState++;
+        // if(this.uiState == 15)
+        //     this.uiState = 0;
     }   
 
     if(axesR[2] > thr) {
-        this.pitch -= this.step;
-        this.change++;
-    }
-    else if(axesR[2] < -thr) {
-        this.pitch += this.step;
-        this.change++;
-    }
-
-    if(axesR[3] > thr) {
         if(this.uiActive) {
             if(this.uiState == 0)
                 this.extinction++;
-            else if(this.uiState == 1)
+            else if(this.uiState == 1 && this.steps < 60)
                 this.steps++;
+            else if(this.uiState == 2) {
+                if(this.rendererTimeout % 20 == 0)
+                    this.safeIncrement("renderer", 3);
+                this.rendererTimeout++;
+            }
+            else if(this.uiState == 3) {
+                if(this.renderStateTimeout % 20 == 0)
+                    this.safeIncrement("state", 3);
+                this.renderStateTimeout++;
+            }
+        }
+        else {
+            this.pitch -= this.step;
+            this.change++;
+        }
+    }
+    else if(axesR[2] < -thr) {
+        if(this.uiActive) {
+            if(this.uiState == 0 && this.extinction > 1)
+                this.extinction--;
+            else if(this.uiState == 1 && this.steps > 1)
+                this.steps--;
+            else if(this.uiState == 2) {
+                if(this.rendererTimeout % 20 == 0)
+                    this.safeDecrement("renderer", 3);
+                this.rendererTimeout++;
+            }
+            else if(this.uiState == 3) {
+                if(this.renderStateTimeout % 20 == 0)
+                    this.safeDecrement("state", 3);
+                this.renderStateTimeout++;
+            }
+        }
+        else {
+            this.pitch += this.step;
+            this.change++;
+        }
+    }
+    else {
+        this.rendererTimeout = 0;
+        this.renderStateTimeout = 0;
+    }
+
+    if(axesR[3] > thr) { 
+        if(this.uiActive) {
+            if(this.uiStateTimeout % 10 == 0) {
+                this.safeIncrement("ui", 4);
+                // this.uiState++;
+                // if(this.uiState > 2)
+                //     this.uiState = 0;
+            }
+            this.uiStateTimeout++;
         }
         else {
             this.yaw -= this.step;
@@ -104,16 +194,23 @@ update(inputs, dt) {
     }
     else if(axesR[3] < -thr) {
         if(this.uiActive) {
-            if(this.uiState == 0)
-                this.extinction--;
-            else if(this.uiState == 1)
-                this.steps--;
+            if(this.uiStateTimeout % 10 == 0) {
+                this.safeDecrement("ui", 4);
+                // this.uiState--;
+                // if(this.uiState < 0)
+                //     this.uiState = 2;
+            }
+            this.uiStateTimeout++;
         }
         else {
             this.yaw += this.step;
             this.change++;
         }
     }
+    else {
+        this.uiStateTimeout = 0;
+    }
+    
 
     
     if(inputs.length > 1) {
@@ -129,7 +226,7 @@ update(inputs, dt) {
         }
 
         if(btnsL[1].pressed) { // down hold
-        
+            
         }
         if(btnsL[4].pressed) { // A
             // if(this.reproCount == 0)

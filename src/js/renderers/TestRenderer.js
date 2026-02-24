@@ -80,7 +80,7 @@ _integrateFrame() {
 
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
-    if(!this.VROn) {
+    if(!this._VROn) {
         this.step = 0;
     }
 }

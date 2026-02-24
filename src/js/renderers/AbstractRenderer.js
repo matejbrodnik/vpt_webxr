@@ -27,6 +27,8 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
 
     this._volumeTransform = options.transform ?? new Transform();
     this._VRAnimator = options.VRAnimator;
+    this._VRProjection = options.VRProjection;
+    this._VROn = options.VROn;
 
     this._rebuildBuffers();
 
@@ -50,7 +52,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     }, MIXINS).quad;
     this.ready = true;
     this.ext = gl.getExtension('EXT_disjoint_timer_query_webgl2');
-    this.VROn = false;
+    // this._VROn = false;
     this.iter = 10;
     this.name = "0";
     console.log("CREATED: ", this);
@@ -163,6 +165,10 @@ log(matrix) {
 
 getTexture() {
     return this._renderBuffer.getAttachments().color[0];
+}
+
+setProjection(matrix) {
+    this._VRProjection = matrix;
 }
 
 _resetFrame() {

@@ -50,12 +50,17 @@ void main() {
         vec4 clipA = uMvp * vec4(position, 1.0);
         vec3 ndcA = clipA.xyz / clipA.w;
         vec2 uvA = ndcA.xy * 0.5 + 0.5;
-        vec3 old = texture(uColor, uvA).rgb;
-        oColor = vec4(old, 1);
+        if (uvA.x >= 0.0 && uvA.x <= 1.0 && uvA.y >= 0.0 && uvA.y <= 1.0) {
+            vec3 old = texture(uColor, uvA).rgb;
+            oColor = vec4(old, 1);
+        }
+        else {
+            oColor = vec4(1);
+        }
         // oColor = vec4(position, 1);
     }
     else {
-        oColor = vec4(0, 1, 0, 1);
+        oColor = vec4(1);
     }
 
 }

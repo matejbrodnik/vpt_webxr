@@ -85,7 +85,8 @@ destroy() {
     Object.keys(this._programs).forEach(programName => {
         gl.deleteProgram(this._programs[programName].program);
     });
-
+    if(this.mip)
+        this.mip.destroy();
     super.destroy();
 }
 
@@ -109,11 +110,12 @@ _resetFrame() {
             resolution: this._resolution,
             transform: this._volumeTransform,
             VRAnimator: this._VRAnimator,
+            VRProjection: this._VRProjection,
+            VROn: this._VROn,
         });
         this.mip.setContext(this._context);
     }
     this.mip.setName(this.name);
-    this.mip.VRProjection = this.VRProjection;
 
     this.mip.reset();
     
@@ -167,9 +169,9 @@ _resetFrame() {
 
 
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
-    const modelMatrix = this._VRAnimator ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
-    const viewMatrix = this._VRAnimator ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
-    const projectionMatrix = this.VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
+    const modelMatrix = this._VROn ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
+    const viewMatrix = this._VROn ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
+    const projectionMatrix = this._VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
     // this.log(this._camera.getComponent(PerspectiveCamera).projectionMatrix);
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);
@@ -273,10 +275,10 @@ _integrateFrame() {
     gl.uniform1ui(uniforms.uCycles, this.cycles);
     gl.uniform1ui(uniforms.uThr, this.thr);
 
-    gl.uniform1f(uniforms.uExtinction, this.VROn ? this._VRAnimator.extinction : this.extinction);
+    gl.uniform1f(uniforms.uExtinction, this._VROn ? this._VRAnimator.extinction : this.extinction);
     gl.uniform1f(uniforms.uAnisotropy, this.anisotropy);
     gl.uniform1ui(uniforms.uMaxBounces, this.bounces);
-    gl.uniform1ui(uniforms.uSteps, this.VROn ? this._VRAnimator.steps : this.steps);
+    gl.uniform1ui(uniforms.uSteps, this._VROn ? this._VRAnimator.steps : this.steps);
     gl.uniform1ui(uniforms.reproject, this.reproject);
     if(this.reproject) {
         // this._context.brick = true;
@@ -287,9 +289,9 @@ _integrateFrame() {
     this.reproject = 0;
 
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
-    const modelMatrix = this.VROn ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
-    const viewMatrix = this.VROn ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
-    const projectionMatrix = this.VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
+    const modelMatrix = this._VROn ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
+    const viewMatrix = this._VROn ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
+    const projectionMatrix = this._VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
 
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);
@@ -298,9 +300,7 @@ _integrateFrame() {
     mat4.multiply(matrix, projectionMatrix, matrix);
 
     if(this.forwardMatrixOld) {
-        // this.log(this.forwardMatrixOld)
         gl.uniformMatrix4fv(uniforms.uMvpA, false, this.forwardMatrixOld);
-        
         // this._context.brick = true;
     }
     else
@@ -342,6 +342,12 @@ _renderFrame() {
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     this.cycles++;
+}
+
+setProjection(matrix) {
+    this._VRProjection = matrix;
+    if(this.mip) 
+        this.mip._VRProjection = matrix;
 }
 
 _getFrameBufferSpec() {

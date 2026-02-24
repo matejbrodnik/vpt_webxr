@@ -16,6 +16,7 @@ constructor(gl, texture, options = {}) {
 
     this._gl = gl;
     this._texture = texture;
+    this._textureOld = texture;
 
     this._rebuildBuffers();
 
@@ -31,7 +32,9 @@ destroy() {
     gl.deleteProgram(this._clipQuadProgram.program);
 }
 
-render() {
+render(texture = null) {
+    if(texture) 
+        this.setTexture(texture);
     this._renderBuffer.use();
     this._renderFrame();
 }
