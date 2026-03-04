@@ -133,6 +133,7 @@ precision mediump float;
 precision mediump sampler2D;
 
 uniform sampler2D uAccumulator;
+uniform uint uMono;
 
 in vec2 vPosition;
 
@@ -167,7 +168,7 @@ void main() {
     // if(acc != 0.0) {
     //     acc = 1.6 - acc;
     // }
-    if(acc > 0.0) {
+    if(uMono == 1u && acc > 0.0) {
         acc = 0.7;
     }
 

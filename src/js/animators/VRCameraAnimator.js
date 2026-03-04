@@ -22,8 +22,10 @@ constructor(volumeTransform) {
     this.pitch = 0;
     this.thr = 0.66;
     this.thrAuto = 0.01;
-    this.step = 0.03;
+    this.angleStep = 0.03;
+    this.translationStep = 0.012;
     this.focusDistance = 1;
+    this.scale = 1.0;
 
     this.translation = [0, 0, 0];
     this.angles = null;
@@ -42,8 +44,10 @@ constructor(volumeTransform) {
     this.renderState = 0; // 0 - mono, 1 - stereo, 2 - reprojection
     this.renderStateTimeout = 0;
 
-    this.chosenRenderer = 0; // 0 - FOV2, 1 - MIP, 2 - MCM
+    this.chosenRenderer = 0; // 0 - FOV2, 1 - MIP, 2 - MCM, 3 - ISO, 4 - DOS, 5 - LAO
     this.rendererTimeout = 0;
+
+    this.bar = 0;
 }
 
 safeIncrement(val, num) {
@@ -61,6 +65,11 @@ safeIncrement(val, num) {
         this.renderState++;
         if(this.renderState >= num)
             this.renderState = 0;
+    }
+    else if(val == "bar") {
+        this.bar += 4;
+        if(this.bar >= 190)
+            this.bar = 190;
     }
 }
 
@@ -80,16 +89,25 @@ safeDecrement(val, num) {
         if(this.renderState < 0)
             this.renderState = num - 1;
     }
+    else if(val == "bar") {
+        this.bar -= 4;
+        if(this.bar < 0)
+            this.bar = 0;
+    }
 }
 
 update(inputs, dt) {
     let gpR;
-    let gpL;
-    // if(inputs[0].handedness == "right")
-    if(inputs.length > 1)
-        gpR = inputs[1].gamepad;
-    else
+    
+    if(inputs.length > 1) {
+        if(inputs[0].handedness == "right")
+            gpR = inputs[0].gamepad;
+        else
+            gpR = inputs[1].gamepad;
+    }
+    else {
         gpR = inputs[0].gamepad;
+    }
 
 
     let axesR = gpR.axes;
@@ -97,36 +115,35 @@ update(inputs, dt) {
     let thr = this.thr;
 
     if(btnsR[0].pressed) { // up hold
-        this.reproject = true;
-    }
-    else {
-        this.reproject = false;
+        this.focusDistance -= 0.01;
+        this.change++;
     }
 
     if(btnsR[1].pressed) { // down hold
-        if(this.uiCount == 0)
-            this.uiActive = !this.uiActive;
-        this.uiCount++;
+        this.focusDistance += 0.01;
+        this.change++;
+
+        // if(this.uiCount == 0)
+        //     this.uiActive = !this.uiActive;
+        // this.uiCount++;
     }
-    else
-        this.uiCount = 0;
+    // else
+    //     this.uiCount = 0;
 
     if(btnsR[4].pressed) { // A
-        this.extinction += 2;
-        if(this.extinction > 200) {
-            this.extinction = 50;
-        }
+        // this.extinction += 2;
+        // if(this.extinction > 200) {
+        //     this.extinction = 50;
+        // }
     }
 
     if(btnsR[5].pressed) { // B
-        // this.steps++;
-        // if(this.steps > 70) {
-        //     this.steps = 20;
-        // }
-        // this.uiState++;
-        // if(this.uiState == 15)
-        //     this.uiState = 0;
+        if(this.uiCount == 0)
+            this.uiActive = !this.uiActive;
+        this.uiCount++;
     }   
+    else
+        this.uiCount = 0;
 
     if(axesR[2] > thr) {
         if(this.uiActive) {
@@ -136,7 +153,7 @@ update(inputs, dt) {
                 this.steps++;
             else if(this.uiState == 2) {
                 if(this.rendererTimeout % 20 == 0)
-                    this.safeIncrement("renderer", 3);
+                    this.safeIncrement("renderer", 6);
                 this.rendererTimeout++;
             }
             else if(this.uiState == 3) {
@@ -146,7 +163,7 @@ update(inputs, dt) {
             }
         }
         else {
-            this.pitch -= this.step;
+            this.pitch -= this.angleStep;
             this.change++;
         }
     }
@@ -158,7 +175,7 @@ update(inputs, dt) {
                 this.steps--;
             else if(this.uiState == 2) {
                 if(this.rendererTimeout % 20 == 0)
-                    this.safeDecrement("renderer", 3);
+                    this.safeDecrement("renderer", 6);
                 this.rendererTimeout++;
             }
             else if(this.uiState == 3) {
@@ -168,7 +185,7 @@ update(inputs, dt) {
             }
         }
         else {
-            this.pitch += this.step;
+            this.pitch += this.angleStep;
             this.change++;
         }
     }
@@ -188,7 +205,7 @@ update(inputs, dt) {
             this.uiStateTimeout++;
         }
         else {
-            this.yaw -= this.step;
+            this.yaw -= this.angleStep;
             this.change++;
         }
     }
@@ -203,7 +220,7 @@ update(inputs, dt) {
             this.uiStateTimeout++;
         }
         else {
-            this.yaw += this.step;
+            this.yaw += this.angleStep;
             this.change++;
         }
     }
@@ -211,22 +228,21 @@ update(inputs, dt) {
         this.uiStateTimeout = 0;
     }
     
-
-    
     if(inputs.length > 1) {
-        let gpL = inputs[0].gamepad;
+        let gpL;
+        if(inputs[0].handedness == "left")
+            gpL = inputs[0].gamepad;
+        else
+            gpL = inputs[1].gamepad;
         let axesL = gpL.axes;
         let btnsL = gpL.buttons;
 
         if(btnsL[0].pressed) { // up hold
-            this.reproject = true;
-        }
-        else {
-            this.reproject = false;
+            this.safeIncrement("bar", 800);
         }
 
         if(btnsL[1].pressed) { // down hold
-            
+            this.safeDecrement("bar", 800);
         }
         if(btnsL[4].pressed) { // A
             // if(this.reproCount == 0)
@@ -234,27 +250,26 @@ update(inputs, dt) {
             // console.log("BUTTON A", this.reproject);
             // this.reproCount++;
         }
-        else
-            this.reproCount = 0;
+
         if(btnsL[5].pressed) { // B
 
         }   
 
         if(axesL[2] > thr) {
-            this.dy -= this.step;
+            this.dx -= this.translationStep;
             this.change++;
         }
         else if(axesL[2] < -thr) {
-            this.dy += this.step;
+            this.dx += this.translationStep;
             this.change++;
         }
 
         if(axesL[3] > thr) {
-            this.dz -= this.step;
+            this.dy -= this.translationStep;
             this.change++;
         }
         else if(axesL[3] < -thr) {
-            this.dz += this.step;
+            this.dy += this.translationStep;
             this.change++;
         }
     }
@@ -282,6 +297,10 @@ apply(viewMatrix = null, force = false) {
             
             // vec3.transformQuat(translation, [0, 0, this.focusDistance], rotation);
             this.transform.localRotation = rotation;
+            // const scale = vec3.create();
+            // vec3.add(scale, scale, [this.scale, this.scale, this.scale]);
+            // console.log(scale);
+            // this.transform.localScale = scale;
             this.transform.localTranslation = vec3.add(vec3.create, t, [0, 0, this.focusDistance]);
             
             const translation = vec3.create();
@@ -291,7 +310,7 @@ apply(viewMatrix = null, force = false) {
             quat.rotateX(rotationM, rotationM, this.yaw);
             quat.rotateY(rotationM, rotationM, this.pitch);
             this.model.localRotation = rotationM;
-            vec3.add(translation, translation, [0, this.dy, this.dz])
+            vec3.add(translation, translation, [this.dx, this.dy, this.dz])
             this.model.localTranslation = translation;
 
             this.change = 0;

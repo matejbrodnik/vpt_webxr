@@ -46,6 +46,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     });
 
     this._programs = WebGL.buildPrograms(this._gl, SHADERS.renderers.MIP, MIXINS);
+    this.mono = 0;
 }
 
 destroy() {
@@ -130,6 +131,7 @@ _renderFrame() {
     gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[0]);
 
     gl.uniform1i(uniforms.uAccumulator, 0);
+    gl.uniform1ui(uniforms.uMono, this.mono);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 }

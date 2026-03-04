@@ -157,7 +157,7 @@ _generateFrame() {
     gl.uniform1i(uniforms.uVolume, 0);
     gl.uniform1i(uniforms.uTransferFunction, 1);
     gl.uniform1f(uniforms.uStepSize, 1 / this.slices);
-    gl.uniform1f(uniforms.uExtinction, this.extinction);
+    gl.uniform1f(uniforms.uExtinction, this._VROn ? this._VRAnimator.extinction : this.extinction);
     gl.uniform1i(uniforms.uLocalAmbientOcclusion, this.localAmbientOcclusion);
     gl.uniform1f(uniforms.uLAOWeight, this.LAOWeight);
     gl.uniform1i(uniforms.uNumLAOSamples, this.numLAOSamples);
@@ -171,9 +171,9 @@ _generateFrame() {
     gl.uniform1f(uniforms.uOffset, Math.random());
 
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
-    const modelMatrix = this._volumeTransform.globalMatrix;
-    const viewMatrix = this._camera.transform.inverseGlobalMatrix;
-    const projectionMatrix = this._camera.getComponent(PerspectiveCamera).projectionMatrix;
+    const modelMatrix = this._VROn ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
+    const viewMatrix = this._VROn ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
+    const projectionMatrix = this._VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
 
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);

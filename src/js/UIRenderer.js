@@ -16,7 +16,6 @@ constructor(gl, texture, options = {}) {
     
     this._scene = texture;
     this._renderBuffer = new SingleBuffer(gl, this._getRenderBufferSpec());
-    
 
     this.init = false;
 
@@ -29,8 +28,9 @@ constructor(gl, texture, options = {}) {
     this.VRAnimator = options.VRAnimator;
     this.chosen = 0;
 
-    this.renderers = ["FOV2", "MIP", "MCM"];
+    this.renderers = ["FOV2", "MIP", "MCM", "ISO", "DOS", "LAO"];
     this.views = ["MONO", "STEREO", "REPROJ"];
+    this.right = true;
 }
 
 setTexture(texture) {
@@ -65,11 +65,12 @@ reset() {
     );
 }
 
-render(texture = null) {
+render(texture = null, right = true) {
     if(texture)
         this.setTexture(texture);
-    if(!(this.VRAnimator && this.VRAnimator.uiActive))
-        return;
+    // if(!(this.VRAnimator && this.VRAnimator.uiActive))
+    //     return;
+    this.right = right;
     const gl = this._gl;
 
     this._renderBuffer.use();
@@ -117,12 +118,17 @@ _drawUIText(reset = false) {
     ctx.fillRect(0, 0, this._resolution.width, this._resolution.height);
 
     ctx.fillStyle = 'black';
-    ctx.font = '24px sans-serif';
+    ctx.font = '20px sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
     if(reset || !(this.VRAnimator))
         ctx.fillText("TEST test", this.uiCanvas.width - 140, 195);
     else {
+        let x = this.uiCanvas.width - 160;
+        if(this.right)
+            x = x - 80;
+        let y = 190;
+        let yStep = 20;
         // this.chosen = this.VRAnimator.uiState;
         let cursor = ["", "", "", "", ""];
         cursor[this.VRAnimator.uiState] = "> ";
@@ -131,25 +137,53 @@ _drawUIText(reset = false) {
             ctx.fillStyle = 'blue';
         else
             ctx.fillStyle = 'black';
-        ctx.fillText(cursor[count++] + "Extinction: " + this.VRAnimator.extinction, this.uiCanvas.width - 140, 190);
+        ctx.fillText(cursor[count++] + "Extinction: " + this.VRAnimator.extinction, x, y);
+        y += yStep;
         if(this.VRAnimator.uiState == count)
             ctx.fillStyle = 'blue';
         else
             ctx.fillStyle = 'black';
-        ctx.fillText(cursor[count++] + "Steps: " + this.VRAnimator.steps, this.uiCanvas.width - 140, 215);
+        ctx.fillText(cursor[count++] + "Steps: " + this.VRAnimator.steps, x, y);
+        y += yStep;
         if(this.VRAnimator.uiState == count)
             ctx.fillStyle = 'blue';
         else
             ctx.fillStyle = 'black';
-        ctx.fillText(cursor[count++] + this.renderers[this.VRAnimator.chosenRenderer] + " renderer", this.uiCanvas.width - 140, 240);
+        ctx.fillText(cursor[count++] + this.renderers[this.VRAnimator.chosenRenderer] + " renderer", x, y);
+        y += yStep;
+
+        
         if(this.VRAnimator.uiState == count)
             ctx.fillStyle = 'blue';
         else
             ctx.fillStyle = 'black';
-        ctx.fillText(cursor[count++] + this.views[this.VRAnimator.renderState] + " view", this.uiCanvas.width - 140, 265);
+        ctx.fillText(cursor[count++] + this.views[this.VRAnimator.renderState] + " view", x, y);
+        
+
+        x = 218;
+        y = this._resolution.height - 72;
+        if(this.right)
+            x = x - 120;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + 190, y);
+        ctx.stroke();
+    
+        ctx.beginPath();
+        ctx.arc(x + this.VRAnimator.bar, y, 14, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgb(0 255 255)';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.stroke();
 
     }
+    // ctx.beginPath();
+    // ctx.moveTo(200, 700);
+    // ctx.lineTo(200 + 800, 700);
+    // ctx.stroke();
+
 }
+
 
 getTexture() {
     return this._renderBuffer.getAttachments().color[0];

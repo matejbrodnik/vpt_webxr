@@ -24,6 +24,9 @@ import { FOVRenderer3 } from './renderers/FOVRenderer3.js';
 
 import { UIRenderer } from './UIRenderer.js';
 import { EyeReproject } from './EyeReproject.js';
+import { ISORenderer } from './renderers/ISORenderer.js';
+import { LAORenderer } from './renderers/LAORenderer.js';
+import { DOSRenderer } from './renderers/DOSRenderer.js';
 
 const [ SHADERS, MIXINS ] = await Promise.all([
     'shaders.json',
@@ -369,6 +372,27 @@ switchRenderer(index) {
         console.log("CHANGED TO MCM");
         return true;
     }
+    if(index == 3 && !(this.renderer instanceof ISORenderer)) {
+        this.chooseRenderer("iso");
+        if(this.renderer2)
+            this.chooseRenderer2("iso", this.VRAnimator.renderState == 1);
+        console.log("CHANGED TO ISO");
+        return true;
+    }
+    if(index == 4 && !(this.renderer instanceof DOSRenderer)) {
+        this.chooseRenderer("dos");
+        if(this.renderer2)
+            this.chooseRenderer2("dos", this.VRAnimator.renderState == 1);
+        console.log("CHANGED TO DOS");
+        return true;
+    }
+    if(index == 5 && !(this.renderer instanceof LAORenderer)) {
+        this.chooseRenderer("lao");
+        if(this.renderer2)
+            this.chooseRenderer2("lao", this.VRAnimator.renderState == 1);
+        console.log("CHANGED TO LAO");
+        return true;
+    }
     return false;
 }
 
@@ -500,20 +524,25 @@ render() {
 
     this.random = Math.random();
     if(this.right) {
-        if(this.VRAnimator.renderState == 2 && this.reproject)
+        
+        if(this.VRAnimator.renderState == 2) {
             this.reproject.render();
+            this.uiRenderer.render(this.reproject.getTexture(), true);
+        }
         else if(this.VRAnimator.renderState == 1) {
             this.renderer2.random = this.random;
             this.renderer2.render(); //2
             this.toneMapper.render(this.renderer2.getTexture()); //2
+            this.uiRenderer.render(this.toneMapper.getTexture(), true);
         }
-        this.uiRenderer.render(this.toneMapper.getTexture());
+        else
+            this.uiRenderer.render(this.toneMapper.getTexture(), true);
     }
     else {
         this.renderer.random = this.random;
         this.renderer.render();
         this.toneMapper.render(this.renderer.getTexture());
-        this.uiRenderer.render(this.toneMapper.getTexture());
+        this.uiRenderer.render(this.toneMapper.getTexture(), false);
     }
 
     this.program = this.programs.quad;

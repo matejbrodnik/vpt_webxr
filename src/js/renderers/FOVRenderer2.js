@@ -114,8 +114,8 @@ _resetFrame() {
             VROn: this._VROn,
         });
         this.mip.setContext(this._context);
+        this.mip.mono = 1;
     }
-    this.mip.setName(this.name);
 
     this.mip.reset();
     
