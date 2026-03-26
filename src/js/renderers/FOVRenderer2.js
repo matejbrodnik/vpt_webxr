@@ -56,6 +56,8 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
 
     this.addEventListener('change', e => {
         const { name, value } = e.detail;
+        console.log("TRANSFEEEEER", this.transferFunction);
+        console.log("TRANSFEEEEER2", this._transferFunction);
 
         if (name === 'transferFunction') {
             this.setTransferFunction(this.transferFunction);
@@ -87,12 +89,26 @@ destroy() {
     });
     if(this.mip)
         this.mip.destroy();
+    this.mip = null;
     super.destroy();
+}
+
+setVolume(volume) {
+    // if(this.mip)
+    //     this.mip.destroy();
+    // console.log("destroy", this.mip)
+    if(this.mip) {
+        this.mip.setVolume(volume);
+        this.mip.render();
+    }
+    this.mip = null;
+    this.reproject = -1;
+    this._volume = volume;
+    this.reset();
 }
 
 _resetFrame() {
     const gl = this._gl;
-    console.log("FOV RESET ", this.name);
 
     if(this.reproject == -1)
         this.reproject = 0;
@@ -104,7 +120,6 @@ _resetFrame() {
     }
 
     // console.log("reset");
-
     if(this.mip == null) {
         this.mip = new MIPRenderer(gl, this._volume, this._camera, this._environmentTexture, {
             resolution: this._resolution,
@@ -117,7 +132,10 @@ _resetFrame() {
         this.mip.mono = 1;
     }
 
-    this.mip.reset();
+    this.mip.reset(true);
+
+    this.mip._VRAnimator = this._VRAnimator;
+    this.mip._VRProjection = this._VRProjection;
     
     this.mip.render();
 
@@ -184,6 +202,8 @@ _resetFrame() {
     this.forwardMatrix = mat4.clone(matrix);
 
     mat4.invert(matrix, matrix);
+    // console.log("FOV2 RESET");
+    // this.log(matrix);
     gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix);
 
     gl.drawBuffers([
@@ -279,6 +299,8 @@ _integrateFrame() {
     gl.uniform1f(uniforms.uAnisotropy, this.anisotropy);
     gl.uniform1ui(uniforms.uMaxBounces, this.bounces);
     gl.uniform1ui(uniforms.uSteps, this._VROn ? this._VRAnimator.steps : this.steps);
+    // if(this.VRAnimator && this.VRAnimator.depthMode)
+    //     this.reproject = 0;
     gl.uniform1ui(uniforms.reproject, this.reproject);
     if(this.reproject) {
         // this._context.brick = true;
@@ -310,6 +332,8 @@ _integrateFrame() {
     // console.log("MODEL")
     // console.log("VIEW", viewMatrix);
     // console.log("PROJ", projectionMatrix)
+    // console.log("FOV");
+    // this.log(matrix);
     gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix);
 
     gl.drawBuffers([

@@ -58,6 +58,7 @@ _getVolumeTypeFromURL(filename) {
 }
 
 _handleLoadClick() {
+    console.log("aaaas")
     switch (this.binds.type.value) {
         case 'file' : this._handleLoadFile(); break;
         case 'url'  : this._handleLoadURL();  break;
@@ -71,6 +72,9 @@ _handleLoadFile() {
         // update status bar?
         return;
     }
+    console.log(this.binds);
+    console.log(this.binds.file);
+    console.log(this.binds.file.files);
 
     const file = files[0];
     const filetype = this._getVolumeTypeFromURL(file.name);
@@ -81,7 +85,7 @@ _handleLoadFile() {
     this.dispatchEvent(new CustomEvent('load', {
         detail: {
             type       : 'file',
-            file       : file,
+            files       : files,
             filetype   : filetype,
             dimensions : dimensions,
             precision  : precision,

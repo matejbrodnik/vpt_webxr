@@ -73,6 +73,7 @@ constructor() {
 
     this.binds.load.addEventListener('click', e => {
         CommonUtils.readTextFile(data => {
+            console.log(data);
             this.bumps = JSON.parse(data);
             this.render();
             this._rebuildHandles();
@@ -110,7 +111,6 @@ resizeTransferFunction(width, height) {
 render() {
     const gl = this._gl;
     const { uniforms } = this._program;
-
     gl.clear(gl.COLOR_BUFFER_BIT);
     for (const bump of this.bumps) {
         gl.uniform2f(uniforms.uPosition, bump.position.x, bump.position.y);

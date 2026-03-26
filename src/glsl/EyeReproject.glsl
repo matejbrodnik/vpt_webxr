@@ -46,10 +46,14 @@ void main() {
     vec3 color = texture(uColor, mappedPosition).rgb;
     vec3 position = texture(uPosition, mappedPosition).rgb;
 
-    if(position != vec3(0)) {
+    if(position.x > 0.0 && position.y > 0.0 && position.z > 0.0 && position.x < 1.0 && position.y < 1.0 && position.z < 1.0) {
         vec4 clipA = uMvp * vec4(position, 1.0);
         vec3 ndcA = clipA.xyz / clipA.w;
         vec2 uvA = ndcA.xy * 0.5 + 0.5;
+        
+        // if (clipA.w <= 0.0 || ndcA.z < -1.0 || ndcA.z > 1.0) {
+        //     oColor = vec4(1, 0, 0, 1);
+        // }
         if (uvA.x >= 0.0 && uvA.x <= 1.0 && uvA.y >= 0.0 && uvA.y <= 1.0) {
             vec3 old = texture(uColor, uvA).rgb;
             oColor = vec4(old, 1);
@@ -57,7 +61,6 @@ void main() {
         else {
             oColor = vec4(1);
         }
-        // oColor = vec4(position, 1);
     }
     else {
         oColor = vec4(1);
@@ -154,10 +157,10 @@ void main() {
 
     vec3 pos = vec3(0);
     uint count = 0u;
-    // while (pos == vec3(0) && count < 3u) {
-    for(uint i = 0u; i < 200u; i++) {
+    for(uint i = 0u; i < 100u; i++) {
         float dist = random_exponential(state, 100.0);
         photon.position += dist * photon.direction;
+        // photon.position += 0.0173 * photon.direction;
 
         vec4 volumeSample = sampleVolumeColor(photon.position);
 
@@ -168,8 +171,8 @@ void main() {
 
         float fortuneWheel = random_uniform(state);
         if (any(greaterThan(photon.position, vec3(1))) || any(lessThan(photon.position, vec3(0)))) {
-            count++;
-            pos += photon.position;
+            // count++;
+            // pos += photon.position;
             reset(state, photon);
         } else if (fortuneWheel < PAbsorption) {
             count++;
@@ -183,6 +186,10 @@ void main() {
             // null collision
         }
     }
-
-    oPosition = vec4(pos / float(count), 1);
+    if(count == 0u) {
+        oPosition = vec4(0);
+    }
+    else {
+        oPosition = vec4(pos / float(count), 1);
+    }
 }

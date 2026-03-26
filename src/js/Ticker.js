@@ -42,7 +42,8 @@ function remove(f) {
 function reset() {
     // console.log("reset")
     queue = [];
-    _session.cancelAnimationFrame(requestID);
+    if(requestID)
+        _session.cancelAnimationFrame(requestID);
     _session = null;
 }
 

@@ -55,6 +55,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     // this._VROn = false;
     this.iter = 10;
     this.name = "0";
+    this.disable = false;
     console.log("CREATED: ", this);
 }
 
@@ -83,17 +84,20 @@ render() {
     this._renderBuffer.use();
     this._renderFrame();
 
+    // console.log("render #" + this.name, "iter: " + this.iter);
     this.ready = true;
     this.iter++;
 }
 
-reset() {
+reset(force = false) {
     // if(this instanceof MIPRenderer) {
     //     console.log("MIP",this.iter)
     // }
-    // console.log("reset", this.iter, this.ready);
-    if(!(this instanceof MIPRenderer) && (this.iter <= 1))
+    if(this.disable || !force && !(this instanceof MIPRenderer) && (this.iter <= 1)) {
+        // console.log("reset", this instanceof MIPRenderer ? "mip" : this.iter);
         return;
+    }
+    console.log("RESET #" + this.name, "iter: " + this.iter);
     this._accumulationBuffer.use();
     this._resetFrame();
     this._accumulationBuffer.swap();

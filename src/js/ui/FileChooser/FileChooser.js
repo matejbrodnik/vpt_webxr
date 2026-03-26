@@ -16,17 +16,32 @@ constructor() {
     this.shadow.appendChild(template.content.cloneNode(true));
     this.binds = DOMUtils.bind(this.shadow);
 
+    this._files = [];
+
     this.addEventListener('click', this.clickListener);
     this.binds.input.addEventListener('change', this.changeListener);
 }
 
 changeListener() {
-    if (this.binds.input.files.length > 0) {
-        const fileName = this.binds.input.files[0].name;
-        this.binds.label.textContent = fileName;
+    // if (this.binds.input.files.length > 0) {
+    //     const fileName = this.binds.input.files[0].name;
+    //     this.binds.label.textContent = fileName;
+    // } else {
+    //     this.binds.label.textContent = '';
+    // }
+    // this.dispatchEvent(new Event('change'));
+
+    const files = this.binds.input.files;
+
+    if (files.length > 0) {
+        this._files.push(...files);
+        const names = Array.from(files).map(f => f.name);
+        this.binds.label.textContent = names.join(', ');
     } else {
         this.binds.label.textContent = '';
     }
+
+    console.log("change")
     this.dispatchEvent(new Event('change'));
 }
 
@@ -35,7 +50,8 @@ clickListener() {
 }
 
 get files() {
-    return this.binds.input.files;
+    return this._files;
+    // return this.binds.input.files;
 }
 
 get value() {

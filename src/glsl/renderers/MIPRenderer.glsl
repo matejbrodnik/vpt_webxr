@@ -142,19 +142,23 @@ out vec4 oColor;
 void main() {
     float acc = texture(uAccumulator, vPosition).r;
 
+    if(uMono == 1u && acc > 0.0) {
+        acc = 0.7;
+    }
+
     //dilation
     float maxVal = 0.0;
-    // int k = 1;
-    // if(acc == 0.0) {
-    //     for (int dx = -k; dx <= k; ++dx) {
-    //         for (int dy = -k; dy <= k; ++dy) {
-    //             vec2 offset = vec2(dx, dy) / 512.0;
-    //             float val = texture(uAccumulator, vPosition + offset).r;
-    //             maxVal = max(maxVal, val);
-    //         }
-    //     }
-    //     acc = maxVal;
-    // }
+    int k = 1;
+    if(acc == 0.0) {
+        for (int dx = -k; dx <= k; ++dx) {
+            for (int dy = -k; dy <= k; ++dy) {
+                vec2 offset = vec2(dx, dy) / 512.0;
+                float val = texture(uAccumulator, vPosition + offset).r;
+                maxVal = max(maxVal, val);
+            }
+        }
+        acc = maxVal * 0.8;
+    }
 
     //acc = pow(acc, 0.7);
     
@@ -168,9 +172,9 @@ void main() {
     // if(acc != 0.0) {
     //     acc = 1.6 - acc;
     // }
-    if(uMono == 1u && acc > 0.0) {
-        acc = 0.7;
-    }
+    // if(uMono == 1u && acc > 0.0) {
+    //     acc = 0.7;
+    // }
 
     oColor = vec4(acc, acc, acc, 1);
     // oColor = vec4(0, 1, 1, 1);

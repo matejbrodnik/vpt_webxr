@@ -1,6 +1,7 @@
 import { WebGL } from './WebGL.js';
 
 import { SingleBuffer } from './SingleBuffer.js';
+import { quat, vec3 } from '../../lib/gl-matrix-module.js';
 
 const [ SHADERS, MIXINS ] = await Promise.all([
     'shaders.json',
@@ -22,6 +23,8 @@ constructor(gl, texture, options = {}) {
     this.uiCanvas = document.createElement('canvas');
     this.uiCanvas.width = 512;
     this.uiCanvas.height = 512;
+    this.ratioW = this._resolution.width / 512;
+    this.ratioH = this._resolution.height / 512;
 
     this.uiCtx = this.uiCanvas.getContext('2d', { alpha: true });
 
@@ -31,6 +34,15 @@ constructor(gl, texture, options = {}) {
     this.renderers = ["FOV2", "MIP", "MCM", "ISO", "DOS", "LAO"];
     this.views = ["MONO", "STEREO", "REPROJ"];
     this.right = true;
+
+    this.depthMode = false;
+    this.depthParams = {
+        xA: 300, yA: 250,
+        xB: 370, yB: 200,
+        xD: 340, yD: 230,
+        rotation: quat.create(), translation: vec3.create()
+    }
+    
 }
 
 setTexture(texture) {
@@ -40,8 +52,6 @@ setTexture(texture) {
 destroy() {
     const gl = this._gl;
     gl.deleteProgram(this._programs.program);
-
-    super.destroy();
 }
 
 reset() {
@@ -112,6 +122,7 @@ render(texture = null, right = true) {
 
 _drawUIText(reset = false) {
     let ctx = this.uiCtx;
+    // console.log(this._resolution) // 720 396
     ctx.clearRect(0, 0, this._resolution.width, this._resolution.height);
 
     ctx.fillStyle = 'rgba(0,0,0,0)';
@@ -121,62 +132,101 @@ _drawUIText(reset = false) {
     ctx.font = '20px sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
-    if(reset || !(this.VRAnimator))
-        ctx.fillText("TEST test", this.uiCanvas.width - 140, 195);
-    else {
-        let x = this.uiCanvas.width - 160;
-        if(this.right)
-            x = x - 80;
-        let y = 190;
-        let yStep = 20;
-        // this.chosen = this.VRAnimator.uiState;
-        let cursor = ["", "", "", "", ""];
-        cursor[this.VRAnimator.uiState] = "> ";
-        let count = 0;
-        if(this.VRAnimator.uiState == count)
-            ctx.fillStyle = 'blue';
-        else
-            ctx.fillStyle = 'black';
-        ctx.fillText(cursor[count++] + "Extinction: " + this.VRAnimator.extinction, x, y);
-        y += yStep;
-        if(this.VRAnimator.uiState == count)
-            ctx.fillStyle = 'blue';
-        else
-            ctx.fillStyle = 'black';
-        ctx.fillText(cursor[count++] + "Steps: " + this.VRAnimator.steps, x, y);
-        y += yStep;
-        if(this.VRAnimator.uiState == count)
-            ctx.fillStyle = 'blue';
-        else
-            ctx.fillStyle = 'black';
-        ctx.fillText(cursor[count++] + this.renderers[this.VRAnimator.chosenRenderer] + " renderer", x, y);
-        y += yStep;
-
-        
-        if(this.VRAnimator.uiState == count)
-            ctx.fillStyle = 'blue';
-        else
-            ctx.fillStyle = 'black';
-        ctx.fillText(cursor[count++] + this.views[this.VRAnimator.renderState] + " view", x, y);
-        
-
-        x = 218;
-        y = this._resolution.height - 72;
-        if(this.right)
-            x = x - 120;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + 190, y);
-        ctx.stroke();
+    // if(reset || !(this.VRAnimator))
+    //     ctx.fillText("TEST test", this.uiCanvas.width - 140, 195);
+    if(this.VRAnimator) {
+        if(this.VRAnimator.lockCircle) {
+            if(this.VRAnimator.circleActive > 0) {
+                // this.VRAnimator.model.localTranslation = this.depthParams.translation;
+                // this.VRAnimator.model.localRotation = this.depthParams.rotation;
+                return;
+            }
     
-        ctx.beginPath();
-        ctx.arc(x + this.VRAnimator.bar, y, 14, 0, 2 * Math.PI);
-        ctx.fillStyle = 'rgb(0 255 255)';
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.stroke();
+            this._drawCircle(this.depthParams.xA - (this.right ? 38 : 0), this.depthParams.yA, 8, 'rgb(109, 255, 41)')
+    
+            this._drawCircle(this.depthParams.xD - (this.right ? 38 : 0), this.depthParams.yD, 8, 'rgb(161, 161, 161)')
+    
+            this._drawCircle(this.depthParams.xB - (this.right ? 38 : 0), this.depthParams.yB, 8, 'rgb(237, 41, 255)')
+            
+            ctx.strokeStyle = 'black';
+            //bar
+            let x = 210;
+            let y = 300;
+            if(this.right)
+                x = x - 38;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo((x + 170), y);
+            ctx.stroke();
+        
+            this._drawCircle((x), y, 10, 'rgb(109, 255, 41)', true);
+            this._drawCircle((x + 170), y, 10, 'rgb(237, 41, 255)', true);
+            this._drawCircle((x + this.VRAnimator.bar), y, 10, 'rgb(161, 161, 161)', true);
+            ctx.strokeStyle = 'black';
+    
+            // ctx.beginPath();
+            // ctx.arc((x + this.VRAnimator.bar), y, 14, 0, 2 * Math.PI);
+            // ctx.fillStyle = 'rgb(161, 161, 161)';
+            // ctx.fill();
+            // ctx.lineWidth = 2;
+            // ctx.stroke();
 
+        }
+        if(this.VRAnimator.uiActive) {
+            let x = this.uiCanvas.width - 160;
+            if(this.right)
+                x = x - 80;
+            let y = 190;
+            let yStep = 20;
+            // this.chosen = this.VRAnimator.uiState;
+            let cursor = ["", "", "", "", ""];
+            cursor[this.VRAnimator.uiState] = "> ";
+            let count = 0;
+            if(this.VRAnimator.uiState == count)
+                ctx.fillStyle = 'blue';
+            else
+                ctx.fillStyle = 'black';
+            ctx.fillText(cursor[count++] + "Extinction: " + this.VRAnimator.extinction, x, y);
+            y += yStep;
+            if(this.VRAnimator.uiState == count)
+                ctx.fillStyle = 'blue';
+            else
+                ctx.fillStyle = 'black';
+            ctx.fillText(cursor[count++] + "Steps: " + this.VRAnimator.steps, x, y);
+            y += yStep;
+            if(this.VRAnimator.uiState == count)
+                ctx.fillStyle = 'blue';
+            else
+                ctx.fillStyle = 'black';
+            ctx.fillText(cursor[count++] + this.renderers[this.VRAnimator.chosenRenderer] + " renderer", x, y);
+            y += yStep;
+    
+            
+            if(this.VRAnimator.uiState == count)
+                ctx.fillStyle = 'blue';
+            else
+                ctx.fillStyle = 'black';
+            ctx.fillText(cursor[count++] + this.views[this.VRAnimator.renderState] + " view", x, y);
+        }
     }
+        
+
+        // x = 218;
+        // y = this._resolution.height - 72;
+        // if(this.right)
+        //     x = x - 120;
+        // ctx.beginPath();
+        // ctx.moveTo(x, y);
+        // ctx.lineTo(x + 190, y);
+        // ctx.stroke();
+    
+        // ctx.beginPath();
+        // ctx.arc(x + this.VRAnimator.bar, y, 14, 0, 2 * Math.PI);
+        // ctx.fillStyle = 'rgb(161, 161, 161)';
+        // ctx.fill();
+        // ctx.lineWidth = 2;
+        // ctx.stroke();
+
     // ctx.beginPath();
     // ctx.moveTo(200, 700);
     // ctx.lineTo(200 + 800, 700);
@@ -184,6 +234,28 @@ _drawUIText(reset = false) {
 
 }
 
+_drawCircle(x, y, w, color, fill = false) {
+    let ctx = this.uiCtx;
+    ctx.beginPath();
+    ctx.arc(x, y, w, 0, 2 * Math.PI);
+    ctx.strokeStyle = 'rgb(0, 0, 0)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(x, y, w - 1, 0, 2 * Math.PI);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();  
+
+    if(fill) {
+        ctx.beginPath();
+        ctx.arc(x, y, w - 3, 0, 2 * Math.PI);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        ctx.stroke();
+    }
+}
 
 getTexture() {
     return this._renderBuffer.getAttachments().color[0];

@@ -132,6 +132,10 @@ render() {
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this._frameBuffer.getAttachments().color[0]);
     gl.uniform1i(uniforms.uPosition, 1);
+
+    // gl.activeTexture(gl.TEXTURE2);
+    // gl.bindTexture(gl.TEXTURE_2D, this._frameBuffer.getAttachments().color[0]);
+    // gl.uniform1i(uniforms.uPositionL, 2);
     
     // console.log(this._views[1]);
     // gl.uniformMatrix4fv(uniforms.uView1, false, this._views[0]);

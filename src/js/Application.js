@@ -95,7 +95,8 @@ constructor() {
     this.renderingContext.addEventListener('animationprogress', e => {
         this.mainDialog.binds.animationProgress.value = e.detail;
     });
-
+    this.renderingContext.addEventListener('volumechange', this._handleVolumeChange);
+    
     this.mainDialog.addEventListener('rendererchange', this._handleRendererChange);
     this.mainDialog.addEventListener('tonemapperchange', this._handleToneMapperChange);
     this._handleRendererChange();
@@ -178,31 +179,16 @@ _handleToneMapperChange() {
     container.appendChild(this.toneMapperDialog);
 }
 
+async _handleVolumeChange(e) {
+    console.log("volume event", e);
+    await this.loadVolume(e.detail, "raw");
+}
+
 async _handleVolumeLoad(e) {
     const options = e.detail;
     if (options.type === 'file') {
-        const readerClass = ReaderFactory(options.filetype);
-        if (readerClass) {
-            const loaderClass = LoaderFactory('blob');
-            const loader = new loaderClass(options.file);
-            let dim = options.file.name.split("_")[1].split("x");
-            console.log(dim);
-            const reader = new readerClass(loader, {
-                width  : dim[0],
-                height : dim[1],
-                depth  : dim[2],
-                bits   : options.precision,
-            });
-            // const reader = new readerClass(loader, {
-            //     width  : options.dimensions[0],
-            //     height : options.dimensions[1],
-            //     depth  : options.dimensions[2],
-            //     bits   : options.precision,
-            // });
-            this.renderingContext.stopRendering();
-            await this.renderingContext.setVolume(reader);
-            this.renderingContext.startRendering();
-        }
+        this.renderingContext.files = options.files;
+        await this.renderingContext.loadVolume(0, options.filetype, options.precision);
     } else if (options.type === 'url') {
         const readerClass = ReaderFactory(options.filetype);
         if (readerClass) {

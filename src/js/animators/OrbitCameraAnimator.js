@@ -23,7 +23,7 @@ constructor(camera, domElement, volumeTransform, options = {}) {
     this._domElement = domElement;
 
     this._focus = [0, 0, 0];
-    this._focusDistance = 2;//vec3.distance(this._focus, this._camera.transform.globalTranslation);
+    this._focusDistance = vec3.distance(this._focus, this._camera.transform.globalTranslation);
     console.log(this._focusDistance);
     this._yaw = 0;
     this._pitch = 0;
