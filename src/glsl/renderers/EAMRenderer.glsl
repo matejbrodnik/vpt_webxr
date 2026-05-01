@@ -6,6 +6,7 @@ uniform mat4 uMvpInverseMatrix;
 
 out vec3 vRayFrom;
 out vec3 vRayTo;
+out vec2 vPosition;
 
 // #link /glsl/mixins/unproject.glsl
 @unproject
@@ -18,6 +19,7 @@ const vec2 vertices[] = vec2[](
 
 void main() {
     vec2 position = vertices[gl_VertexID];
+    vPosition = position;
     unproject(position, uMvpInverseMatrix, vRayFrom, vRayTo);
     gl_Position = vec4(position, 0, 1);
 }
@@ -31,12 +33,15 @@ precision mediump sampler3D;
 
 uniform sampler3D uVolume;
 uniform sampler2D uTransferFunction;
+// uniform sampler2D uMIP;
+uniform float uFov;
 uniform float uStepSize;
 uniform float uOffset;
 uniform float uExtinction;
 
 in vec3 vRayFrom;
 in vec3 vRayTo;
+in vec2 vPosition;
 
 out vec4 oColor;
 
@@ -52,14 +57,31 @@ vec4 sampleVolumeColor(vec3 position) {
 void main() {
     vec3 rayDirection = vRayTo - vRayFrom;
     vec2 tbounds = max(intersectCube(vRayFrom, rayDirection), 0.0);
+    
+    // vec2 mappedPosition = vPosition * 0.5 + 0.5;
+    // float mip = texture(uMIP, mappedPosition).r;
+    // float avg;
+    // avg = texelFetch(uMIP, ivec2(0, 0), uLod).r;
+
+    float stepSize = uStepSize;
+    // if(mip < 0.01) {
+    //     stepSize = 1.0;
+    // }
+    // else {
+    //     stepSize *= (mip / avg);
+    // }
+
+    // if(uFov != 0.0) {
+    //     oColor = vec4(0, 0, 0, 1);
+    // }
     if (tbounds.x >= tbounds.y) {
         oColor = vec4(0, 0, 0, 1);
     } else {
         vec3 from = mix(vRayFrom, vRayTo, tbounds.x);
         vec3 to = mix(vRayFrom, vRayTo, tbounds.y);
-        float rayStepLength = distance(from, to) * uStepSize;
+        float rayStepLength = distance(from, to) * stepSize;
 
-        float t = uStepSize * uOffset;
+        float t = stepSize * uOffset;
         vec4 accumulator = vec4(0);
 
         while (t < 1.0 && accumulator.a < 0.99) {
@@ -68,7 +90,7 @@ void main() {
             colorSample.a *= rayStepLength * uExtinction;
             colorSample.rgb *= colorSample.a;
             accumulator += (1.0 - accumulator.a) * colorSample;
-            t += uStepSize;
+            t += stepSize;
         }
 
         if (accumulator.a > 1.0) {

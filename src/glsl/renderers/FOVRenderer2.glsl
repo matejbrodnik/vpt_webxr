@@ -44,6 +44,7 @@ uniform sampler2D uPosition;
 uniform sampler2D uDirection;
 uniform sampler2D uTransmittance;
 uniform sampler2D uRadiance;
+uniform sampler2D uDepth;
 
 uniform sampler3D uVolume;
 uniform sampler2D uTransferFunction;
@@ -132,6 +133,9 @@ void main() {
     vec2 mappedPosition = vPosition * 0.5 + 0.5;
     float state = hash(vec3(mappedPosition.x * 123.456, mappedPosition.y * 654.321, uRandSeed));
     
+    vec4 depthA = texture(uDepth, mappedPosition);
+    vec3 depth = depthA.rgb;
+    float depthSamples = depthA.a;
     vec4 radianceAndSamples = texture(uRadiance, mappedPosition);
     photon.radiance = radianceAndSamples.rgb;
     photon.samples2 = radianceAndSamples.w;
@@ -258,7 +262,11 @@ void main() {
     // oMIP = vec4(mip, mip, mip, 1);
     oMIP = vec4(photon.M2, mip);
 
-    oDepth = vec4(saved, 0);
+    if(saved != vec3(0)) {
+        depthSamples += 1.0;
+        depth += (saved - depth) / depthSamples;
+    }
+    oDepth = vec4(depth, depthSamples);
 
     vec3 variance = photon.M2 / (photon.samples2 - 1.0);
     float sum = variance.r + variance.g + variance.b;
@@ -412,6 +420,7 @@ layout (location = 2) out vec4 oTransmittance;
 layout (location = 3) out vec4 oRadiance;
 layout (location = 4) out vec4 oMIP;
 layout (location = 5) out vec4 oOld;
+layout (location = 6) out vec4 oDepth;
 // layout (location = 6) out vec4 oOldSteps;
 
 void main() {
@@ -438,5 +447,6 @@ void main() {
     oMIP = vec4(photon.M2, texture(uMIP, mappedPosition).r);
     // oMIP = texture(uMIP, mappedPosition);
     oOld = texture(uRadiance, mappedPosition);
+    oDepth = vec4(0);
     // oOldSteps = texture(uPosition, mappedPosition);
 }

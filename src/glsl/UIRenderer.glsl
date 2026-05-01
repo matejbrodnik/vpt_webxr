@@ -23,6 +23,8 @@ precision highp float;
 
 uniform sampler2D uScene;
 uniform sampler2D uTex;
+// uniform float uX;
+// uniform float uY;
 
 in vec2 vPosition;
 out vec4 outColor;
@@ -38,7 +40,21 @@ void main() {
     vec4 ui = texture(uTex, uiUV);
 
     // outColor = ui;
-    outColor = mix(scene, ui, ui.a);
+    // float uxMin = uX - 0.002;
+    // float uxMax = uX + 0.002;
+    // float uyMin = uY - 0.002;
+    // float uyMax = uY + 0.002;
+    // if((vPosition.x > uxMin && vPosition.x < uxMax) || (vPosition.y > uyMin && vPosition.y < uyMax)) {
+    //     if((vPosition.x > uxMin && vPosition.x < uxMax) && (vPosition.y > uyMin && vPosition.y < uyMax)) {
+    //         outColor = vec4(1, 0, 0, 0);
+    //     }
+    //     else {
+    //         outColor = vec4(0, 0, 0, 0);
+    //     }
+    // }
+    // else {
+        outColor = mix(scene, ui, ui.a);
+    // }
 }
 
 
@@ -54,10 +70,8 @@ uniform mat4 u_matrix;
 out vec2 v_texcoord;
 
 void main() {
-  // Multiply the position by the matrix.
   gl_Position = u_matrix * a_position;
 
-  // Pass the texcoord to the fragment shader.
   v_texcoord = a_texcoord;
 }
 
@@ -66,7 +80,6 @@ void main() {
 #version 300 es
 precision highp float;
 
-// Passed in from the vertex shader.
 in vec2 v_texcoord;
 
 uniform sampler2D u_texture;

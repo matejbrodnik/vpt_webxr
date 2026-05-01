@@ -3,8 +3,7 @@
 void mipmap(
         inout float state,
         in sampler2D MIP,
-        out vec2 pos,
-        out float pdf)
+        out vec2 pos)
 {
     int a = 0;
     int b = 0;
@@ -23,7 +22,10 @@ void mipmap(
         ne = ne / sum;
         se = se / sum;
         // state = state + uint(i);
-        float normRand = state;
+        float h1 = (nw + 0.7421245196) * (se + 0.397136137);
+        float h2 = (ne + 0.2397198051) * (sw + 0.8735190153);
+        state += fract(random_uniform(h1) + random_uniform(h2));
+        float normRand = random_uniform(state);
         // normRand *= sum;
         if(normRand < nw) {
             a *= 2;
@@ -49,7 +51,7 @@ void mipmap(
             root = sum;
         }
     }
-    pdf = leaf / root;
+    // pdf = leaf / root;
     // a = a / 2;
     // b = b / 2;
 

@@ -47,6 +47,11 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
         mag     : gl.LINEAR,
     });
 
+    if(options.TF) {
+        console.log("ABS")
+        this.setTransferFunction(options.TF);
+    }
+
     this._clipQuadProgram = WebGL.buildPrograms(gl, {
         quad: SHADERS.quad
     }, MIXINS).quad;
@@ -94,10 +99,12 @@ reset(force = false) {
     //     console.log("MIP",this.iter)
     // }
     if(this.disable || !force && !(this instanceof MIPRenderer) && (this.iter <= 1)) {
+        // console.log(force);
         // console.log("reset", this instanceof MIPRenderer ? "mip" : this.iter);
         return;
     }
-    console.log("RESET #" + this.name, "iter: " + this.iter);
+    // console.log("RESET ", force);
+    // console.log("RESET #" + this.name, "iter: " + this.iter);
     this._accumulationBuffer.use();
     this._resetFrame();
     this._accumulationBuffer.swap();
@@ -138,10 +145,11 @@ _rebuildRender() {
 
 setVolume(volume) {
     this._volume = volume;
-    this.reset();
+    this.reset(true);
 }
 
 setTransferFunction(transferFunction) {
+    console.log(transferFunction)
     const gl = this._gl;
     gl.bindTexture(gl.TEXTURE_2D, this._transferFunction);
     gl.texImage2D(gl.TEXTURE_2D, 0,

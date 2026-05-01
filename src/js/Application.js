@@ -137,7 +137,7 @@ _handleRendererChange() {
     }
 
     const which = this.mainDialog.getSelectedRenderer();
-    this.renderingContext.chooseRenderer(which, false);
+    this.renderingContext.chooseRenderer(which, true);
     const renderer = this.renderingContext.renderer;
     const object = DialogConstructor.construct(renderer.properties);
     const binds = DOMUtils.bind(object);
@@ -188,7 +188,10 @@ async _handleVolumeLoad(e) {
     const options = e.detail;
     if (options.type === 'file') {
         this.renderingContext.files = options.files;
-        await this.renderingContext.loadVolume(0, options.filetype, options.precision);
+        for(let i = 0; i < options.files.length; i++) {
+            await this.renderingContext.loadVolume(i, options.filetype, options.precision);
+            console.log("INDEX", i);
+        }
     } else if (options.type === 'url') {
         const readerClass = ReaderFactory(options.filetype);
         if (readerClass) {
@@ -263,7 +266,9 @@ _handleVRLoad(e) {
                 renderingContext = this.renderingContext;
                 gl = renderingContext.gl;
                 
-                const layer = new XRWebGLLayer(session, gl);
+                const layer = new XRWebGLLayer(session, gl, {
+                    framebufferScaleFactor: 1.0
+                });
                 console.log(layer);
                 renderingContext.session.updateRenderState({ baseLayer: layer });
                 renderingContext.session.requestReferenceSpace('local-floor').then((refSpace) => {

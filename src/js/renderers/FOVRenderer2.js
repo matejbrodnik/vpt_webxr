@@ -132,30 +132,13 @@ _resetFrame() {
         this.mip.mono = 1;
     }
 
-    this.mip.reset(true);
+    this.mip.setVolume(this._volume);
+    // this.mip.reset(true);
 
     this.mip._VRAnimator = this._VRAnimator;
     this.mip._VRProjection = this._VRProjection;
     
     this.mip.render();
-
-    this._MIPmap = { ...this.mip._renderBuffer.getAttachments() };
-
-    // this._rebuildBuffers();
-    // console.log(this._accumulationBuffer._readAttachments.color);
-
-    // this._accumulationBuffer._readAttachments.color[4] = WebGL.createTexture(gl, {
-    //     texture : this._MIPmap.color[0],
-    //     width   : this._resolution,
-    //     height  : this._resolution,
-    //     min     : gl.NEAREST,
-    //     mag     : gl.NEAREST,
-    //     format  : gl.RGBA,
-    //     iformat : gl.RGBA32F,
-    //     type    : gl.FLOAT,
-    // });
-    // gl.bindFramebuffer(gl.FRAMEBUFFER, this._accumulationBuffer._readFramebuffer);
-    // gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT4, gl.TEXTURE_2D, this._accumulationBuffer._readAttachments.color[4], 0);
 
     this._accumulationBuffer.use();
     
@@ -213,7 +196,7 @@ _resetFrame() {
         gl.COLOR_ATTACHMENT3,
         gl.COLOR_ATTACHMENT4,
         gl.COLOR_ATTACHMENT5,
-        // gl.COLOR_ATTACHMENT6,
+        gl.COLOR_ATTACHMENT6,
     ]);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -287,6 +270,10 @@ _integrateFrame() {
     gl.activeTexture(gl.TEXTURE8);
     gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[5]);
     gl.uniform1i(uniforms.uOld, 8);
+
+    gl.activeTexture(gl.TEXTURE9);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[6]);
+    gl.uniform1i(uniforms.uDepth, 9);
 
     gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution.width, 1 / this._resolution.height);
     gl.uniform1i(uniforms.uLod, this.lod);
@@ -459,7 +446,6 @@ _getAccumulationBufferSpec() {
     };
 
     const mipBufferSpec = {
-        // texture : this._MIPmap ? this._MIPmap.color[0] : gl.createTexture(),
         width   : this._resolution.width,
         height  : this._resolution.height,
         min     : gl.NEAREST,

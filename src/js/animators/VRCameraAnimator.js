@@ -9,11 +9,8 @@ export class VRCameraAnimator extends EventTarget {
 constructor(volumeTransform) {
     super();
     this.transform = new Transform(new Node());
-
     this.model = new Transform(new Node());
-    this.translationSpeed = 0.0008;
-    this.rotationSpeed = 0.005;
-
+    
     this.yaw = 0;
     this.pitch = 0;
     this.dx = 0;
@@ -24,15 +21,14 @@ constructor(volumeTransform) {
     this.focusDistance = 1;
     this.transform.localTranslation = vec3.clone([0, 0, this.focusDistance]);
     // console.log("focus", this.focusDistance)
-    this.yaw = 0;
-    this.pitch = 0;
-    this.thr = 0.66;
+    
+    this.thr = 0.74;
     this.thrAuto = 0.01;
-    this.angleStep = 0.03;
+    this.translationSpeed = 0.0008;
+    this.rotationSpeed = 0.005;
     this.translationStep = 0.012;
-    this.scale = 1.0;
+    this.angleStep = 0.03;
 
-    this.translation = [0, 0, 0];
     this.angles = null;
     this.change = 0;
 
@@ -41,7 +37,7 @@ constructor(volumeTransform) {
     this.uiCount = 0;
 
     this.steps = 30;
-    this.extinction = 70;
+    this.extinction = 120;
 
     this.uiState = 0; // 0 - steps, 1 - extinction, 2 - renderer, 3 - tonemapper
     this.uiStateTimeout = 0;
@@ -50,11 +46,11 @@ constructor(volumeTransform) {
     this.renderStateTimeout = 0;
     this.renderStateChanged = false;
 
-    this.chosenRenderer = 0; // 0 - FOV2, 1 - MIP, 2 - MCM, 3 - ISO, 4 - DOS, 5 - LAO
-    this.rendererTimeout = 0;
+    this.chosenRenderer = 0; // 0 - FOV2, 1 - MIP, 2 - MCM, 3 - ISO, 4 - DOS, 5 - EAM, 6 - LAO, 7 - Depth
 
     this.bar = 0;
     this.timer = 0;
+    this.fps = 20;
 
     // this.circle = [0, 1];
     this.lockCircle = false;
@@ -88,8 +84,8 @@ safeIncrement(val, num) {
     }
     else if(val == "bar") {
         this.bar += 4;
-        if(this.bar >= 170)
-            this.bar = 170;
+        if(this.bar >= 165)
+            this.bar = 165;
     }
 }
 
@@ -169,20 +165,6 @@ update(inputs, dt) {
         this.dispatchEvent(new CustomEvent('saveToJSON', {detail: this.survey.data}));
         this.unlockA = 5;
         this.timer = 0;
-        // this.depthMode = true;
-        // if(this.depthMode) {
-        //     console.log(this.survey.data);
-        //     this.survey.data.results.push({bar: this.bar});
-        //     console.log(this.survey.data);
-            
-        //     this.depthMode = false;
-        //     this.lockCircle = false;
-        //     this.dispatchEvent(new CustomEvent('saveToJSON', {detail: this.survey.data}));
-        // }
-        // else {
-        //     this.depthMode = true;
-        // }
-        // this.unlockA = false;
     }
     else {
         this.unlockA--;
@@ -202,11 +184,11 @@ update(inputs, dt) {
         if(this.uiActive) {
             if(this.uiState == 0)
                 this.extinction++;
-            else if(this.uiState == 1 && this.steps < 60)
+            else if(this.uiState == 1) // && this.steps < 60)
                 this.steps++;
             else if(this.uiState == 2) {
                 if(this.rendererTimeout % 20 == 0)
-                    this.safeIncrement("renderer", 6);
+                    this.safeIncrement("renderer", 8);
                 this.rendererTimeout++;
             }
             else if(this.uiState == 3) {
@@ -219,7 +201,7 @@ update(inputs, dt) {
         else {
             if(this.lockCircle) {
                 console.log("move")
-                this.circle-=0.13;
+                this.circle -= 2.2 / this.fps;
                 this.circleActive = 2;
             }
             else
@@ -235,7 +217,7 @@ update(inputs, dt) {
                 this.steps--;
             else if(this.uiState == 2) {
                 if(this.rendererTimeout % 20 == 0)
-                    this.safeDecrement("renderer", 6);
+                    this.safeDecrement("renderer", 8);
                 this.rendererTimeout++;
             }
             else if(this.uiState == 3) {
@@ -247,7 +229,7 @@ update(inputs, dt) {
         }
         else {
             if(this.lockCircle) {
-                this.circle+=0.13;
+                this.circle += 2.2 / this.fps;
                 this.circleActive = 2;
             }
             else
@@ -308,7 +290,7 @@ update(inputs, dt) {
         let btnsL = gpL.buttons;
 
         if(btnsL[4].pressed) { // A
-            this.safeIncrement("bar", 800);
+            // this.safeIncrement("bar", 800);
             
             // if(this.reproCount == 0)
             //     this.reproject = !this.reproject;
@@ -316,9 +298,28 @@ update(inputs, dt) {
             // this.reproCount++;
         }
         if(btnsL[5].pressed) { // B
-            this.safeDecrement("bar", 800);
+            // this.safeDecrement("bar", 800);
             
         }   
+        
+        if(axesL[2] > thr) { //right
+            if(this.lockCircle) {
+                this.safeIncrement("bar", 800);
+            }
+            else {
+                this.dx -= this.translationStep;
+                this.change++;
+            }
+        }
+        else if(axesL[2] < -thr) { //left
+            if(this.lockCircle) {
+                this.safeDecrement("bar", 800);
+            }
+            else {
+                this.dx += this.translationStep;
+                this.change++;
+            }
+        }
         
         if(this.lockCircle)
             return;
@@ -329,15 +330,6 @@ update(inputs, dt) {
         }
         if(btnsL[1].pressed) { // down hold
             this.dz -= this.translationStep;
-            this.change++;
-        }
-
-        if(axesL[2] > thr) {
-            this.dx -= this.translationStep;
-            this.change++;
-        }
-        else if(axesL[2] < -thr) {
-            this.dx += this.translationStep;
             this.change++;
         }
 
@@ -362,7 +354,7 @@ apply(viewMatrix, force = false) {
     let s = vec3.create();
     mat4.decompose(r, t, s, viewMatrix);
     // console.log(t[0].toFixed(2), "0", t[2].toFixed(2));
-    t = [t[0] * 1.2, t[1] * 0, t[2] * 1.2];
+    t = [t[0] * 1.0, t[1] * 0, t[2] * 1.0];
     let angles = this.quatToEuler(r);
 
     if(force || this.change >= 1 || (!this.lockCircle && this.angles && (Math.abs(this.angles.yaw - angles.yaw) > this.thrAuto || Math.abs(this.angles.pitch - angles.pitch) > this.thrAuto))) {  // || Math.abs(this.angles.roll - angles.roll) > this.thrAuto
@@ -397,7 +389,7 @@ apply(viewMatrix, force = false) {
                 // console.log("yaw", this.angles.yaw.toFixed(2));
                 // console.log("pitch", this.angles.pitch.toFixed(2));
                 // console.log("roll", this.angles.roll.toFixed(2));
-                let t2 = vec3.clone([this.pitch / 3, this.focusDistance * -1.2, this.yaw / 3]);
+                let t2 = vec3.clone([-this.pitch / 3, this.focusDistance * -1.0, -this.yaw / 3]);
                 vec3.transformQuat(t2, t2, r);
                 vec3.add(this.changeT, this.changeT, t2);
                 this.yaw = 0;
@@ -428,7 +420,6 @@ apply(viewMatrix, force = false) {
         
         }
         this.change = 0;
-        this.translation = t;
         this.angles = angles;
         return true;
     }

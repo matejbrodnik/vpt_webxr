@@ -83,47 +83,59 @@ destroy() {
     Object.keys(this._programs).forEach(programName => {
         gl.deleteProgram(this._programs[programName].program);
     });
-
+    if(this.mip)
+        this.mip.destroy();
+    this.mip = null;
     super.destroy();
 }
 
+setVolume(volume) {
+    if(this.mip) {
+        this.mip.setVolume(volume);
+        this.mip.render();
+    }
+    this.mip = null;
+    this.reproject = -1;
+    this._volume = volume;
+    this.reset();
+}
+
+
 _resetFrame() {
-    // console.log(this.laps);
-    // this.laps++;
-    // this._context.cameraAnimator._zoom(-0.05);
-
     const gl = this._gl;
-
     if(this.mip == null) {
         this.mip = new MIPRenderer(gl, this._volume, this._camera, this._environmentTexture, {
             resolution: this._resolution,
-            transform: this._volumeTransform
+            transform: this._volumeTransform,
+            VRAnimator: this._VRAnimator,
+            VRProjection: this._VRProjection,
+            VROn: this._VROn,
         });
         this.mip.setContext(this._context);
+        this.mip.mono = 1;
     }
+    console.log(this.mip);
 
-    this.mip.reset();
+    this.mip.reset(true);
+
+    this.mip._VRAnimator = this._VRAnimator;
+    this.mip._VRProjection = this._VRProjection;
 
     this.mip.render();
 
-    this._MIPmap = { ...this.mip._renderBuffer.getAttachments() }; // MOGOČE TUKAJ??? KAJ JE BILO TREBA, DA SE TEKSTURA OHRANI/NE POVOZI NA UNDEFINED??
-
-    this._accumulationBuffer.use(); //
+    this._accumulationBuffer.use(); 
 
     this._context.count2 = 0;
-
-    // this._context.cameraAnimator._zoom(0.05);
-
 
     const { program, uniforms } = this._programs.reset;
     gl.useProgram(program);
 
     gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution.width, 1 / this._resolution.height);
-    gl.uniform1f(uniforms.uRandSeed, Math.random());
+    gl.uniform1f(uniforms.uRandSeed, this.random);
     gl.uniform1f(uniforms.uBlur, 0);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this._MIPmap.color[0]);
+    gl.bindTexture(gl.TEXTURE_2D, this.mip._renderBuffer.getAttachments().color[0]);
     gl.uniform1i(uniforms.uMIP, 0);
     
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
@@ -131,10 +143,9 @@ _resetFrame() {
     gl.generateMipmap(gl.TEXTURE_2D);
     
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
-    const modelMatrix = this._volumeTransform.globalMatrix;
-    const viewMatrix = this._camera.transform.inverseGlobalMatrix;
-    const projectionMatrix = this._camera.getComponent(PerspectiveCamera).projectionMatrix;
-
+    const modelMatrix = this._VROn ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
+    const viewMatrix = this._VROn ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
+    const projectionMatrix = this._VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);
     mat4.multiply(matrix, modelMatrix, matrix);
@@ -167,6 +178,7 @@ _generateFrame() {
 }
 
 _integrateFrame() {
+    console.log(this.mip);
     console.log("int")
     const gl = this._gl;
 
@@ -202,7 +214,7 @@ _integrateFrame() {
     gl.uniform1i(uniforms.uTransferFunction, 6);
 
     gl.activeTexture(gl.TEXTURE7);
-    gl.bindTexture(gl.TEXTURE_2D, this._MIPmap.color[0]);
+    gl.bindTexture(gl.TEXTURE_2D, this.mip._renderBuffer.getAttachments().color[0]);
     gl.uniform1i(uniforms.uMIP, 7);
     
     gl.activeTexture(gl.TEXTURE8);
@@ -219,7 +231,7 @@ _integrateFrame() {
     // }
 
     gl.uniform2f(uniforms.uInverseResolution, 1 / this._resolution.width, 1 / this._resolution.height);
-    gl.uniform1f(uniforms.uRandSeed, Math.random());
+    gl.uniform1f(uniforms.uRandSeed, this.random);
     gl.uniform1f(uniforms.uBlur, 0);
 
     gl.uniform1ui(uniforms.uReset, this.resetCount);
@@ -229,7 +241,7 @@ _integrateFrame() {
         this.resetCount--;
     }
     else {
-        this.resetCount = 200;
+        this.resetCount = 10;
     }
 
     gl.uniform1f(uniforms.uExtinction, this.extinction);

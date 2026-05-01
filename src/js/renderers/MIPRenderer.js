@@ -90,7 +90,7 @@ _generateFrame() {
     // console.log(this.VRView);
     // console.log(this.VRProjection);
     const viewMatrix = this._VROn ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
-    console.log("RESET ", this.name);
+    // console.log("RESET ", this.name);
     const projectionMatrix = this._VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);

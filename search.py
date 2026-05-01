@@ -1,11 +1,12 @@
 import nibabel as nib
 import numpy as np
 
-outFile = "../../../Downloads/mitos/search330430_256x256x256_.raw"
+# outFile = "../../../Downloads/mitos/search330430_256x256x256_.raw"
+outFile = "../../../Downloads/mitos/search000103_256x256x256_.raw"
 # nii = nib.load("../../../Downloads/fib1-0-0-0.nii/contact-3-2-1.nii.gz")
 # nii = nib.load("../../../Downloads/mitos/fusion330430_256x256x256_.raw")
 
-data = np.fromfile("../../../Downloads/mitos/fusion330430_256x256x256_.raw", dtype=np.uint8)
+data = np.fromfile("../../../Downloads/mitos/fusion000103_256x256x256_.raw", dtype=np.uint8)
 # data = nii.get_fdata(dtype=np.float32)
 data = data.reshape((256, 256, 256))
 print(data.min(), data.max())
@@ -21,11 +22,11 @@ copy = data.copy()
 # z = 164
 
 # 000
-w = 4
+w = 5
 val = 250
-x = 50
-y = 160
-z = 230
+x = 75 # back front
+y = 75  # down up
+z = 180 # left right
 
 for i in range(x-w, x+w):
     for j in range(y-w, y+w):

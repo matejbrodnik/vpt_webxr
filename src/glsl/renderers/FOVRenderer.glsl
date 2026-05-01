@@ -32,7 +32,7 @@ precision highp sampler3D;
 
 @constants
 @random/hash_float/pcg
-@random/hash_float/tea
+@random/hash/pcg
 @random/distribution_float/uniformdivision
 @random/distribution_float/square
 @random/distribution_float/disk
@@ -87,8 +87,7 @@ void resetPhoton(inout float state, inout Photon photon) {
 void resetPhotonHard(inout float state, inout Photon photon) {
     vec3 from, to;
     vec2 pos;
-    float pdf;
-    mipmap(state, uMIP, pos, pdf);
+    mipmap(state, uMIP, pos);
     unprojectRandFloat(state, pos, uMvpInverseMatrix, uInverseResolution, uBlur, from, to);
 
     photon.direction = normalize(to - from);
@@ -99,7 +98,6 @@ void resetPhotonHard(inout float state, inout Photon photon) {
     photon.bounces = 0u;
     photon.samples = 0u;
     photon.positionA = pos;
-    photon.pdf = pdf;
 }
 
 vec4 sampleEnvironmentMap(vec3 d) {
@@ -160,7 +158,6 @@ void main() {
         photon.transmittance = texture(uTransmittance, mappedPosition).rgb;
         photon.positionA = texture(uPosition, mappedPosition).zw;
         // photon.positionA = texture(uPositionA, mappedPosition).rg;
-        photon.pdf = 1.0;
         //photon.positionA = vPosition;
     }
     
@@ -307,7 +304,7 @@ uniform mat4 uMvpInverseMatrix;
 uniform vec2 uInverseResolution;
 uniform float uRandSeed;
 uniform float uBlur;
-// uniform sampler2D uMIP;
+uniform sampler2D uMIP;
 
 in vec2 vPosition;
 
@@ -321,7 +318,9 @@ void main() {
     vec3 from, to;
     // vec2 pos;
     vec2 pos = vPosition;
-    float state = hash(vec3(vPosition.x * 123.456, vPosition.y * 654.321, uRandSeed));
+    // float state = hash(vec3(vPosition.x * 123.456, vPosition.y * 654.321, uRandSeed));
+    float state = hash(vec2(fract(dot(vPosition, vec2(0.1231, 0.3717)) + uRandSeed * 0.8121), fract(dot(vPosition, vec2(0.7132, 0.1937)) + uRandSeed * 0.2719)));
+
     // mipmap(state, uMIP, pos);
     // photon.positionA = pos;
     unprojectRandFloat(state, pos, uMvpInverseMatrix, uInverseResolution, uBlur, from, to);

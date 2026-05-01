@@ -27,7 +27,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'isovalue',
             label: 'Isovalue',
             type: 'slider',
-            value: 0.5,
+            value: 0.4,
             min: 0,
             max: 1,
         },

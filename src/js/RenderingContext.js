@@ -32,6 +32,8 @@ import { LAORenderer } from './renderers/LAORenderer.js';
 import { DOSRenderer } from './renderers/DOSRenderer.js';
 import { Survey } from './Survey.js';
 import { CommonUtils } from './utils/CommonUtils.js';
+import { DepthRenderer } from './renderers/DepthRenderer.js';
+import { EAMRenderer } from './renderers/EAMRenderer.js';
 
 const [ SHADERS, MIXINS ] = await Promise.all([
     'shaders.json',
@@ -63,7 +65,7 @@ constructor(options = {}) {
     this.changedView = false;
 
     this.resolution = options.resolution ?? {width: 512, height: 512};
-    this.filter = options.filter ?? 'linear';
+    this.filter = options.filter ?? 'nearest'; //'linear';
 
     this.camera = new Node();
     this.camera.transform.localTranslation = [0, 0, 1];
@@ -113,8 +115,10 @@ constructor(options = {}) {
     this.UIinit = true;
     this.VROn = false;
     
-    this.tf = '[{"position":{"x":0.2745,"y":0.97},"size":{"x":0.012,"y":0.2},"color":{"r":1,"g":0.96,"b":0.3,"a":1}},' +
-    '{"position":{"x":0.363,"y":0.97},"size":{"x":0.012,"y":0.2},"color":{"r":0.3,"g":1,"b":0.31,"a":1}},' +
+    this.volumes = [];
+
+    this.tfData = '[{"position":{"x":0.2745,"y":0.97},"size":{"x":0.012,"y":0.2},"color":{"r":1,"g":0.96,"b":0.3,"a":1}},' +
+    '{"position":{"x":0.353,"y":0.97},"size":{"x":0.012,"y":0.2},"color":{"r":0.3,"g":1,"b":0.31,"a":1}},' +
     '{"position":{"x":0.4314,"y":0.97},"size":{"x":0.012,"y":0.2},"color":{"r":0.3,"g":1,"b":0.97,"a":1}},' +
     '{"position":{"x":0.5098,"y":0.97},"size":{"x":0.012,"y":0.2},"color":{"r":0.3,"g":0.75,"b":1,"a":1}},' +
     '{"position":{"x":0.5882,"y":0.97},"size":{"x":0.012,"y":0.2},"color":{"r":0.49,"g":0.3,"b":1,"a":1}},' +
@@ -123,38 +127,105 @@ constructor(options = {}) {
     '{"position":{"x":0.8235,"y":0.97},"size":{"x":0.012,"y":0.2},"color":{"r":1,"g":0,"b":0,"a":1}},' +
     '{"position":{"x":0.902,"y":0.97},"size":{"x":0.012,"y":0.2},"color":{"r":1,"g":0.73,"b":0,"a":1}},' +
     '{"position":{"x":0.981,"y":0.97},"size":{"x":0.01,"y":0.2},"color":{"r":0.3,"g":0.3,"b":0.3,"a":1}}]';
+    
+    this.tf = new TransferFunction();
+    this.tf.bumps = JSON.parse(this.tfData);
+    this.tf.render();
+    this.tf._rebuildHandles();
+    console.log("INIT")
+
+    // this.renderer.setTransferFunction(this.tf.canvas);
     // this.VRAnimator = new VRCameraAnimator(this.volumeTransform);
     this.currFileIndex = 0;
     this.setupIndex = 0;
+    // 0 - FOV2, 1 - MIP, 2 - MCM, 3 - ISO, 4 - DOS, 5 - EAM, 6 - LAO, 7 - Depth
     this.setupList = [
+         // 330430
         {
-            depthParams: { // 330430
-            xA: 239, yA: 248,
-            xD: 268, yD: 250,
-            xB: 305, yB: 222,
-            rotation: quat.fromEuler(quat.create(), 0, 0, 180), translation: vec3.clone([0, -0.3, 0])}, 
+            depthParams: {
+            xA: 129, yA: 117,
+            xD: 169, yD: 149,
+            xB: 181, yB: 163,
+            rotation: quat.fromEuler(quat.create(), 90, 10, 0), translation: vec3.clone([-0.09, -0.1, 0])}, 
             fileIndex: 0,
-            type: "depth"
+            renderer: 0,
+            type: "depth",
         },
         {
+            depthParams: {
+            xA: 131, yA: 119,
+            xD: 169, yD: 118,
+            xB: 192, yB: 131,
+            rotation: quat.fromEuler(quat.create(), 90, -10, 180), translation: vec3.clone([0.05, 0.1, 0])}, 
+            fileIndex: 0,
+            renderer: 4,
+            type: "depth",
+        },
+        {
+            depthParams: {
+            xA: 131, yA: 155,
+            xD: 154, yD: 142,
+            xB: 189, yB: 162,
+            rotation: quat.fromEuler(quat.create(), -90, -10, 0), translation: vec3.clone([0.1, -0.1, 0])}, 
+            fileIndex: 0,
+            renderer: 3,
+            type: "depth",
+        },
+        // {
+        //     depthParams: {
+        //     xA: 130, yA: 129,
+        //     xD: 151, yD: 140,
+        //     xB: 188, yB: 163,
+        //     rotation: quat.fromEuler(quat.create(), -90, 0, 180), translation: vec3.clone([-0.1, -0.1, 0])}, 
+        //     fileIndex: 0,
+        //     renderer: 5,
+        //     type: "depth",
+        // },
+        {
+            depthParams: {
+            xA: 130, yA: 129,
+            xD: 151, yD: 140,
+            xB: 188, yB: 163,
+            rotation: quat.fromEuler(quat.create(), -70, 0, 0), translation: vec3.clone([0, 0, 0])}, 
             fileIndex: 1,
-            start: [0.5, 0.5, 0.5],
-            type: "search"
+            renderer: 0,
+            type: "depth",
         },
         {
-            depthParams: { // 330430
-            xA: 215, yA: 255,
-            xD: 257, yD: 222,
-            xB: 324, yB: 204,
-            rotation: quat.fromEuler(quat.create(), 90, 20, 0), translation: vec3.clone([0.1, -0.2, 0])}, 
-            fileIndex: 0,
-            type: "depth"
+            depthParams: {
+            xA: 123, yA: 119,
+            xD: 151, yD: 150,
+            xB: 151, yB: 173,
+            rotation: quat.fromEuler(quat.create(), -90, 20, 0), translation: vec3.clone([0, 0, 0])}, 
+            fileIndex: 1,
+            renderer: 0,
+            type: "depth",
         },
         {
-            fileIndex: 0,
-            start: [1.0, 0.6, 0.6],
-            type: "search"
+            depthParams: {
+            xA: 130, yA: 130,
+            xD: 158, yD: 152,
+            xB: 198, yB: 192,
+            rotation: quat.fromEuler(quat.create(), -90, 0, 0), translation: vec3.clone([0, 0, 0])}, 
+            fileIndex: 1,
+            renderer: 0,
+            type: "depth",
         },
+        // {
+        //     fileIndex: 0,
+        //     start: [0.0, 0.2, 0.2],
+        //     type: "search"
+        // },
+        // {
+        //     depthParams: {
+        //     xA: 239, yA: 248,
+        //     xD: 268, yD: 250,
+        //     xB: 305, yB: 222,
+        //     rotation: quat.fromEuler(quat.create(), 0, 0, 180), translation: vec3.clone([0, -0.3, 0])}, 
+        //     fileIndex: 0,
+        //     renderer: "fov2",
+        //     type: "depth",
+        // },
     ];
     
     console.log(this.camera.transform);
@@ -251,6 +322,7 @@ async loadVolume(index, filetype, precision=8) {
         this.currFileIndex = index;
         const loader = new loaderClass(file);
         let dim = file.name.split("_")[1].split("x");
+        console.log(dim)
         const reader = new readerClass(loader, {
             width  : dim[0],
             height : dim[1],
@@ -270,7 +342,8 @@ async loadVolume(index, filetype, precision=8) {
 }
 
 async setVolume(reader) {
-    this.volume = new Volume(this.gl, reader);
+    let volume = new Volume(this.gl, reader);
+    this.volume = volume;
     this.volume.addEventListener('progress', e => {
         this.dispatchEvent(new CustomEvent('progress', { detail: e.detail }));
     });
@@ -284,14 +357,7 @@ async setVolume(reader) {
     if(this.renderer2) {
         this.renderer2.setVolume(this.volume);
     }
-
-}
-
-swapVolume(index) {
-    if(index == this.currFileIndex)
-        return;
-    if(index < this.files.length)
-        this.dispatchEvent(new CustomEvent('volumechange', { detail: index }));
+    this.volumes.push(volume);
 }
 
 setEnvironmentMap(image) {
@@ -301,12 +367,17 @@ setEnvironmentMap(image) {
     });
 }
 
-setFilter(filter) {
+setFilter(filter, reset = true) {
     this.filter = filter;
     if (this.volume) {
         this.volume.setFilter(filter);
-        if (this.renderer) {
-            this.renderer.reset();
+        if(reset) {
+            if (this.renderer) {
+                this.renderer.reset();
+            }
+            if (this.renderer2) {
+                this.renderer2.reset();
+            }
         }
     }
 }
@@ -326,6 +397,7 @@ chooseRenderer(renderer, reset=true) {
         VRAnimator: this.VRAnimator,
         VRProjection: this.VRProjection,
         VROn: this.VROn,
+        TF: this.tf.canvas,
     });
     this.renderer.setContext(this);
     // if(this.renderer instanceof FOVRenderer){
@@ -377,6 +449,7 @@ chooseRenderer2(renderer, reset=true) {
         VRAnimator: this.VRAnimator,
         VRProjection: this.VRProjection,
         VROn: this.VROn,
+        TF: this.tf.canvas,
     });
     this.renderer2.setContext(this);
     // if(this.renderer instanceof FOVRenderer){
@@ -424,9 +497,8 @@ chooseToneMapper(toneMapper) {
 setupUI(toneMapper) {
     let ui = new UIRenderer(this.gl, toneMapper.getTexture(), {
         resolution: this.resolution,
-        extinction: this.renderer.extinction,
-        steps: this.renderer.steps,
         VRAnimator: this.VRAnimator,
+        renderingContext: this,
     });
     ui.reset();
     return ui;
@@ -442,57 +514,91 @@ setupReprojection() {
 
 switchRenderer(index) {
     if(index == 0 && !(this.renderer instanceof FOVRenderer2)) {
+        this.setFilter('nearest', false);
         this.chooseRenderer("fov2");
         if(this.renderer2)
             this.chooseRenderer2("fov2", this.VRAnimator.renderState == 1);
         console.log("CHANGED TO FOV2");
+        if(this.VRAnimator.steps > 100 || this.VRAnimator.steps < 6)
+            this.VRAnimator.steps = 30;
+        this.VRAnimator.extinction = 120;
         return true;
     }
     if(index == 1 && !(this.renderer instanceof MIPRenderer)) {
+        this.setFilter('nearest', false);
         this.chooseRenderer("mip");
-        if(this.renderer2)
+        this.renderer.reset(true);
+        if(this.renderer2) {
             this.chooseRenderer2("mip", this.VRAnimator.renderState == 1);
+            this.renderer2.reset(true);
+        }
         console.log("CHANGED TO MIP");
+        if(this.VRAnimator.steps > 100 || this.VRAnimator.steps < 6)
+            this.VRAnimator.steps = 30;
         return true;
     }
     if(index == 2 && !(this.renderer instanceof MCMRenderer)) {
+        this.setFilter('nearest', false);
         this.chooseRenderer("mcm");
         if(this.renderer2)
             this.chooseRenderer2("mcm", this.VRAnimator.renderState == 1);
         console.log("CHANGED TO MCM");
+        if(this.VRAnimator.steps > 100 || this.VRAnimator.steps < 6)
+            this.VRAnimator.steps = 30;
         return true;
     }
     if(index == 3 && !(this.renderer instanceof ISORenderer)) {
+        this.setFilter('nearest', false);
         this.chooseRenderer("iso");
         if(this.renderer2)
             this.chooseRenderer2("iso", this.VRAnimator.renderState == 1);
         console.log("CHANGED TO ISO");
+        if(this.VRAnimator.steps < 150)
+            this.VRAnimator.steps = 300;
         return true;
     }
     if(index == 4 && !(this.renderer instanceof DOSRenderer)) {
+        this.setFilter('nearest', false);
         this.chooseRenderer("dos");
         if(this.renderer2)
             this.chooseRenderer2("dos", this.VRAnimator.renderState == 1);
         console.log("CHANGED TO DOS");
+        if(this.VRAnimator.steps > 200 || this.VRAnimator.steps < 60)
+            this.VRAnimator.steps = 100;
         return true;
     }
-    if(index == 5 && !(this.renderer instanceof LAORenderer)) {
+    if(index == 5 && !(this.renderer instanceof EAMRenderer)) {
+        this.setFilter('nearest', false);
+        this.chooseRenderer("eam");
+        if(this.renderer2)
+            this.chooseRenderer2("eam", this.VRAnimator.renderState == 1);
+        console.log("CHANGED TO EAM");
+        return true;
+    }
+    if(index == 6 && !(this.renderer instanceof LAORenderer)) {
+        this.setFilter('nearest', false);
         this.chooseRenderer("lao");
         if(this.renderer2)
             this.chooseRenderer2("lao", this.VRAnimator.renderState == 1);
         console.log("CHANGED TO LAO");
+        if(this.VRAnimator.steps > 8)
+            this.VRAnimator.steps = 2;
+        return true;
+    }
+    if(index == 7 && !(this.renderer instanceof DepthRenderer)) {
+        this.setFilter('linear', false);
+        this.chooseRenderer("depth");
+        if(this.renderer2)
+            this.chooseRenderer2("depth", this.VRAnimator.renderState == 1);
+        console.log("CHANGED TO Depth");
+        if(this.VRAnimator.steps > 100 || this.VRAnimator.steps < 10)
+            this.VRAnimator.steps = 30;
         return true;
     }
     return false;
 }
 
 _update(t, frame) {
-    // console.log("update", this.gl.getError());
-    // if(this.VRiterations > 100) {
-    //     console.log("OVER");
-    //     Ticker.remove(this._update);
-    //     return;
-    // }
     let session = this.session;
     let gl = this.gl;
     if(this.VRFirst) {
@@ -500,14 +606,17 @@ _update(t, frame) {
         console.log("render state:", session.renderState);
         let glLayer = session.renderState.baseLayer;
         console.log("gl layer:", glLayer);
-        this.resolution = {width: glLayer.framebufferWidth / 5, height: glLayer.framebufferHeight / 5}
+        let scale = 5;
+        this.resolution = {width: Math.round(glLayer.framebufferWidth / scale), height: Math.round(glLayer.framebufferHeight / scale)}
+        console.log(glLayer.framebufferWidth);
+        console.log(glLayer.framebufferHeight);
+        console.log(this.resolution);
         this.VRAnimator = new VRCameraAnimator(this.volumeTransform);
         this.VROn = true;
         this.uiRenderer.destroy();
         this.UIinit = true;
         this.old_t = t;
         this.dtSum = 0;
-        // this.ext = this.gl.getExtension('EXT_disjoint_timer_query_webgl2');
     }
     let dt = t - this.old_t;
 
@@ -518,16 +627,18 @@ _update(t, frame) {
 
     this.dtSum += dt;
     if(this.VRiterations % 5 == 0) {
-        console.log("fps:", (1000 / (this.dtSum / 5)).toFixed(1));
+        this.fps = (1000 / (this.dtSum / 5)).toFixed(1);
+        console.log("fps:", this.fps);
         this.dtSum = 0;
+        this.VRAnimator.fps = this.fps;
     }
     this.old_t = t;
     if(frame.session.inputSources.length > 0) {
         let inputs = frame.session.inputSources;
         this.VRAnimator.update(inputs, dt);
     }
-    // this.right = true;
     let pose = frame.getViewerPose(this.refSpace);
+    this.pose = pose;
     // if(this.VRiterations % 10 == 0 && this.VRiterations != 0) {
     if (pose) {
         if(this.VRiterations == 0) {
@@ -540,8 +651,7 @@ _update(t, frame) {
             this.chooseToneMapper("artistic");
             this.chooseRenderer2("fov2");
             this.setupReprojection();
-            // this.renderer.log(pose.views[0].transform.matrix)
-            // this.renderer.log(pose.views[1].transform.matrix)
+
             this.renderer.setName("1");
             this.renderer2.setName("2");
             this.renderer.setProjection(pose.views[0].projectionMatrix);
@@ -550,22 +660,15 @@ _update(t, frame) {
             this._saveJSON = this._saveJSON.bind(this);
             this.VRAnimator.addEventListener('saveToJSON', this._saveJSON);
 
-            // console.log("model");
-            // console.log(this.VRAnimator.model.localTranslation[0], this.VRAnimator.model.localTranslation[1], this.VRAnimator.model.localTranslation[2]);
-            // console.log(this.VRAnimator.model.localRotation[0], this.VRAnimator.model.localRotation[1], this.VRAnimator.model.localRotation[2]);
-            // console.log("view");
-            // console.log(this.VRAnimator.transform.localTranslation[0], this.VRAnimator.transform.localTranslation[1], this.VRAnimator.transform.localTranslation[2]);
-            // console.log(this.VRAnimator.transform.localRotation[0], this.VRAnimator.transform.localRotation[1], this.VRAnimator.transform.localRotation[2]);
-            // console.log("proj");
-            // this.renderer.log(this.renderer._VRProjection);
-
             if(this.reproject)
                 this.reproject.reset(pose.views[1].projectionMatrix);
+            this.renderer.log(pose.views[0].projectionMatrix)
+            this.renderer.log(pose.views[1].projectionMatrix)
         }
-        // console.log("volume", this.volumeTransform.globalMatrix);
         let glLayer = session.renderState.baseLayer;
         for (let view of pose.views) {
             this.viewport = glLayer.getViewport(view);
+            // console.log(this.viewport.width, this.viewport.height);
                 if(!this.right) {
                     this.changedView = this.VRAnimator.renderStateChanged || this.VRAnimator.apply(view.transform.matrix, this.VRiterations <= 1);
                 }
@@ -578,10 +681,9 @@ _update(t, frame) {
                             this.renderer2.reset();
                             this.changedView = false;
                         }
-                        else
-                            console.log("right reset: ", this.renderer2.iter);
-                        // MOGOČE NI V VREDU???
-                        if(this.VRAnimator.renderState == 2 && this.reproject && this.renderer.iter >= 2) {
+                        // else
+                        //     console.log("right reset: ", this.renderer2.iter);
+                        if(this.VRAnimator.renderState == 2 && this.reproject && this.renderer.iter >= 1) {
                             this.reproject.reset(view.projectionMatrix);
                             this.changedView = false;
                         }
@@ -611,9 +713,7 @@ _update(t, frame) {
                         }
                         // console.log("RESET 1");
                     }
-                    // continue; // če želimo pri resetu preskočiti render
                 }
-
             this.render();
             this.right = !this.right;
         }
@@ -623,23 +723,64 @@ _update(t, frame) {
     this.VRiterations++;
 }
 
+swapVolume(index) {
+    if(index == this.currFileIndex)
+        return;
+    // if(index < this.files.length)
+    //     this.dispatchEvent(new CustomEvent('volumechange', { detail: index }));
+    if(index < this.volumes.length) {
+        console.log(this.volumes)
+        console.log(index)
+        if (this.renderer) {
+            this.renderer.setVolume(this.volumes[index]);
+        }
+        if(this.renderer2) {
+            this.renderer2.setVolume(this.volumes[index]);
+        }
+    }
+}
+
 _saveJSON(e) {
     console.log("SAVE");
     console.log("ENABLE", this.setupIndex);
+    this.uiRenderer.depthMode = false;
     
     if(this.setupIndex == this.setupList.length) {
         CommonUtils.downloadJSON(e.detail, "testJSON.json");
         return;
     }
-
+    
     let setup = this.setupList[this.setupIndex];
-    this.swapVolume(setup.fileIndex);
-    console.log(setup.type);
+    this.volume = this.volumes[setup.fileIndex];
+    console.log(setup);
+    console.log(setup.fileIndex);
+
+    if (this.renderer) {
+        this.renderer.setVolume(this.volume);
+    }
+    if(this.renderer2) {
+        this.renderer2.setVolume(this.volume);
+    }
+
+    if(!this.switchRenderer(setup.renderer)) {
+        console.log("old renderer");
+        this.renderer.reset();
+        if(this.renderer2 && this.VRAnimator.renderState == 1)
+            this.renderer2.reset();
+    }
+    if(this.pose) {
+        this.renderer.setProjection(this.pose.views[0].projectionMatrix);
+        this.renderer2.setProjection(this.pose.views[1].projectionMatrix);
+    }
+    console.log(this.renderer._VRProjection);
+    this.renderer.log(this.renderer._VRProjection);
+    this.renderer.log(this.renderer2._VRProjection);
+
+    this.VRAnimator.chosenRenderer = setup.renderer;
     if(setup.type == "depth")
         this.depthInstance(setup.depthParams);
     else if(setup.type == "search")
         this.searchInstance(setup.start);
-    
 
     this.setupIndex++;
 }
@@ -647,6 +788,31 @@ _saveJSON(e) {
 depthInstance(depthParams) {
     console.log("DEPTH TEST START");
     this.uiRenderer.depthMode = true;
+    this.uiRenderer.depthParams = depthParams;
+    // let repro = mat4.fromValues(
+    //     1.035, 0, 0, 0,
+    //     0, 0.869, 0, 0,
+    //     0.035, -0.035, -1, -1,
+    //     0, 0, -0.2, 0
+    // );
+    // let repro = mat4.fromValues(
+    //     0.93, 0, 0, 0,
+    //     0, 0.869, 0, 0,
+    //     -0.07, -0.035, -1, -1,
+    //     0, 0, -0.2, 0
+    // );
+    // this.renderer.log(repro);
+    // this.renderer.log(this.renderer._VRProjection);
+    // this.renderer._VRProjection = repro;
+    // if(this.renderer2) {
+    //     repro = mat4.fromValues(
+    //         0.93, 0, 0, 0,
+    //         0, 0.869, 0, 0,
+    //         0.07, -0.035, -1, -1,
+    //         0, 0, -0.2, 0
+    //     );
+    //     this.renderer2._VRProjection = repro;
+    // }
     if(this.VRAnimator) {
         // this.VRAnimator.depthMode = true;
         this.VRAnimator.lockCircle = true;
@@ -655,20 +821,17 @@ depthInstance(depthParams) {
         this.VRAnimator.model.localRotation = depthParams.rotation;
         this.VRAnimator.transform.localRotation = quat.create();
         this.VRAnimator.transform.localTranslation = vec3.clone([0, 0, 1]);
-        // console.log("model");
-        // console.log(this.VRAnimator.model.localTranslation[0], this.VRAnimator.model.localTranslation[1], this.VRAnimator.model.localTranslation[2]);
-        // console.log(this.VRAnimator.model.localRotation[0], this.VRAnimator.model.localRotation[1], this.VRAnimator.model.localRotation[2]);
-        // console.log("view");
-        // console.log(this.VRAnimator.transform.localTranslation[0], this.VRAnimator.transform.localTranslation[1], this.VRAnimator.transform.localTranslation[2]);
-        // console.log(this.VRAnimator.transform.localRotation[0], this.VRAnimator.transform.localRotation[1], this.VRAnimator.transform.localRotation[2]);
-        // console.log("proj");
-        // this.renderer.log(this.renderer._VRProjection);
-        this.uiRenderer.depthParams = depthParams;
-
     }
+    else {
+        this.volumeTransform.localTranslation = depthParams.translation;
+        this.volumeTransform.localRotation = depthParams.rotation;
+        this.camera.transform.localRotation = quat.create();
+        this.camera.transform.localTranslation = vec3.clone([0, 0, 1]);
+    }
+    
     console.log("DEPTH TEST END");
     this.renderer.reset();
-    if(this.VRAnimator.renderState == 1)
+    if(this.renderer2 && this.VRAnimator.renderState == 1)
         this.renderer2.reset();
 }
 
@@ -696,45 +859,76 @@ render() {
         gl.beginQuery(ext.TIME_ELAPSED_EXT, this.query);
     }
 
-    if(this.VRAnimator && this.VRAnimator.depthMode && !this.VRAnimator.lockCircle) {
+    if(this.VRAnimator && this.VRAnimator.lockCircle) {
+        // if(!this.switchRenderer(7) && this.renderer.iter >= 10) {
+        if(this.renderer.iter % 5 == 1) {
+            // let pixels = new Float32Array(this.resolution.width * this.resolution.height);
+            let pixels = new Float32Array(this.resolution.width * this.resolution.height * 4);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this.renderer._accumulationBuffer._readFramebuffer);
+            gl.readBuffer(gl.COLOR_ATTACHMENT6);
+            // gl.pixelStorei(gl.PACK_ALIGNMENT, 1);
+            gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.FLOAT, pixels);
+            // console.log(this.setupIndex-1);
+            let depthParams = this.setupList[this.setupIndex-1].depthParams;
+            let indexA = (depthParams.yA * this.resolution.width + depthParams.xA * 2) * 4;
+            let indexB = (depthParams.yB * this.resolution.width + depthParams.xB * 2) * 4;
+            let indexD = (depthParams.yD * this.resolution.width + depthParams.xD * 2) * 4;
+            let A = vec3.fromValues(pixels[indexA], pixels[indexA + 1], pixels[indexA + 2]);
+            let B = vec3.fromValues(pixels[indexB], pixels[indexB + 1], pixels[indexB + 2]);
+            let D = vec3.fromValues(pixels[indexD], pixels[indexD + 1], pixels[indexD + 2]);
 
+            // console.log(A[0].toFixed(2), A[1].toFixed(2), A[2].toFixed(2));
+            // console.log(D[0].toFixed(2), D[1].toFixed(2), D[2].toFixed(2));
+            // console.log(B[0].toFixed(2), B[1].toFixed(2), B[2].toFixed(2));
+            
+            let inv = this.VRAnimator.transform.inverseGlobalMatrix;
+            let cameraPos = vec3.fromValues(inv[12], inv[13], inv[14]);
+
+            mat4.invert(inv, inv);
+            cameraPos = vec3.fromValues(inv[12], inv[13], inv[14]);
+            console.log(cameraPos[0].toFixed(2), cameraPos[1].toFixed(2), cameraPos[2].toFixed(2));
+            console.log(vec3.distance(cameraPos, A).toFixed(2));
+            console.log(vec3.distance(cameraPos, D).toFixed(2));
+            console.log(vec3.distance(cameraPos, B).toFixed(2));
+            console.log("---");
+        }
+
+        else {
+            // console.log("...")
+            // this.VRAnimator.chosenRenderer = 7;
+        }
     }
+
+    // if(!this.VROn && !this.uiTest && this.renderer.iter == 10) {
+    //     this.uiTest = true;
+    //     console.log("AAAAAA")
+    //     this._saveJSON(null);
+    //     this.setupIndex = 0;
+    // }
     
     if(this.UIinit) {
         this.uiRenderer = this.setupUI(this.toneMapper);
         this.UIinit = false;
-        const tf = new TransferFunction();
-
-        tf.bumps = JSON.parse(this.tf);
-        tf.render();
-        tf._rebuildHandles();
-        this.renderer.setTransferFunction(tf.canvas);
-        if(this.renderer2)
-            this.renderer2.setTransferFunction(tf.canvas);
     }
 
     this.random = Math.random();
     if(this.right) {
         if(this.VRAnimator.renderState == 2) {
             this.reproject.render();
-            // this.uiRenderer.render(this.reproject.getTexture(), this.right);
         }
         else if(this.VRAnimator.renderState == 1) {
             this.renderer2.random = this.random;
             this.renderer2.render(); //2
             this.toneMapper.render(this.renderer2.getTexture()); //2
-            // this.uiRenderer.render(this.toneMapper.getTexture(), this.right);
         }
-        // else
-        //     this.uiRenderer.render(this.toneMapper.getTexture(), this.right);
     }
     else {
         this.renderer.random = this.random;
         this.renderer.render();
         this.toneMapper.render(this.renderer.getTexture());
-        // this.uiRenderer.render(this.toneMapper.getTexture(), this.right);
     }
-    this.uiRenderer.render(this.VRAnimator && this.VRAnimator.renderState == 2 ? this.reproject.getTexture() : this.toneMapper.getTexture(), this.right);
+
+    this.uiRenderer.render((this.VRAnimator && this.right && this.VRAnimator.renderState == 2) ? this.reproject.getTexture() : this.toneMapper.getTexture(), this.right);
 
     this.program = this.programs.quad;
     
@@ -748,9 +942,6 @@ render() {
         gl.viewport(viewport.x, viewport.y,
             viewport.width, viewport.height);
         gl.bindFramebuffer(gl.FRAMEBUFFER, glLayer.framebuffer);
-        // gl.clearColor(0, 0, 0, 1);
-        // gl.clear(gl.COLOR_BUFFER_BIT);
-
     }
     else {
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -760,15 +951,10 @@ render() {
     gl.activeTexture(gl.TEXTURE0);
     if(this.VRAnimator) {
         // console.log("UI", this.VRAnimator.uiActive, "STATE", this.VRAnimator.renderState, "REPRO",  this.VRAnimator.reproject);
-        // console.log((this.renderer._VRProjection[8]));
-        // console.log(this.VRAnimator.transform);
+        // console.log(this.VRAnimator.uiActive);
         // this.renderer.log(this.VRAnimator.transform.inverseGlobalMatrix);
         // console.log("rot", this.VRAnimator.transform.localRotation[0].toFixed(2), this.VRAnimator.transform.localRotation[1].toFixed(2), this.VRAnimator.transform.localRotation[2].toFixed(2));
-        // console.log(this.VRAnimator.model);
-
     }
-
-    // gl.bindTexture(gl.TEXTURE_2D, this.uiRenderer.getTexture());
 
     if((this.VRAnimator && this.VRAnimator.uiActive) || this.uiRenderer.depthMode) {
         gl.bindTexture(gl.TEXTURE_2D, this.uiRenderer.getTexture());
@@ -779,8 +965,6 @@ render() {
     else {
         gl.bindTexture(gl.TEXTURE_2D, this.toneMapper.getTexture());
     }
-    // gl.bindTexture(gl.TEXTURE_2D, this.right ? this.toneMapper2.getTexture() : this.toneMapper.getTexture());
-    // gl.bindTexture(gl.TEXTURE_2D, this.right ? this.uiRenderer.getTexture() : this.uiRenderer.getTexture());
 
     gl.uniform1i(uniforms.uTexture, 0);
 

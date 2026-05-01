@@ -175,10 +175,8 @@ _update() {
 
     let dx = 0;
     let dz = 0;
-    if (this._forward && this.ref + 10 < this.count) {
+    if (this._forward) {
         dz -= this.moveSpeed * this._focusDistance * dt;
-        this._forward = false;
-        this.ref = this.count;
     }
     if (this._backward) {
         dz += this.moveSpeed * this._focusDistance * dt;
@@ -186,10 +184,8 @@ _update() {
     if (this._left) {
         dx -= this.moveSpeed * this._focusDistance * dt;
     }
-    if (this._right && this.ref + 10 < this.count) {
+    if (this._right) {
         dx += this.moveSpeed * this._focusDistance * dt;
-        this._right = false;
-        this.ref = this.count;
     }
 
     if (dx !== 0 || dz !== 0) {
