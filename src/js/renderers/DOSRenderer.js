@@ -20,14 +20,14 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'steps',
             label: 'Steps',
             type: 'spinner',
-            value: 50,
+            value: 100,
             min: 1,
         },
         {
             name: 'slices',
             label: 'Slices',
             type: 'spinner',
-            value: 200,
+            value: 100,
             min: 1,
         },
         {

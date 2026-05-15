@@ -160,6 +160,10 @@ getTexture() {
     return this._renderBuffer.getAttachments().color[0];
 }
 
+setVolume(volume) {
+    this._volume = volume;
+}
+
 _getRenderBufferSpec() {
     const gl = this._gl;
     return [{

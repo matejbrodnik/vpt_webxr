@@ -155,10 +155,10 @@ void main() {
     //     avg = texelFetch(uMIP, ivec2(0, 0), 9).a;
     // }
 
-    if(uCycles >= uThr) {
-        mip = texture(uTransmittance, mappedPosition).a;
-        avg = texelFetch(uTransmittance, ivec2(0, 0), uLod).a;
-    }
+    // if(uCycles >= uThr) {
+    //     mip = texture(uTransmittance, mappedPosition).a;
+    //     avg = texelFetch(uTransmittance, ivec2(0, 0), uLod).a;
+    // }
     uint steps = uint(float(uSteps) * mip / avg);
 
     // avg
@@ -197,7 +197,7 @@ void main() {
             photon.samples2+=1.0;
             vec3 delta = radiance - photon.radiance;
             photon.radiance += delta / photon.samples2;
-            photon.M2 += delta * (radiance - photon.radiance);
+            // photon.M2 += delta * (radiance - photon.radiance);
             resetPhoton(state, photon);
         } else if (fortuneWheel < PAbsorption) {
             // absorption
@@ -208,7 +208,7 @@ void main() {
             photon.samples2+=1.0;
             vec3 delta = radiance - photon.radiance;
             photon.radiance += delta / photon.samples2;
-            photon.M2 += delta * (radiance - photon.radiance);
+            // photon.M2 += delta * (radiance - photon.radiance);
             resetPhoton(state, photon);
         } else if (fortuneWheel < PAbsorption + PScattering) {
             // scattering
@@ -351,8 +351,8 @@ out vec4 oColor;
 // layout (location = 1) out vec4 oMIP;
 
 void main() {
+    // oColor = vec4(texture(uMIP, vPosition).r, 0, 0, 1);
     oColor = vec4(texture(uColor, vPosition).rgb, 1);
-    // oColor = vec4(texture(uMIP, vPosition).a / 250.0, 0, 0, 1);
     // float acc = texture(uMIP, vPosition).a;
     // oColor = vec4(acc, acc, acc, 1);
     // if(acc >= 0.8) {

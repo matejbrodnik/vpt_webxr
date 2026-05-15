@@ -21,7 +21,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'extinction',
             label: 'Extinction',
             type: 'spinner',
-            value: 70,
+            value: 200,
             min: 0,
         },
         {
@@ -98,12 +98,13 @@ setVolume(volume) {
     //     this.mip.destroy();
     // console.log("destroy", this.mip)
     if(this.mip) {
+        console.log("MIP SET VOLUME");
         this.mip.setVolume(volume);
         this.mip.render();
     }
-    this.mip = null;
     this.reproject = -1;
     this._volume = volume;
+    console.log("VOLUME CHANGE");
     this.reset();
 }
 
@@ -121,6 +122,7 @@ _resetFrame() {
 
     // console.log("reset");
     if(this.mip == null) {
+        console.log("MIP REINIT");
         this.mip = new MIPRenderer(gl, this._volume, this._camera, this._environmentTexture, {
             resolution: this._resolution,
             transform: this._volumeTransform,
@@ -132,8 +134,8 @@ _resetFrame() {
         this.mip.mono = 1;
     }
 
-    this.mip.setVolume(this._volume);
-    // this.mip.reset(true);
+    // this.mip.setVolume(this._volume);
+    this.mip.reset(true);
 
     this.mip._VRAnimator = this._VRAnimator;
     this.mip._VRProjection = this._VRProjection;
@@ -173,6 +175,7 @@ _resetFrame() {
     const modelMatrix = this._VROn ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
     const viewMatrix = this._VROn ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
     const projectionMatrix = this._VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
+    
     // this.log(this._camera.getComponent(PerspectiveCamera).projectionMatrix);
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);
@@ -347,7 +350,7 @@ _renderFrame() {
     gl.uniform1i(uniforms.uColor, 0);
     
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[0]);
+    gl.bindTexture(gl.TEXTURE_2D, this.mip._renderBuffer.getAttachments().color[0]);
     // gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[2]);
     gl.uniform1i(uniforms.uMIP, 1);
 

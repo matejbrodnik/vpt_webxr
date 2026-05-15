@@ -164,21 +164,12 @@ void main() {
 
         vec4 volumeSample = sampleVolumeColor(photon.position);
 
-        float PNull = 1.0 - volumeSample.a;
-        float PScattering = volumeSample.a * max3(volumeSample.rgb);
-        float PAbsorption = 1.0 - PNull - PScattering;
-        // float PAbsorption = volumeSample.a * (1.0 - max3(volumeSample.rgb));
-
         float fortuneWheel = random_uniform(state);
         if (any(greaterThan(photon.position, vec3(1))) || any(lessThan(photon.position, vec3(0)))) {
             // count++;
             // pos += photon.position;
             reset(state, photon);
-        } else if (fortuneWheel < PAbsorption) {
-            count++;
-            pos += photon.position;
-            reset(state, photon);
-        } else if (fortuneWheel < PAbsorption + PScattering) {
+        } else if (fortuneWheel < volumeSample.a) {
             count++;
             pos += photon.position;
             reset(state, photon);

@@ -148,38 +148,39 @@ _drawUIText(reset = false) {
                 return;
             }
             let w = 6;
-            this._drawCircle(this.depthParams.xA - (this.right ? 20 : 0), this.depthParams.yA, w, 'rgb(109, 255, 41)')
-            this._drawCircle(this.depthParams.xD - (this.right ? 20 : 0), this.depthParams.yD, w, 'rgb(161, 161, 161)')
-            this._drawCircle(this.depthParams.xB - (this.right ? 20 : 0), this.depthParams.yB, w, 'rgb(237, 41, 255)')
+            this._drawCircle(this.depthParams.xA - (this.right ? 20 : 0), this.depthParams.yA, w, this.VRAnimator.selectedL ? 'rgb(109, 255, 41)' : 'rgb(161, 161, 161)')
+            this._drawCircle(this.depthParams.xB - (this.right ? 20 : 0), this.depthParams.yB, w, this.VRAnimator.selectedL ? 'rgb(161, 161, 161)' : 'rgb(109, 255, 41)')
+            // this._drawCircle(this.depthParams.xB - (this.right ? 20 : 0), this.depthParams.yB, w, 'rgb(237, 41, 255)')
             
             ctx.strokeStyle = 'black';
             //bar
-            let x = 210;
-            let y = 315;
-            if(this.right)
-                x = x - 38;
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo((x + 170), y);
-            ctx.stroke();
+            // let x = 210;
+            // let y = 315;
+            // if(this.right)
+            //     x = x - 38;
+            // ctx.beginPath();
+            // ctx.moveTo(x, y);
+            // ctx.lineTo((x + 170), y);
+            // ctx.stroke();
         
-            this._drawCircle((x), y, 10, 'rgb(109, 255, 41)', true);
-            this._drawCircle((x + 165), y, 10, 'rgb(237, 41, 255)', true);
-            this._drawCircle((x + this.VRAnimator.bar), y, 10, 'rgb(161, 161, 161)', true);
+            // this._drawCircle((x), y, 10, 'rgb(109, 255, 41)', true);
+            // this._drawCircle((x + 165), y, 10, 'rgb(237, 41, 255)', true);
+            // this._drawCircle((x + this.VRAnimator.bar), y, 10, 'rgb(161, 161, 161)', true);
             ctx.strokeStyle = 'black';
         }
         if(this.VRAnimator.uiActive) {
             // let x = this.uiCanvas.width - 160;
-            let x = this._resolution.width / 3; // 120
+            let x = this._resolution.width / 3.2; // 120
             // let x = 310;
             if(this.right)
                 x = x - 40;
             let y = this._resolution.height / 2.5;
             // let y = 195;
             let yStep = 14;
+            // let style = (this.VRAnimator.chosenRenderer == 5 || this.VRAnimator.chosenRenderer == 6 || this.VRAnimator.chosenRenderer == 7) ? 'white' : 'black';
             let style = (this.VRAnimator.chosenRenderer == 5 || this.VRAnimator.chosenRenderer == 6 || this.VRAnimator.chosenRenderer == 7) ? 'white' : 'black';
             // this.chosen = this.VRAnimator.uiState;
-            let cursor = ["", "", "", "", ""];
+            let cursor = ["", "", "", "", "", ""];
             cursor[this.VRAnimator.uiState] = "> ";
             let count = 0;
             if(this.VRAnimator.uiState == count)
@@ -192,7 +193,7 @@ _drawUIText(reset = false) {
                 ctx.fillStyle = 'blue';
             else
                 ctx.fillStyle = style;
-            ctx.fillText(cursor[count++] + "Steps: " + this.VRAnimator.steps, x, y);
+            ctx.fillText(cursor[count++] + "Stepss: " + this.VRAnimator.steps, x, y);
             y += yStep;
             if(this.VRAnimator.uiState == count)
                 ctx.fillStyle = 'blue';
@@ -200,16 +201,22 @@ _drawUIText(reset = false) {
                 ctx.fillStyle = style;
             ctx.fillText(cursor[count++] + this.renderers[this.VRAnimator.chosenRenderer], x, y);
             y += yStep;
-    
             
             if(this.VRAnimator.uiState == count)
                 ctx.fillStyle = 'blue';
             else
                 ctx.fillStyle = style;
             ctx.fillText(cursor[count++] + this.views[this.VRAnimator.renderState], x, y);
-
+            y += yStep;
+            
+            if(this.VRAnimator.uiState == count)
+                ctx.fillStyle = 'blue';
+            else
+                ctx.fillStyle = style;
+            ctx.fillText(cursor[count++] + "FIL:" + this.renderingContext.filter, x, y);
+    
             if(this.renderingContext.fps) {
-                x += 55;
+                x += 50;
                 // if(this.right)
                 //     x = x - 80;
                 y = this._resolution.height / 2.5;
@@ -222,7 +229,7 @@ _drawUIText(reset = false) {
         }
     
         if(this.VRAnimator.timer) {
-            let x = this._resolution.width / 3 + 55;
+            let x = this._resolution.width / 3.2 + 50;
             if(this.right)
                 x = x - 40;
             let y = this._resolution.height / 2.5;
@@ -233,35 +240,35 @@ _drawUIText(reset = false) {
         }
 
     }
-    else if(this.depthMode) {
-        // if(this.VRAnimator.circleActive > 0) {
-        //     // this.VRAnimator.model.localTranslation = this.depthParams.translation;
-        //     // this.VRAnimator.model.localRotation = this.depthParams.rotation;
-        //     return;
-        // }
-        let w = 7;
-        let offset = 0;
-        this.right = true;
-        this._drawCircle(this.depthParams.xA - offset, this.depthParams.yA, w, 'rgb(109, 255, 41)')
-        this._drawCircle(this.depthParams.xD - offset, this.depthParams.yD, w, 'rgb(161, 161, 161)')
-        this._drawCircle(this.depthParams.xB - offset, this.depthParams.yB, w, 'rgb(237, 41, 255)')
+    // else if(this.depthMode) {
+    //     // if(this.VRAnimator.circleActive > 0) {
+    //     //     // this.VRAnimator.model.localTranslation = this.depthParams.translation;
+    //     //     // this.VRAnimator.model.localRotation = this.depthParams.rotation;
+    //     //     return;
+    //     // }
+    //     let w = 7;
+    //     let offset = 0;
+    //     this.right = true;
+    //     this._drawCircle(this.depthParams.xA - offset, this.depthParams.yA, w, 'rgb(109, 255, 41)')
+    //     this._drawCircle(this.depthParams.xD - offset, this.depthParams.yD, w, 'rgb(161, 161, 161)')
+    //     this._drawCircle(this.depthParams.xB - offset, this.depthParams.yB, w, 'rgb(237, 41, 255)')
         
-        ctx.strokeStyle = 'black';
-        //bar
-        let x = 210;
-        let y = 315;
-        if(this.right)
-            x = x - 38;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo((x + 170), y);
-        ctx.stroke();
+    //     ctx.strokeStyle = 'black';
+    //     //bar
+    //     let x = 210;
+    //     let y = 315;
+    //     if(this.right)
+    //         x = x - 38;
+    //     ctx.beginPath();
+    //     ctx.moveTo(x, y);
+    //     ctx.lineTo((x + 170), y);
+    //     ctx.stroke();
     
-        this._drawCircle((x), y, 9, 'rgb(109, 255, 41)', true);
-        this._drawCircle((x + 165), y, 9, 'rgb(237, 41, 255)', true);
-        this._drawCircle((x + 80), y, 9, 'rgb(161, 161, 161)', true);
-        ctx.strokeStyle = 'black';
-    }
+    //     this._drawCircle((x), y, 9, 'rgb(109, 255, 41)', true);
+    //     this._drawCircle((x + 165), y, 9, 'rgb(237, 41, 255)', true);
+    //     this._drawCircle((x + 80), y, 9, 'rgb(161, 161, 161)', true);
+    //     ctx.strokeStyle = 'black';
+    // }
         // x = 218;
         // y = this._resolution.height - 72;
         // if(this.right)

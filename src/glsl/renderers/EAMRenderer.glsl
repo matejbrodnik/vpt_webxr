@@ -33,11 +33,12 @@ precision mediump sampler3D;
 
 uniform sampler3D uVolume;
 uniform sampler2D uTransferFunction;
-// uniform sampler2D uMIP;
+uniform sampler2D uMIP;
 uniform float uFov;
 uniform float uStepSize;
 uniform float uOffset;
 uniform float uExtinction;
+uniform int uLod;
 
 in vec3 vRayFrom;
 in vec3 vRayTo;
@@ -58,18 +59,19 @@ void main() {
     vec3 rayDirection = vRayTo - vRayFrom;
     vec2 tbounds = max(intersectCube(vRayFrom, rayDirection), 0.0);
     
-    // vec2 mappedPosition = vPosition * 0.5 + 0.5;
-    // float mip = texture(uMIP, mappedPosition).r;
-    // float avg;
-    // avg = texelFetch(uMIP, ivec2(0, 0), uLod).r;
+    vec2 mappedPosition = vPosition * 0.5 + 0.5;
+    float mip = texture(uMIP, mappedPosition).r;
+    float avg;
+    avg = texelFetch(uMIP, ivec2(0, 0), uLod).r;
 
     float stepSize = uStepSize;
-    // if(mip < 0.01) {
-    //     stepSize = 1.0;
-    // }
-    // else {
-    //     stepSize *= (mip / avg);
-    // }
+    if(mip < 0.01) {
+        stepSize = 0.5;
+    }
+    else {
+        stepSize *= (mip / avg);
+        stepSize =  1.0/64.0;
+    }
 
     // if(uFov != 0.0) {
     //     oColor = vec4(0, 0, 0, 1);

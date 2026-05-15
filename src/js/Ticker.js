@@ -40,7 +40,7 @@ function remove(f) {
 }
 
 function reset() {
-    // console.log("reset")
+    console.log("reset")
     queue = [];
     if(requestID)
         _session.cancelAnimationFrame(requestID);

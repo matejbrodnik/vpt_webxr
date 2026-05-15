@@ -37,9 +37,9 @@ constructor(volumeTransform) {
     this.uiCount = 0;
 
     this.steps = 30;
-    this.extinction = 120;
+    this.extinction = 150;
 
-    this.uiState = 0; // 0 - steps, 1 - extinction, 2 - renderer, 3 - tonemapper
+    this.uiState = 0; // 0 - steps, 1 - extinction, 2 - renderer, 3 - state, 4 - filter
     this.uiStateTimeout = 0;
 
     this.renderState = 1; // 0 - mono, 1 - stereo, 2 - reprojection
@@ -47,6 +47,10 @@ constructor(volumeTransform) {
     this.renderStateChanged = false;
 
     this.chosenRenderer = 0; // 0 - FOV2, 1 - MIP, 2 - MCM, 3 - ISO, 4 - DOS, 5 - EAM, 6 - LAO, 7 - Depth
+    this.currentId = -1;
+    
+    this.filter = 'nearest';
+    this.filterTimeout = 0;
 
     this.bar = 0;
     this.timer = 0;
@@ -60,6 +64,9 @@ constructor(volumeTransform) {
     this.searchMode = false;
     this.start = [0, 0, 0];
     this.changeT = vec3.clone([0, 0, 0]);
+
+    this.selectedL = true; // selected circle A
+    this.upHold = false;
 
     this.jsonReady = true;
     this.unlockA = true;
@@ -137,6 +144,13 @@ update(inputs, dt) {
             this.focusDistance -= 0.01;
             this.change++;
         }
+        else if(!this.upHold) {
+            this.selectedL = !this.selectedL;
+        }
+        this.upHold = true;
+    }
+    else {
+        this.upHold = false;
     }
 
     if(btnsR[1].pressed) { // down hold
@@ -151,20 +165,22 @@ update(inputs, dt) {
     // else
     //     this.uiCount = 0;
 
-    if(btnsR[4].pressed && this.unlockA <= 0) { // A
-        console.log("A pressed", this.depthMode)
-        if(this.lockCircle) {
-            this.survey.data.results.push({type: "depth", bar: this.bar, time: (this.timer / 1000).toFixed(3)});
-            this.lockCircle = false;
-            this.focusDistance = 1;
+    if(btnsR[4].pressed) { // A
+        if(this.unlockA <= 0) {
+            console.log("A pressed", this.depthMode)
+            if(this.lockCircle) {
+                this.survey.data.results.push({id: this.currentId, renderer: this.chosenRenderer, reprojected: this.renderState == 2, selectedL: this.selectedL, time: (this.timer / 1000).toFixed(3)});
+                this.lockCircle = false;
+                this.focusDistance = 1;
+            }
+            else if(this.searchMode) {
+                this.survey.data.results.push({type: "search", time: (this.timer / 1000).toFixed(3)});
+                this.searchMode = false;
+            }
+            this.dispatchEvent(new CustomEvent('saveToJSON', {detail: this.survey.data}));
+            this.unlockA = 10;
+            this.timer = 0;
         }
-        else if(this.searchMode) {
-            this.survey.data.results.push({type: "search", time: (this.timer / 1000).toFixed(3)});
-            this.searchMode = false;
-        }
-        this.dispatchEvent(new CustomEvent('saveToJSON', {detail: this.survey.data}));
-        this.unlockA = 5;
-        this.timer = 0;
     }
     else {
         this.unlockA--;
@@ -197,6 +213,11 @@ update(inputs, dt) {
                 this.renderStateTimeout++;
                 this.renderStateChanged = true;
             }
+            else if(this.uiState == 4) {
+                if(this.filterTimeout % 20 == 0)
+                    this.filter = this.filter == 'nearest' ? 'linear' : 'nearest';
+                this.filterTimeout++;
+            }
         }
         else {
             if(this.lockCircle) {
@@ -226,6 +247,11 @@ update(inputs, dt) {
                 this.renderStateTimeout++;
                 this.renderStateChanged = true;
             }
+            else if(this.uiState == 4) {
+                if(this.filterTimeout % 20 == 0)
+                    this.filter = this.filter == 'nearest' ? 'linear' : 'nearest';
+                this.filterTimeout++;
+            }
         }
         else {
             if(this.lockCircle) {
@@ -240,12 +266,13 @@ update(inputs, dt) {
     else {
         this.rendererTimeout = 0;
         this.renderStateTimeout = 0;
+        this.filterTimeout = 0;
     }
 
     if(axesR[3] > thr) { 
         if(this.uiActive) {
             if(this.uiStateTimeout % 10 == 0) {
-                this.safeIncrement("ui", 4);
+                this.safeIncrement("ui", 5);
                 // this.uiState++;
                 // if(this.uiState > 2)
                 //     this.uiState = 0;
@@ -262,7 +289,7 @@ update(inputs, dt) {
     else if(axesR[3] < -thr) {
         if(this.uiActive) {
             if(this.uiStateTimeout % 10 == 0) {
-                this.safeDecrement("ui", 4);
+                this.safeDecrement("ui", 5);
                 // this.uiState--;
                 // if(this.uiState < 0)
                 //     this.uiState = 2;
@@ -361,18 +388,18 @@ apply(viewMatrix, force = false) {
         // vec3.transformQuat(translation, [0, 0, this.focusDistance], rotation);
         if(this.lockCircle) {
             if(this.circleActive > 0) {
-                console.log("update circle");
+                // console.log("update circle");
                 let tr = vec3.create();
                 vec3.add(tr, tr, [Math.cos(this.circle), Math.sin(this.circle), 0])
                 vec3.scale(tr, tr, 0.02);
-                console.log(tr);
+                // console.log(tr);
                 this.transform.localTranslation = vec3.add(vec3.create(), tr, [0, 0, this.focusDistance]);
             }
             else {
-                console.log("reset circle 1");
-                console.log(this.change);
-                console.log(Math.abs(this.angles.yaw - angles.yaw));
-                console.log(Math.abs(this.angles.pitch - angles.pitch));
+                // console.log("reset circle 1");
+                // console.log(this.change);
+                // console.log(Math.abs(this.angles.yaw - angles.yaw));
+                // console.log(Math.abs(this.angles.pitch - angles.pitch));
                 this.transform.localTranslation = vec3.clone([0, 0, this.focusDistance]);
                 this.circle = Math.PI / 2;
             }
@@ -383,7 +410,6 @@ apply(viewMatrix, force = false) {
             // quat.rotateY(rotation, rotation, angles.yaw);
             // quat.rotateX(rotation, rotation, angles.pitch);
             // quat.rotateZ(rotation, rotation, angles.roll);
-;
             // this.transform.localRotation = rotation;
             if(this.searchMode) {
                 // console.log("yaw", this.angles.yaw.toFixed(2));

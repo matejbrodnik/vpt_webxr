@@ -61,6 +61,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             this.reset();
         }
     });
+    this.lod = Math.floor(Math.log2(Math.max(this._resolution.width, this._resolution.height)));
 
     this._programs = WebGL.buildPrograms(this._gl, SHADERS.renderers.EAM, MIXINS);
     this._frameNumber = 0;
@@ -80,26 +81,26 @@ _resetFrame() {
     console.log("EAM RESET")
     const gl = this._gl;
 
-    // if(this.mip == null) {
-    //     this.mip = new MIPRenderer(gl, this._volume, this._camera, this._environmentTexture, {
-    //         resolution: this._resolution,
-    //         transform: this._volumeTransform,
-    //         VRAnimator: this._VRAnimator,
-    //         VRProjection: this._VRProjection,
-    //         VROn: this._VROn,
-    //     });
-    //     this.mip.setContext(this._context);
-    //     this.mip.mono = 1;
-    // }
+    if(this.mip == null) {
+        this.mip = new MIPRenderer(gl, this._volume, this._camera, this._environmentTexture, {
+            resolution: this._resolution,
+            transform: this._volumeTransform,
+            VRAnimator: this._VRAnimator,
+            VRProjection: this._VRProjection,
+            VROn: this._VROn,
+        });
+        this.mip.setContext(this._context);
+        this.mip.mono = 1;
+    }
 
-    // this.mip.reset(true);
+    this.mip.reset(true);
 
-    // this.mip._VRAnimator = this._VRAnimator;
-    // this.mip._VRProjection = this._VRProjection;
+    this.mip._VRAnimator = this._VRAnimator;
+    this.mip._VRProjection = this._VRProjection;
     
-    // this.mip.render();
+    this.mip.render();
 
-    // this._accumulationBuffer.use();
+    this._accumulationBuffer.use();
 
     const { program, uniforms } = this._programs.reset;
     gl.useProgram(program);
@@ -123,15 +124,16 @@ _generateFrame() {
     gl.uniform1i(uniforms.uVolume, 0);
     gl.uniform1i(uniforms.uTransferFunction, 1);
 
-    // gl.activeTexture(gl.TEXTURE2);
-    // gl.bindTexture(gl.TEXTURE_2D, this.mip._renderBuffer.getAttachments().color[0]);
-    // gl.uniform1i(uniforms.uMIP, 2);
-
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this.mip._renderBuffer.getAttachments().color[0]);
+    gl.uniform1i(uniforms.uMIP, 2);
+    
     gl.uniform1f(uniforms.uStepSize, 1 / this.slices);
     gl.uniform1f(uniforms.uFov, this.enableFov);
     gl.uniform1f(uniforms.uExtinction, this._VROn ? this._VRAnimator.extinction : this.extinction);
     gl.uniform1f(uniforms.uOffset, this.random ? Math.random() : 0);
-
+    gl.uniform1i(uniforms.uLod, this.lod);
+    
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
     const modelMatrix = this._VROn ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
     const viewMatrix = this._VROn ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;

@@ -21,7 +21,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'extinction',
             label: 'Extinction',
             type: 'spinner',
-            value: 60,
+            value: 200,
             min: 0,
         },
         {

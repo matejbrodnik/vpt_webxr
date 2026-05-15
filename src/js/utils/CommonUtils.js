@@ -78,4 +78,22 @@ static smootherstep(edge0, edge1, x) {
     return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
+static doubleShuffle(array1, array2) {
+  let currentIndex = array1.length;
+
+  // While there remain elements to shuffle...
+  while (currentIndex != 0) {
+
+    // Pick a remaining element...
+    let randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // And swap it with the current element.
+    [array1[currentIndex], array1[randomIndex]] = [
+      array1[randomIndex], array1[currentIndex]];
+    [array2[currentIndex], array2[randomIndex]] = [
+      array2[randomIndex], array2[currentIndex]];
+  }
+}
+
 }

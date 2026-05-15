@@ -60,7 +60,6 @@ destroy() {
 
 _resetFrame() {
     const gl = this._gl;
-
     const { program, uniforms } = this._programs.reset;
     gl.useProgram(program);
 
@@ -93,6 +92,7 @@ _generateFrame() {
     // console.log("RESET ", this.name);
     const projectionMatrix = this._VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
     const matrix = mat4.create();
+    
     mat4.multiply(matrix, centerMatrix, matrix);
     mat4.multiply(matrix, modelMatrix, matrix);
     mat4.multiply(matrix, viewMatrix, matrix);

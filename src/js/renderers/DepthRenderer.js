@@ -160,6 +160,7 @@ _renderFrame() {
     gl.uniform1i(uniforms.uAccumulator, 0);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    // this._context.brick = true;
 }
 
 _getFrameBufferSpec() {
