@@ -9,6 +9,7 @@ export class VRCameraAnimator extends EventTarget {
 constructor(volumeTransform) {
     super();
     this.transform = new Transform(new Node());
+    this.transform2 = new Transform(new Node());
     this.model = new Transform(new Node());
     
     this.yaw = 0;
@@ -20,6 +21,7 @@ constructor(volumeTransform) {
     // this.focusDistance = vec3.distance([0, 0, 0], this.transform.globalTranslation);
     this.focusDistance = 1;
     this.transform.localTranslation = vec3.clone([0, 0, this.focusDistance]);
+    this.transform2.localTranslation = vec3.clone([0, 0, this.focusDistance]);
     // console.log("focus", this.focusDistance)
     
     this.thr = 0.74;
@@ -134,7 +136,10 @@ update(inputs, dt) {
         gpR = inputs[0].gamepad;
     }
 
-
+    if(!gpR) {
+        console.log("NO INPUT", inputs);
+        return
+    }
     let axesR = gpR.axes;
     let btnsR = gpR.buttons;
     let thr = this.thr;
@@ -374,7 +379,7 @@ update(inputs, dt) {
     // console.log(this.dx, this.dz);
 }
 
-apply(viewMatrix, force = false) {
+apply(viewMatrix, force = false, right = false) {
     // ROLL + T[1] ZAVRŽEMO
     let r = quat.create();
     let t = vec3.create();
@@ -384,54 +389,35 @@ apply(viewMatrix, force = false) {
     t = [t[0] * 1.0, t[1] * 0, t[2] * 1.0];
     let angles = this.quatToEuler(r);
 
+    let transform = this.transform;
+    if(right)
+        transform = this.transform2;
+
     if(force || this.change >= 1 || (!this.lockCircle && this.angles && (Math.abs(this.angles.yaw - angles.yaw) > this.thrAuto || Math.abs(this.angles.pitch - angles.pitch) > this.thrAuto))) {  // || Math.abs(this.angles.roll - angles.roll) > this.thrAuto
-        // vec3.transformQuat(translation, [0, 0, this.focusDistance], rotation);
         if(this.lockCircle) {
             if(this.circleActive > 0) {
-                // console.log("update circle");
                 let tr = vec3.create();
                 vec3.add(tr, tr, [Math.cos(this.circle), Math.sin(this.circle), 0])
                 vec3.scale(tr, tr, 0.02);
-                // console.log(tr);
-                this.transform.localTranslation = vec3.add(vec3.create(), tr, [0, 0, this.focusDistance]);
+                transform.localTranslation = vec3.add(vec3.create(), tr, [0, 0, this.focusDistance]);
             }
             else {
-                // console.log("reset circle 1");
-                // console.log(this.change);
-                // console.log(Math.abs(this.angles.yaw - angles.yaw));
-                // console.log(Math.abs(this.angles.pitch - angles.pitch));
-                this.transform.localTranslation = vec3.clone([0, 0, this.focusDistance]);
+                transform.localTranslation = vec3.clone([0, 0, this.focusDistance]);
                 this.circle = Math.PI / 2;
             }
         } else {
-            // console.log("normal")
-            
-            // const rotation = quat.create();
-            // quat.rotateY(rotation, rotation, angles.yaw);
-            // quat.rotateX(rotation, rotation, angles.pitch);
-            // quat.rotateZ(rotation, rotation, angles.roll);
-            // this.transform.localRotation = rotation;
             if(this.searchMode) {
-                // console.log("yaw", this.angles.yaw.toFixed(2));
-                // console.log("pitch", this.angles.pitch.toFixed(2));
-                // console.log("roll", this.angles.roll.toFixed(2));
                 let t2 = vec3.clone([-this.pitch / 3, this.focusDistance * -1.0, -this.yaw / 3]);
                 vec3.transformQuat(t2, t2, r);
                 vec3.add(this.changeT, this.changeT, t2);
                 this.yaw = 0;
                 this.pitch = 0;
                 this.focusDistance = 0;
-                
-                // t[0] -= this.pitch / 3;
-                // t[1] = this.focusDistance * -1.2;
-                // t[2] -= this.yaw / 3;
                 vec3.add(t, t, this.changeT);
-                this.transform.localTranslation = vec3.add(vec3.create(), t, this.start);
-                // quat.rotateX(r, r, this.yaw);
-                // quat.rotateY(r, r, this.pitch);
+                transform.localTranslation = vec3.add(vec3.create(), t, this.start);
             }
             else {
-                this.transform.localTranslation = vec3.add(vec3.create(), t, [0, 0, this.focusDistance]);
+                transform.localTranslation = vec3.add(vec3.create(), t, [0, 0, this.focusDistance]);
             
                 const translation = vec3.create();
                 vec3.add(translation, translation, [this.dx, this.dy, this.dz])
@@ -442,11 +428,13 @@ apply(viewMatrix, force = false) {
                 this.model.localRotation = rotationM;
             }
 
-            this.transform.localRotation = r;
+            transform.localRotation = r;
         
         }
-        this.change = 0;
-        this.angles = angles;
+        if(right) {
+            this.change = 0;
+            this.angles = angles;
+        }
         return true;
     }
     else if(this.lockCircle && this.circleActive <= 0) {
@@ -456,7 +444,7 @@ apply(viewMatrix, force = false) {
             return false;
         }
         console.log("reset circle 2");
-        this.transform.localTranslation = translation;
+        transform.localTranslation = translation;
         this.circle = Math.PI / 2;
         return true;
     }
@@ -464,20 +452,7 @@ apply(viewMatrix, force = false) {
         this.angles = angles;
         this.t = t;
     }
-    // else {
-    //     const translation = [this.dx, 0, this.dz];
-    //     const rotation = quat.create();
-    //     quat.rotateY(rotation, rotation, this.yaw);
-    //     quat.rotateX(rotation, rotation, this.pitch);
-    //     vec3.transformQuat(translation, translation, rotation);
-    //     vec3.add(this.focus, this.focus, translation);
-    
-    //     this.transform.localTranslation = this.focus;
-    //     this.transform.localRotation = rotation;
-    //     // console.log(translation);
-    //     this.dx = 0;
-    //     this.dz = 0;
-    // }
+
     return false;
 }
 

@@ -152,9 +152,59 @@ constructor(options = {}) {
 
     // this.renderer.setTransferFunction(this.tf.canvas);
     // this.VRAnimator = new VRCameraAnimator(this.volumeTransform);
+    // let instancesFibers = [
+    //     {
+    //         // xA: 129, yA: 117,
+    //         id: 0,
+    //         xA: 250, yA: 130,
+    //         xB: 255, yB: 140,
+    //         rotation: quat.fromEuler(quat.create(), -90, 0, 0), translation: vec3.clone([0, 0, 0]),
+    //         closer: false,
+    //         fileIndex: 0,
+    //     },
+    //     {
+    //         id: 1,
+    //         xA: 260, yA: 130,
+    //         xB: 265, yB: 140,
+    //         rotation: quat.fromEuler(quat.create(), -90, 0, 0), translation: vec3.clone([0, 0, 0]),
+    //         closer: true,
+    //         fileIndex: 0,
+    //     },
+    //     {
+    //         id: 2,
+    //         xA: 270, yA: 130,
+    //         xB: 275, yB: 140,
+    //         rotation: quat.fromEuler(quat.create(), -90, 0, 0), translation: vec3.clone([0, 0, 0]),
+    //         closer: false,
+    //         fileIndex: 0,
+    //     },
+    //     {
+    //         id: 3,
+    //         xA: 280, yA: 130,
+    //         xB: 285, yB: 140,
+    //         rotation: quat.fromEuler(quat.create(), -90, 0, 0), translation: vec3.clone([0, 0, 0]),
+    //         closer: false,
+    //         fileIndex: 0,
+    //     },
+    //     {
+    //         id: 4,
+    //         xA: 40, yA: 130,
+    //         xB: 45, yB: 140,
+    //         rotation: quat.fromEuler(quat.create(), -90, 0, 0), translation: vec3.clone([0, 0, 0]),
+    //         closer: true,
+    //         fileIndex: 0,
+    //     },
+    //     {
+    //         id: 5,
+    //         xA: 50, yA: 130,
+    //         xB: 55, yB: 140,
+    //         rotation: quat.fromEuler(quat.create(), -90, 0, 0), translation: vec3.clone([0, 0, 0]),
+    //         closer: false,
+    //         fileIndex: 0,
+    //     },
+    // ];
     let instancesFibers = [
         {
-            // xA: 129, yA: 117,
             id: 0,
             xA: 128, yA: 128,
             xB: 169, yB: 149,
@@ -173,7 +223,7 @@ constructor(options = {}) {
         {
             id: 2,
             xA: 123, yA: 183,
-            xB: 187, yB: 160,
+            xB: 188, yB: 160,
             rotation: quat.fromEuler(quat.create(), -90, -10, 0), translation: vec3.clone([0.07, -0.18, 0]),
             closer: false,
             fileIndex: 0,
@@ -196,7 +246,7 @@ constructor(options = {}) {
         },
         {
             id: 5,
-            xA: 141, yA: 165,
+            xA: 140, yA: 165,
             xB: 166, yB: 171,
             rotation: quat.fromEuler(quat.create(), 90, -90, 15), translation: vec3.clone([0.1, 0, -0.1]),
             closer: false,
@@ -272,8 +322,8 @@ constructor(options = {}) {
     
     let complete = [];
     for(let i = 0; i < 4; i++) {
-        CommonUtils.doubleShuffle(instancesFibers, renderersFibers);
-        CommonUtils.doubleShuffle(instancesManix, renderersManix);
+        // CommonUtils.doubleShuffle(instancesFibers, renderersFibers);
+        // CommonUtils.doubleShuffle(instancesManix, renderersManix);
         let instances = instancesFibers.slice();
         instances = instances.concat(instancesManix);
         let renderers = renderersFibers.slice();
@@ -625,6 +675,7 @@ chooseRenderer2(renderer, reset=true, tf = null) {
         // TF: tf ?? this.tf.canvas,
     });
     this.renderer2.setContext(this);
+    this.renderer2.right = true;
     // if(this.renderer instanceof FOVRenderer){
     //     this.disable = true;
     // }
@@ -686,6 +737,9 @@ setupReprojection() {
 }
 
 switchRenderer(index, TF = null, force = false) {
+    // console.log("PROJ MATRIX")
+    // this.renderer.log(this.pose.views[0].projectionMatrix)
+    // this.renderer.log(this.pose.views[1].projectionMatrix)
     if(index == 0 && (!(this.renderer instanceof FOVRenderer2) || force)) {
         this.setFilter('nearest', false);
         this.chooseRenderer("fov2", true, TF);
@@ -847,16 +901,44 @@ _update(t, frame) {
 
             if(this.reproject)
                 this.reproject.reset(pose.views[1].projectionMatrix);
-            this.renderer.log(pose.views[0].projectionMatrix)
-            this.renderer.log(pose.views[1].projectionMatrix)
+            this.renderer.log(pose.views[0].projectionMatrix);
+            this.renderer.log(pose.views[1].projectionMatrix);
+            
         }
+        // console.log("PROJ LEFT");
+        // this.renderer.log(pose.views[0].projectionMatrix);
+        // console.log("PROJ RIGHT");
+        // this.renderer.log(pose.views[1].projectionMatrix);
+        // console.log(pose.views[0].projectionMatrix[8].toFixed(3));
+        if(pose.views[0].projectionMatrix[8].toFixed(3) == -0.174) {
+            this.projMode = 1;
+        }
+        else if(pose.views[0].projectionMatrix[8].toFixed(3) == -0.07) {
+            this.projMode = 2;
+        }
+        else if(pose.views[0].projectionMatrix[8].toFixed(3) == 0.035) {
+            this.projMode = 3;
+        }
+        else {
+            this.projMode = 0;
+        }
+        // console.log(this.projMode);
         let glLayer = session.renderState.baseLayer;
         for (let view of pose.views) {
+            // console.log(view.transform.position.x);
             this.viewport = glLayer.getViewport(view);
             // console.log(this.viewport.width, this.viewport.height);
                 if(!this.right) {
                     this.changedView = this.VRAnimator.renderStateChanged || this.VRAnimator.apply(view.transform.matrix, this.VRiterations <= 1);
+                    console.log("LEFT");
+                    this.renderer.log(view.transform.matrix)
+                } 
+                else {
+                    this.VRAnimator.apply(view.transform.matrix, this.VRiterations <= 1, 1);
+                    console.log("RIGHT");
+                    this.renderer.log(view.transform.matrix)
                 }
+                
                 if(this.changedView) {
                     if(this.right) {
                         // console.log("proj right");

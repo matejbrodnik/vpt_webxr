@@ -61,6 +61,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     this.iter = 10;
     this.name = "0";
     this.disable = false;
+    this.right = false;
     console.log("CREATED: ", this);
 }
 

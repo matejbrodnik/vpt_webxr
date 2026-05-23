@@ -1,7 +1,7 @@
 import { WebGL } from './WebGL.js';
 
 import { SingleBuffer } from './SingleBuffer.js';
-import { quat, vec3 } from '../../lib/gl-matrix-module.js';
+import { quat, vec3, vec4, mat4 } from '../../lib/gl-matrix-module.js';
 
 const [ SHADERS, MIXINS ] = await Promise.all([
     'shaders.json',
@@ -140,6 +140,7 @@ _drawUIText(reset = false) {
     ctx.textBaseline = 'bottom';
     // if(reset || !(this.VRAnimator))
     //     ctx.fillText("TEST test", this.uiCanvas.width - 140, 195);
+    let rightOffset = 83;
     if(this.VRAnimator) {
         if(this.VRAnimator.lockCircle) {
             if(this.VRAnimator.circleActive > 0) {
@@ -148,8 +149,72 @@ _drawUIText(reset = false) {
                 return;
             }
             let w = 6;
-            this._drawCircle(this.depthParams.xA - (this.right ? 20 : 0), this.depthParams.yA, w, this.VRAnimator.selectedL ? 'rgb(109, 255, 41)' : 'rgb(161, 161, 161)')
-            this._drawCircle(this.depthParams.xB - (this.right ? 20 : 0), this.depthParams.yB, w, this.VRAnimator.selectedL ? 'rgb(161, 161, 161)' : 'rgb(109, 255, 41)')
+            let offset = [0, 0];
+            let offsetR = 0;
+            let multi = 1;
+
+            // let p = vec4.fromValues(this.depthParams.xA / this.uiCanvas.width, 0, 0, 1.0);
+            // let clip = vec4.transformMat4(
+            //     vec4.create(),
+            //     vec4.transformMat4(vec4.create(), p, this.VRAnimator.transform.globalMatrix),
+            //     this.renderingContext.pose.views[0].projectionMatrix,
+            // );
+            // console.log(clip)
+            // let ndc = {
+            //     x: clip[0] / clip[3],
+            //     y: clip[0] / clip[3],
+            //     z: clip[0] / clip[3]
+            // };
+            // console.log(ndc)
+            // let finalX = (clip[0] * 0.5 + 0.5) * this.uiCanvas.width;
+            // console.log(this.depthParams.xA + " -> " + finalX);
+
+            let three = [
+                {A: -18, B: -13},
+                {A: -18, B: -12},
+                {A: -19, B: -11},
+                {A: -14, B: -11},
+                {A: -15, B: -13},
+                {A: -16, B: -13},
+
+                {A: -18, B: -13},
+                {A: -18, B: -13},
+                {A: -18, B: -13},
+                {A: -18, B: -13},
+                {A: -18, B: -13},
+                {A: -18, B: -13}
+            ];
+
+            let index = this.depthParams.id;
+            if(index >= 10)
+                index -= 4;
+
+            if(this.renderingContext.projMode == 2) {
+                if(this.right)
+                    offsetR -= 20;
+                // offset += 0;
+            }
+            if(this.renderingContext.projMode == 1) {
+                if(this.right)
+                    offsetR -= 50;
+                    // offsetR -= 50;
+                offset = [15, 15];
+                // offset += 3;
+                // multi = 1.089;
+            }
+            if(this.renderingContext.projMode == 3) {
+                if(this.right)
+                    offsetR += 10;
+                    // offsetR += 8;
+                offset = [three[0].A, three[0].B];
+                // offset += 5;
+                // multi = 0.935;
+            }
+            // offset = [47, 56];
+            // if(this.right)
+            //     offsetR = -81;
+            this._drawCircle(Math.round((this.depthParams.xA + offset[0] + offsetR) * multi), Math.round(this.depthParams.yA), w, this.VRAnimator.selectedL ? 'rgb(109, 255, 41)' : 'rgb(161, 161, 161)')
+            this._drawCircle(Math.round((this.depthParams.xB + offset[1] + offsetR) * multi), Math.round(this.depthParams.yB), w, this.VRAnimator.selectedL ? 'rgb(161, 161, 161)' : 'rgb(109, 255, 41)')
             // this._drawCircle(this.depthParams.xB - (this.right ? 20 : 0), this.depthParams.yB, w, 'rgb(237, 41, 255)')
             
             ctx.strokeStyle = 'black';
@@ -170,11 +235,11 @@ _drawUIText(reset = false) {
         }
         if(this.VRAnimator.uiActive) {
             // let x = this.uiCanvas.width - 160;
-            let x = this._resolution.width / 3.2; // 120
+            let x = this._resolution.width / 3; // 120
             // let x = 310;
             if(this.right)
-                x = x - 40;
-            let y = this._resolution.height / 2.5;
+                x = x - rightOffset;
+            let y = this._resolution.height / 2.8;
             // let y = 195;
             let yStep = 14;
             // let style = (this.VRAnimator.chosenRenderer == 5 || this.VRAnimator.chosenRenderer == 6 || this.VRAnimator.chosenRenderer == 7) ? 'white' : 'black';
@@ -193,7 +258,7 @@ _drawUIText(reset = false) {
                 ctx.fillStyle = 'blue';
             else
                 ctx.fillStyle = style;
-            ctx.fillText(cursor[count++] + "Stepss: " + this.VRAnimator.steps, x, y);
+            ctx.fillText(cursor[count++] + this.right ? "STEPS: " : "steps" + this.VRAnimator.steps, x, y);
             y += yStep;
             if(this.VRAnimator.uiState == count)
                 ctx.fillStyle = 'blue';
@@ -219,7 +284,7 @@ _drawUIText(reset = false) {
                 x += 50;
                 // if(this.right)
                 //     x = x - 80;
-                y = this._resolution.height / 2.5;
+                y = this._resolution.height / 2.8;
                 // y = 231;
                 if(this.VRAnimator.timer)
                     y = y + 18
@@ -229,10 +294,10 @@ _drawUIText(reset = false) {
         }
     
         if(this.VRAnimator.timer) {
-            let x = this._resolution.width / 3.2 + 50;
+            let x = this._resolution.width / 3 + 50;
             if(this.right)
-                x = x - 40;
-            let y = this._resolution.height / 2.5;
+                x = x - rightOffset;
+            let y = this._resolution.height / 2.8;
             // let y = 231;
             let style = (this.VRAnimator.chosenRenderer == 5 || this.VRAnimator.chosenRenderer == 6 || this.VRAnimator.chosenRenderer == 7) ? 'white' : 'black';
             ctx.fillStyle = style;
