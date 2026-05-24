@@ -189,32 +189,35 @@ _drawUIText(reset = false) {
             if(index >= 10)
                 index -= 4;
 
-            if(this.renderingContext.projMode == 2) {
-                if(this.right)
-                    offsetR -= 20;
-                // offset += 0;
-            }
-            if(this.renderingContext.projMode == 1) {
-                if(this.right)
-                    offsetR -= 50;
-                    // offsetR -= 50;
-                offset = [15, 15];
-                // offset += 3;
-                // multi = 1.089;
-            }
-            if(this.renderingContext.projMode == 3) {
-                if(this.right)
-                    offsetR += 10;
-                    // offsetR += 8;
-                offset = [three[0].A, three[0].B];
-                // offset += 5;
-                // multi = 0.935;
-            }
+            // if(this.renderingContext.projMode == 2) {
+            //     if(this.right)
+            //         offsetR -= 20;
+            //     // offset += 0;
+            // }
+            // if(this.renderingContext.projMode == 1) {
+            //     if(this.right)
+            //         offsetR -= 50;
+            //         // offsetR -= 50;
+            //     offset = [15, 15];
+            //     // offset += 3;
+            //     // multi = 1.089;
+            // }
+            // if(this.renderingContext.projMode == 3) {
+            //     if(this.right)
+            //         offsetR += 10;
+            //         // offsetR += 8;
+            //     offset = [three[0].A, three[0].B];
+            //     // offset += 5;
+            //     // multi = 0.935;
+            // }
             // offset = [47, 56];
-            // if(this.right)
-            //     offsetR = -81;
-            this._drawCircle(Math.round((this.depthParams.xA + offset[0] + offsetR) * multi), Math.round(this.depthParams.yA), w, this.VRAnimator.selectedL ? 'rgb(109, 255, 41)' : 'rgb(161, 161, 161)')
-            this._drawCircle(Math.round((this.depthParams.xB + offset[1] + offsetR) * multi), Math.round(this.depthParams.yB), w, this.VRAnimator.selectedL ? 'rgb(161, 161, 161)' : 'rgb(109, 255, 41)')
+            offset = [0, 0];
+            if(this.right)
+                offsetR = this.renderingContext.filename == "fibersB" ? -81 : -20;
+            
+            console.log(this.renderingContext.filename);
+            this._drawCircle(Math.round(((this.renderingContext.filename == "fibersB" ? this.depthParams.xA2 : this.depthParams.xA) + offset[0] + offsetR) * multi), this.renderingContext.filename == "fibersB" ? this.depthParams.yA2 : this.depthParams.yA, w, this.VRAnimator.selectedL ? 'rgb(109, 255, 41)' : 'rgb(161, 161, 161)')
+            this._drawCircle(Math.round(((this.renderingContext.filename == "fibersB" ? this.depthParams.xB2 : this.depthParams.xB) + offset[1] + offsetR) * multi), this.renderingContext.filename == "fibersB" ? this.depthParams.yB2 : this.depthParams.yB, w, this.VRAnimator.selectedL ? 'rgb(161, 161, 161)' : 'rgb(109, 255, 41)')
             // this._drawCircle(this.depthParams.xB - (this.right ? 20 : 0), this.depthParams.yB, w, 'rgb(237, 41, 255)')
             
             ctx.strokeStyle = 'black';

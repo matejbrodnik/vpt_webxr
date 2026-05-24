@@ -203,11 +203,14 @@ constructor(options = {}) {
     //         fileIndex: 0,
     //     },
     // ];
+
     let instancesFibers = [
         {
             id: 0,
             xA: 128, yA: 128,
             xB: 169, yB: 149,
+            xA2: 179, yA2: 116,
+            xB2: 226, yB2: 139,
             rotation: quat.fromEuler(quat.create(), 90, 10, 0), translation: vec3.clone([-0.09, -0.1, 0]), 
             closer: false,
             fileIndex: 0,
@@ -216,6 +219,8 @@ constructor(options = {}) {
             id: 1,
             xA: 131, yA: 119,
             xB: 193, yB: 131,
+            xA2: 183, yA2: 107,
+            xB2: 253, yB2: 120,
             rotation: quat.fromEuler(quat.create(), 90, -10, 180), translation: vec3.clone([0.05, 0.1, 0]),
             closer: true,
             fileIndex: 0,
@@ -224,6 +229,8 @@ constructor(options = {}) {
             id: 2,
             xA: 123, yA: 183,
             xB: 188, yB: 160,
+            xA2: 173, yA2: 174,
+            xB2: 246, yB2: 151,
             rotation: quat.fromEuler(quat.create(), -90, -10, 0), translation: vec3.clone([0.07, -0.18, 0]),
             closer: false,
             fileIndex: 0,
@@ -232,6 +239,8 @@ constructor(options = {}) {
             id: 3,
             xA: 139, yA: 167,
             xB: 179, yB: 185,
+            xA2: 192, yA2: 157,
+            xB2: 237, yB2: 177,
             rotation: quat.fromEuler(quat.create(), -90, -10, 180), translation: vec3.clone([0.1, -0.1, -0.2]),
             closer: false,
             fileIndex: 0,
@@ -240,6 +249,8 @@ constructor(options = {}) {
             id: 4,
             xA: 136, yA: 163,
             xB: 170, yB: 184,
+            xA2: 189, yA2: 156,
+            xB2: 227, yB2: 177,
             rotation: quat.fromEuler(quat.create(), 90, 90, 15), translation: vec3.clone([0.1, -0.2, -0.1]),
             closer: true,
             fileIndex: 0,
@@ -248,6 +259,8 @@ constructor(options = {}) {
             id: 5,
             xA: 140, yA: 165,
             xB: 166, yB: 171,
+            xA2: 192, yA2: 156,
+            xB2: 223, yB2: 162,
             rotation: quat.fromEuler(quat.create(), 90, -90, 15), translation: vec3.clone([0.1, 0, -0.1]),
             closer: false,
             fileIndex: 0,
@@ -259,6 +272,8 @@ constructor(options = {}) {
             id: 10,
             xA: 134, yA: 138,
             xB: 180, yB: 170,
+            xA2: 188, yA2: 127,
+            xB2: 238, yB2: 159,
             rotation: quat.fromEuler(quat.create(), -70, 0, 10), translation: vec3.clone([0.2, 0.1, 0]),
             closer: false,
             fileIndex: 1,
@@ -267,6 +282,8 @@ constructor(options = {}) {
             id: 11,
             xA: 139, yA: 129,
             xB: 181, yB: 143,
+            xA2: 191, yA2: 118,
+            xB2: 239, yB2: 132,
             rotation: quat.fromEuler(quat.create(), -90, 20, 0), translation: vec3.clone([0, 0, 0]),
             closer: false,
             fileIndex: 1,
@@ -275,6 +292,8 @@ constructor(options = {}) {
             id: 12,
             xA: 142, yA: 120,
             xB: 136, yB: 178,
+            xA2: 193, yA2: 109,
+            xB2: 186, yB2: 169,
             rotation: quat.fromEuler(quat.create(), -105, 20, 0), translation: vec3.clone([0, 0, 0]),
             closer: true,
             fileIndex: 1,
@@ -283,6 +302,8 @@ constructor(options = {}) {
             id: 13,
             xA: 157, yA: 115,
             xB: 168, yB: 181,
+            xA2: 212, yA2: 101,
+            xB2: 227, yB2: 171,
             rotation: quat.fromEuler(quat.create(), -115, -40, 0), translation: vec3.clone([0, -0.1, -0.3]), 
             closer: true,
             fileIndex: 1,
@@ -291,6 +312,8 @@ constructor(options = {}) {
             id: 14,
             xA: 128, yA: 162,
             xB: 172, yB: 190,
+            xA2: 179, yA2: 153,
+            xB2: 232, yB2: 182,
             rotation: quat.fromEuler(quat.create(), -80, 0, 10), translation: vec3.clone([0.2, -0.05, 0.35]),
             closer: false,
             fileIndex: 1,
@@ -299,12 +322,13 @@ constructor(options = {}) {
             id: 15,
             xA: 150, yA: 130,
             xB: 141, yB: 198,
+            xA2: 204, yA2: 120,
+            xB2: 195, yB2: 189,
             rotation: quat.fromEuler(quat.create(), -95, 80, 0), translation: vec3.clone([-0.05, 0.07, -0.1]),
             closer: false,
             fileIndex: 1,
         },
     ];
-
 
     // instances.concat(instancesManix);
     // let renderers = [];
@@ -331,8 +355,8 @@ constructor(options = {}) {
         for(let j = 0; j < instances.length; j++) {
             console.log(instances[j]);
             let index = Math.floor(Math.random() * renderers[j].length);
-            // complete.push({depthParams: instances[j], renderer: 0});
-            complete.push({depthParams: instances[j], renderer: renderers[j][index]});
+            complete.push({depthParams: instances[j], renderer: 4});
+            // complete.push({depthParams: instances[j], renderer: renderers[j][index]});
             renderers[j].splice(index, 1);
             // console.log(renderers, index);
         }
@@ -543,6 +567,8 @@ async loadVolume(index, filetype, precision=8) {
         this.currFileIndex = index;
         const loader = new loaderClass(file);
         let dim = file.name.split("_")[1].split("x");
+        if(!this.filename)
+            this.filename = file.name.split("_")[0];
         console.log(dim)
         const reader = new readerClass(loader, {
             width  : dim[0],
