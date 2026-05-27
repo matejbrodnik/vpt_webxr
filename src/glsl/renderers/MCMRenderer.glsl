@@ -195,23 +195,18 @@ void main() {
     }
     // photon.depth = vec3(0);
     vec2 uvA = vec2(0);
-    // vec3 old1 = texture(uOld, mappedPosition).rgb;
-    // vec3 old = old1;
-    // saved = photon.acc;
-
-    if(reproject > 0u && saved != vec3(0)) {
-        vec4 clipA = uMvpA * vec4(saved, 1.0);
-        vec3 ndcA = clipA.xyz / clipA.w;
-        uvA = ndcA.xy * 0.5 + 0.5;
-        vec3 old = texture(uOld, uvA).rgb;
-        float prevSamples = texture(uOld, uvA).a;
-        if (prevSamples >= 1.0 && uvA.x >= 0.0 && uvA.x <= 1.0 && uvA.y >= 0.0 && uvA.y <= 1.0) {
-            float s = min(10.0, log(prevSamples + 1.0) + 1.5);
-            // float s = 1.0;
-            photon.radiance = (photon.radiance * photon.samples2 + old * s) / (photon.samples2 + s);
-            photon.samples2 += s;
-        }
-    }
+    // if(reproject > 0u && saved != vec3(0)) {
+    //     vec4 clipA = uMvpA * vec4(saved, 1.0);
+    //     vec3 ndcA = clipA.xyz / clipA.w;
+    //     uvA = ndcA.xy * 0.5 + 0.5;
+    //     vec3 old = texture(uOld, uvA).rgb;
+    //     float prevSamples = texture(uOld, uvA).a;
+    //     if (prevSamples >= 1.0 && uvA.x >= 0.0 && uvA.x <= 1.0 && uvA.y >= 0.0 && uvA.y <= 1.0) {
+    //         float s = min(10.0, log(prevSamples + 1.0) + 1.5);
+    //         photon.radiance = (photon.radiance * photon.samples2 + old * s) / (photon.samples2 + s);
+    //         photon.samples2 += s;
+    //     }
+    // }
     
     
     // else if(reproject > 0u){

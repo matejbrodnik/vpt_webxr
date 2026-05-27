@@ -73,6 +73,10 @@ constructor(volumeTransform) {
     this.jsonReady = true;
     this.unlockA = true;
     this.survey = new Survey();
+
+    this.comparison = 0;
+    this.comparisonTimeout = 0;
+
 }
 
 safeIncrement(val, num) {
@@ -96,6 +100,11 @@ safeIncrement(val, num) {
         if(this.bar >= 165)
             this.bar = 165;
     }
+    else if(val == "comparison") {
+        this.comparison++;
+        if(this.comparison >= num)
+            this.comparison = 0;
+    }
 }
 
 safeDecrement(val, num) {
@@ -118,6 +127,11 @@ safeDecrement(val, num) {
         this.bar -= 4;
         if(this.bar < 0)
             this.bar = 0;
+    }
+    else if(val == "comparison") {
+        this.comparison--;
+        if(this.comparison < 0)
+            this.comparison = num - 1;
     }
 }
 
@@ -328,6 +342,9 @@ update(inputs, dt) {
             //     this.reproject = !this.reproject;
             // console.log("BUTTON A", this.reproject);
             // this.reproCount++;
+            console.log(this.comparison);
+            this.dispatchEvent(new CustomEvent('comparison', {detail: this.comparison}));
+
         }
         if(btnsL[5].pressed) { // B
             // this.safeDecrement("bar", 800);
@@ -335,22 +352,32 @@ update(inputs, dt) {
         }   
         
         if(axesL[2] > thr) { //right
-            if(this.lockCircle) {
-                this.safeIncrement("bar", 800);
+            // if(this.lockCircle) {
+            //     this.safeIncrement("bar", 800);
+            // }
+            // else {
+            //     this.dx -= this.translationStep;
+            //     this.change++;
+            // }
+            if(this.comparisonTimeout % 20 == 0) {
+                this.safeIncrement("comparison", 4);
             }
-            else {
-                this.dx -= this.translationStep;
-                this.change++;
-            }
+            this.comparisonTimeout++;
         }
         else if(axesL[2] < -thr) { //left
-            if(this.lockCircle) {
-                this.safeDecrement("bar", 800);
-            }
-            else {
-                this.dx += this.translationStep;
-                this.change++;
-            }
+            // if(this.lockCircle) {
+            //     this.safeDecrement("bar", 800);
+            // }
+            // else {
+            //     this.dx += this.translationStep;
+            //     this.change++;
+            // }
+            if(this.comparisonTimeout % 20 == 0)
+                this.safeDecrement("comparison", 4);
+            this.comparisonTimeout++;
+        }
+        else {
+            this.comparisonTimeout = 0;
         }
         
         if(this.lockCircle)
@@ -391,7 +418,8 @@ apply(viewMatrix, force = false, right = false) {
 
     let transform = this.transform;
     if(right)
-        transform = this.transform2;
+        transform = this.transform;
+        // transform = this.transform2;
 
     if(force || this.change >= 1 || (!this.lockCircle && this.angles && (Math.abs(this.angles.yaw - angles.yaw) > this.thrAuto || Math.abs(this.angles.pitch - angles.pitch) > this.thrAuto))) {  // || Math.abs(this.angles.roll - angles.roll) > this.thrAuto
         if(this.lockCircle) {
@@ -431,10 +459,10 @@ apply(viewMatrix, force = false, right = false) {
             transform.localRotation = r;
         
         }
-        if(right) {
+        // if(right) {
             this.change = 0;
             this.angles = angles;
-        }
+        // }
         return true;
     }
     else if(this.lockCircle && this.circleActive <= 0) {

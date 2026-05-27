@@ -46,6 +46,7 @@ constructor(gl, texture, options = {}) {
         xD: 340, yD: 230,
         rotation: quat.create(), translation: vec3.create()
     }
+    this.comparisonMode = false;
     
 }
 
@@ -140,8 +141,19 @@ _drawUIText(reset = false) {
     ctx.textBaseline = 'bottom';
     // if(reset || !(this.VRAnimator))
     //     ctx.fillText("TEST test", this.uiCanvas.width - 140, 195);
-    let rightOffset = 83;
+    let rightOffset = 123;
     if(this.VRAnimator) {
+        if(this.comparisonMode) {
+            let x = this._resolution.width / 2.8; // 120
+            // let x = 310;
+            if(this.right)
+                x = x - rightOffset;
+            let y = this._resolution.height / 2.5;
+            ctx.strokeStyle = 'black';
+            ctx.fillStyle = 'black';
+            
+            ctx.fillText("Mode: " + this.VRAnimator.comparison, x, y);
+        }
         if(this.VRAnimator.lockCircle) {
             if(this.VRAnimator.circleActive > 0) {
                 // this.VRAnimator.model.localTranslation = this.depthParams.translation;
@@ -152,22 +164,6 @@ _drawUIText(reset = false) {
             let offset = [0, 0];
             let offsetR = 0;
             let multi = 1;
-
-            // let p = vec4.fromValues(this.depthParams.xA / this.uiCanvas.width, 0, 0, 1.0);
-            // let clip = vec4.transformMat4(
-            //     vec4.create(),
-            //     vec4.transformMat4(vec4.create(), p, this.VRAnimator.transform.globalMatrix),
-            //     this.renderingContext.pose.views[0].projectionMatrix,
-            // );
-            // console.log(clip)
-            // let ndc = {
-            //     x: clip[0] / clip[3],
-            //     y: clip[0] / clip[3],
-            //     z: clip[0] / clip[3]
-            // };
-            // console.log(ndc)
-            // let finalX = (clip[0] * 0.5 + 0.5) * this.uiCanvas.width;
-            // console.log(this.depthParams.xA + " -> " + finalX);
 
             let three = [
                 {A: -18, B: -13},
@@ -189,28 +185,6 @@ _drawUIText(reset = false) {
             if(index >= 10)
                 index -= 4;
 
-            // if(this.renderingContext.projMode == 2) {
-            //     if(this.right)
-            //         offsetR -= 20;
-            //     // offset += 0;
-            // }
-            // if(this.renderingContext.projMode == 1) {
-            //     if(this.right)
-            //         offsetR -= 50;
-            //         // offsetR -= 50;
-            //     offset = [15, 15];
-            //     // offset += 3;
-            //     // multi = 1.089;
-            // }
-            // if(this.renderingContext.projMode == 3) {
-            //     if(this.right)
-            //         offsetR += 10;
-            //         // offsetR += 8;
-            //     offset = [three[0].A, three[0].B];
-            //     // offset += 5;
-            //     // multi = 0.935;
-            // }
-            // offset = [47, 56];
             offset = [0, 0];
             if(this.right)
                 offsetR = this.renderingContext.filename == "fibersB" ? -81 : -20;
@@ -221,24 +195,10 @@ _drawUIText(reset = false) {
             // this._drawCircle(this.depthParams.xB - (this.right ? 20 : 0), this.depthParams.yB, w, 'rgb(237, 41, 255)')
             
             ctx.strokeStyle = 'black';
-            //bar
-            // let x = 210;
-            // let y = 315;
-            // if(this.right)
-            //     x = x - 38;
-            // ctx.beginPath();
-            // ctx.moveTo(x, y);
-            // ctx.lineTo((x + 170), y);
-            // ctx.stroke();
-        
-            // this._drawCircle((x), y, 10, 'rgb(109, 255, 41)', true);
-            // this._drawCircle((x + 165), y, 10, 'rgb(237, 41, 255)', true);
-            // this._drawCircle((x + this.VRAnimator.bar), y, 10, 'rgb(161, 161, 161)', true);
-            ctx.strokeStyle = 'black';
         }
         if(this.VRAnimator.uiActive) {
             // let x = this.uiCanvas.width - 160;
-            let x = this._resolution.width / 3; // 120
+            let x = this._resolution.width / 2.8; // 120
             // let x = 310;
             if(this.right)
                 x = x - rightOffset;
@@ -297,7 +257,7 @@ _drawUIText(reset = false) {
         }
     
         if(this.VRAnimator.timer) {
-            let x = this._resolution.width / 3 + 50;
+            let x = this._resolution.width / 2.8 + 50;
             if(this.right)
                 x = x - rightOffset;
             let y = this._resolution.height / 2.8;
@@ -308,55 +268,6 @@ _drawUIText(reset = false) {
         }
 
     }
-    // else if(this.depthMode) {
-    //     // if(this.VRAnimator.circleActive > 0) {
-    //     //     // this.VRAnimator.model.localTranslation = this.depthParams.translation;
-    //     //     // this.VRAnimator.model.localRotation = this.depthParams.rotation;
-    //     //     return;
-    //     // }
-    //     let w = 7;
-    //     let offset = 0;
-    //     this.right = true;
-    //     this._drawCircle(this.depthParams.xA - offset, this.depthParams.yA, w, 'rgb(109, 255, 41)')
-    //     this._drawCircle(this.depthParams.xD - offset, this.depthParams.yD, w, 'rgb(161, 161, 161)')
-    //     this._drawCircle(this.depthParams.xB - offset, this.depthParams.yB, w, 'rgb(237, 41, 255)')
-        
-    //     ctx.strokeStyle = 'black';
-    //     //bar
-    //     let x = 210;
-    //     let y = 315;
-    //     if(this.right)
-    //         x = x - 38;
-    //     ctx.beginPath();
-    //     ctx.moveTo(x, y);
-    //     ctx.lineTo((x + 170), y);
-    //     ctx.stroke();
-    
-    //     this._drawCircle((x), y, 9, 'rgb(109, 255, 41)', true);
-    //     this._drawCircle((x + 165), y, 9, 'rgb(237, 41, 255)', true);
-    //     this._drawCircle((x + 80), y, 9, 'rgb(161, 161, 161)', true);
-    //     ctx.strokeStyle = 'black';
-    // }
-        // x = 218;
-        // y = this._resolution.height - 72;
-        // if(this.right)
-        //     x = x - 120;
-        // ctx.beginPath();
-        // ctx.moveTo(x, y);
-        // ctx.lineTo(x + 190, y);
-        // ctx.stroke();
-    
-        // ctx.beginPath();
-        // ctx.arc(x + this.VRAnimator.bar, y, 14, 0, 2 * Math.PI);
-        // ctx.fillStyle = 'rgb(161, 161, 161)';
-        // ctx.fill();
-        // ctx.lineWidth = 2;
-        // ctx.stroke();
-
-    // ctx.beginPath();
-    // ctx.moveTo(200, 700);
-    // ctx.lineTo(200 + 800, 700);
-    // ctx.stroke();
 
 }
 

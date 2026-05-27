@@ -78,7 +78,7 @@ destroy() {
 }
 
 _resetFrame() {
-    console.log("EAM RESET")
+    // console.log("EAM RESET")
     const gl = this._gl;
 
     if(this.mip == null) {
@@ -136,7 +136,7 @@ _generateFrame() {
     
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
     const modelMatrix = this._VROn ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
-    const viewMatrix = this._VROn ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
+    const viewMatrix = this._VROn ? (this.right ? this._VRAnimator.transform.inverseGlobalMatrix : this._VRAnimator.transform.inverseGlobalMatrix) : this._camera.transform.inverseGlobalMatrix;
     const projectionMatrix = this._VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
 
     const matrix = mat4.create();

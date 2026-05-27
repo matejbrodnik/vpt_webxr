@@ -215,56 +215,56 @@ constructor(options = {}) {
             closer: false,
             fileIndex: 0,
         },
-        {
-            id: 1,
-            xA: 131, yA: 119,
-            xB: 193, yB: 131,
-            xA2: 183, yA2: 107,
-            xB2: 253, yB2: 120,
-            rotation: quat.fromEuler(quat.create(), 90, -10, 180), translation: vec3.clone([0.05, 0.1, 0]),
-            closer: true,
-            fileIndex: 0,
-        },
-        {
-            id: 2,
-            xA: 123, yA: 183,
-            xB: 188, yB: 160,
-            xA2: 173, yA2: 174,
-            xB2: 246, yB2: 151,
-            rotation: quat.fromEuler(quat.create(), -90, -10, 0), translation: vec3.clone([0.07, -0.18, 0]),
-            closer: false,
-            fileIndex: 0,
-        },
-        {
-            id: 3,
-            xA: 139, yA: 167,
-            xB: 179, yB: 185,
-            xA2: 192, yA2: 157,
-            xB2: 237, yB2: 177,
-            rotation: quat.fromEuler(quat.create(), -90, -10, 180), translation: vec3.clone([0.1, -0.1, -0.2]),
-            closer: false,
-            fileIndex: 0,
-        },
-        {
-            id: 4,
-            xA: 136, yA: 163,
-            xB: 170, yB: 184,
-            xA2: 189, yA2: 156,
-            xB2: 227, yB2: 177,
-            rotation: quat.fromEuler(quat.create(), 90, 90, 15), translation: vec3.clone([0.1, -0.2, -0.1]),
-            closer: true,
-            fileIndex: 0,
-        },
-        {
-            id: 5,
-            xA: 140, yA: 165,
-            xB: 166, yB: 171,
-            xA2: 192, yA2: 156,
-            xB2: 223, yB2: 162,
-            rotation: quat.fromEuler(quat.create(), 90, -90, 15), translation: vec3.clone([0.1, 0, -0.1]),
-            closer: false,
-            fileIndex: 0,
-        },
+        // {
+        //     id: 1,
+        //     xA: 131, yA: 119,
+        //     xB: 193, yB: 131,
+        //     xA2: 183, yA2: 107,
+        //     xB2: 253, yB2: 120,
+        //     rotation: quat.fromEuler(quat.create(), 90, -10, 180), translation: vec3.clone([0.05, 0.1, 0]),
+        //     closer: true,
+        //     fileIndex: 0,
+        // },
+        // {
+        //     id: 2,
+        //     xA: 123, yA: 183,
+        //     xB: 188, yB: 160,
+        //     xA2: 173, yA2: 174,
+        //     xB2: 246, yB2: 151,
+        //     rotation: quat.fromEuler(quat.create(), -90, -10, 0), translation: vec3.clone([0.07, -0.18, 0]),
+        //     closer: false,
+        //     fileIndex: 0,
+        // },
+        // {
+        //     id: 3,
+        //     xA: 139, yA: 167,
+        //     xB: 179, yB: 185,
+        //     xA2: 192, yA2: 157,
+        //     xB2: 237, yB2: 177,
+        //     rotation: quat.fromEuler(quat.create(), -90, -10, 180), translation: vec3.clone([0.1, -0.1, -0.2]),
+        //     closer: false,
+        //     fileIndex: 0,
+        // },
+        // {
+        //     id: 4,
+        //     xA: 136, yA: 163,
+        //     xB: 170, yB: 184,
+        //     xA2: 189, yA2: 156,
+        //     xB2: 227, yB2: 177,
+        //     rotation: quat.fromEuler(quat.create(), 90, 90, 15), translation: vec3.clone([0.1, -0.2, -0.1]),
+        //     closer: true,
+        //     fileIndex: 0,
+        // },
+        // {
+        //     id: 5,
+        //     xA: 140, yA: 165,
+        //     xB: 166, yB: 171,
+        //     xA2: 192, yA2: 156,
+        //     xB2: 223, yB2: 162,
+        //     rotation: quat.fromEuler(quat.create(), 90, -90, 15), translation: vec3.clone([0.1, 0, -0.1]),
+        //     closer: false,
+        //     fileIndex: 0,
+        // },
     ];
 
     let instancesManix = [ 
@@ -276,58 +276,58 @@ constructor(options = {}) {
             xB2: 238, yB2: 159,
             rotation: quat.fromEuler(quat.create(), -70, 0, 10), translation: vec3.clone([0.2, 0.1, 0]),
             closer: false,
-            fileIndex: 1,
+            fileIndex: 0,
         },
-        {
-            id: 11,
-            xA: 139, yA: 129,
-            xB: 181, yB: 143,
-            xA2: 191, yA2: 118,
-            xB2: 239, yB2: 132,
-            rotation: quat.fromEuler(quat.create(), -90, 20, 0), translation: vec3.clone([0, 0, 0]),
-            closer: false,
-            fileIndex: 1,
-        },
-        {
-            id: 12,
-            xA: 142, yA: 120,
-            xB: 136, yB: 178,
-            xA2: 193, yA2: 109,
-            xB2: 186, yB2: 169,
-            rotation: quat.fromEuler(quat.create(), -105, 20, 0), translation: vec3.clone([0, 0, 0]),
-            closer: true,
-            fileIndex: 1,
-        },
-        {
-            id: 13,
-            xA: 157, yA: 115,
-            xB: 168, yB: 181,
-            xA2: 212, yA2: 101,
-            xB2: 227, yB2: 171,
-            rotation: quat.fromEuler(quat.create(), -115, -40, 0), translation: vec3.clone([0, -0.1, -0.3]), 
-            closer: true,
-            fileIndex: 1,
-        },
-        {
-            id: 14,
-            xA: 128, yA: 162,
-            xB: 172, yB: 190,
-            xA2: 179, yA2: 153,
-            xB2: 232, yB2: 182,
-            rotation: quat.fromEuler(quat.create(), -80, 0, 10), translation: vec3.clone([0.2, -0.05, 0.35]),
-            closer: false,
-            fileIndex: 1,
-        },
-        {
-            id: 15,
-            xA: 150, yA: 130,
-            xB: 141, yB: 198,
-            xA2: 204, yA2: 120,
-            xB2: 195, yB2: 189,
-            rotation: quat.fromEuler(quat.create(), -95, 80, 0), translation: vec3.clone([-0.05, 0.07, -0.1]),
-            closer: false,
-            fileIndex: 1,
-        },
+        // {
+        //     id: 11,
+        //     xA: 139, yA: 129,
+        //     xB: 181, yB: 143,
+        //     xA2: 191, yA2: 118,
+        //     xB2: 239, yB2: 132,
+        //     rotation: quat.fromEuler(quat.create(), -90, 20, 0), translation: vec3.clone([0, 0, 0]),
+        //     closer: false,
+        //     fileIndex: 1,
+        // },
+        // {
+        //     id: 12,
+        //     xA: 142, yA: 120,
+        //     xB: 136, yB: 178,
+        //     xA2: 193, yA2: 109,
+        //     xB2: 186, yB2: 169,
+        //     rotation: quat.fromEuler(quat.create(), -105, 20, 0), translation: vec3.clone([0, 0, 0]),
+        //     closer: true,
+        //     fileIndex: 1,
+        // },
+        // {
+        //     id: 13,
+        //     xA: 157, yA: 115,
+        //     xB: 168, yB: 181,
+        //     xA2: 212, yA2: 101,
+        //     xB2: 227, yB2: 171,
+        //     rotation: quat.fromEuler(quat.create(), -115, -40, 0), translation: vec3.clone([0, -0.1, -0.3]), 
+        //     closer: true,
+        //     fileIndex: 1,
+        // },
+        // {
+        //     id: 14,
+        //     xA: 128, yA: 162,
+        //     xB: 172, yB: 190,
+        //     xA2: 179, yA2: 153,
+        //     xB2: 232, yB2: 182,
+        //     rotation: quat.fromEuler(quat.create(), -80, 0, 10), translation: vec3.clone([0.2, -0.05, 0.35]),
+        //     closer: false,
+        //     fileIndex: 1,
+        // },
+        // {
+        //     id: 15,
+        //     xA: 150, yA: 130,
+        //     xB: 141, yB: 198,
+        //     xA2: 204, yA2: 120,
+        //     xB2: 195, yB2: 189,
+        //     rotation: quat.fromEuler(quat.create(), -95, 80, 0), translation: vec3.clone([-0.05, 0.07, -0.1]),
+        //     closer: false,
+        //     fileIndex: 1,
+        // },
     ];
 
     // instances.concat(instancesManix);
@@ -373,104 +373,39 @@ constructor(options = {}) {
     this.currFileIndex = 0;
     this.setupIndex = 0;
     // 0 - FOV2, 1 - MIP, 2 - MCM, 3 - ISO, 4 - DOS, 5 - EAM, 6 - LAO, 7 - Depth
-    // this.setupList = [
-    //      // 330430
-    //     {
-    //         depthParams: {
-    //         xA: 129, yA: 117,
-    //         xD: 169, yD: 149,
-    //         xB: 181, yB: 163,
-    //         rotation: quat.fromEuler(quat.create(), 90, 10, 0), translation: vec3.clone([-0.09, -0.1, 0])}, 
-    //         fileIndex: 0,
-    //         renderer: 0,
-    //         type: "depth",
-    //     },
-    //     {
-    //         depthParams: {
-    //         xA: 131, yA: 119,
-    //         xD: 169, yD: 118,
-    //         xB: 197, yB: 131,
-    //         rotation: quat.fromEuler(quat.create(), 90, -10, 180), translation: vec3.clone([0.05, 0.1, 0])}, 
-    //         fileIndex: 0,
-    //         renderer: 4,
-    //         type: "depth",
-    //     },
-    //     {
-    //         depthParams: {
-    //         xA: 131, yA: 155,
-    //         xD: 154, yD: 142,
-    //         xB: 189, yB: 162,
-    //         rotation: quat.fromEuler(quat.create(), -90, -10, 0), translation: vec3.clone([0.1, -0.1, 0])}, 
-    //         fileIndex: 0,
-    //         renderer: 3,
-    //         type: "depth",
-    //     },
-    //     {
-    //         depthParams: {
-    //         xA: 138, yA: 166,
-    //         xD: 151, yD: 140,
-    //         xB: 180, yB: 157,
-    //         rotation: quat.fromEuler(quat.create(), 0, 90, 75), translation: vec3.clone([-0.1, 0, -0.15])}, 
-    //         fileIndex: 0,
-    //         renderer: 0,
-    //         type: "depth",
-    //     },
-    //     {
-    //         depthParams: {
-    //         xA: 134, yA: 138,
-    //         xD: 156, yD: 181,
-    //         xB: 180, yB: 170,
-    //         rotation: quat.fromEuler(quat.create(), -70, 0, 10), translation: vec3.clone([0.2, 0.1, 0])}, 
-    //         fileIndex: 1,
-    //         renderer: 0,
-    //         type: "depth",
-    //     },
-    //     {
-    //         depthParams: {
-    //         xA: 139, yA: 129,
-    //         xD: 181, yD: 143,
-    //         xB: 171, yB: 173,
-    //         rotation: quat.fromEuler(quat.create(), -90, 20, 0), translation: vec3.clone([0, 0, 0])}, 
-    //         fileIndex: 1,
-    //         renderer: 0,
-    //         type: "depth",
-    //     },
-    //     {
-    //         depthParams: {
-    //         xA: 142, yA: 120,
-    //         xD: 136, yD: 178,
-    //         xB: 198, yB: 192,
-    //         rotation: quat.fromEuler(quat.create(), -105, 20, 0), translation: vec3.clone([0, 0, 0])}, 
-    //         fileIndex: 1,
-    //         renderer: 0,
-    //         type: "depth",
-    //     },
-    //             {
-    //         depthParams: {
-    //         xA: 157, yA: 115,
-    //         xD: 168, yD: 178,
-    //         xB: 198, yB: 192,
-    //         rotation: quat.fromEuler(quat.create(), -115, -40, 0), translation: vec3.clone([0, -0.1, -0.3])}, 
-    //         fileIndex: 1,
-    //         renderer: 0,
-    //         type: "depth",
-    //     },
-    //     // {
-    //     //     fileIndex: 0,
-    //     //     start: [0.0, 0.2, 0.2],
-    //     //     type: "search"
-    //     // },
-    //     // {
-    //     //     depthParams: {
-    //     //     xA: 239, yA: 248,
-    //     //     xD: 268, yD: 250,
-    //     //     xB: 305, yB: 222,
-    //     //     rotation: quat.fromEuler(quat.create(), 0, 0, 180), translation: vec3.clone([0, -0.3, 0])}, 
-    //     //     fileIndex: 0,
-    //     //     renderer: "fov2",
-    //     //     type: "depth",
-    //     // },
-    // ];
+
+
+    this.instancesComparison = [
+        {
+            id: 20,
+            rotation: quat.fromEuler(quat.create(), 90, 0, 0), translation: vec3.clone([0, 0, 0]), 
+            renderer: 0,
+            reproj: false,
+            fileIndex: 0,
+        },
+        {
+            id: 21,
+            rotation: quat.fromEuler(quat.create(), 90, 0, 0), translation: vec3.clone([0, 0, 0]), 
+            renderer: 2,
+            reproj: false,
+            fileIndex: 0,
+        },
+        {
+            id: 22,
+            rotation: quat.fromEuler(quat.create(), 90, 0, 0), translation: vec3.clone([0, 0, 0]), 
+            renderer: 4,
+            reproj: false,
+            fileIndex: 0,
+        },
+        {
+            id: 23,
+            rotation: quat.fromEuler(quat.create(), 90, 0, 0), translation: vec3.clone([0, 0, 0]), 
+            renderer: 5,
+            reproj: false,
+            fileIndex: 0,
+        },
+    ];
+    
     this.delayedReset = -1;
     
     console.log(this.camera.transform);
@@ -923,7 +858,9 @@ _update(t, frame) {
             this.renderer2.setProjection(pose.views[1].projectionMatrix);
             
             this._saveJSON = this._saveJSON.bind(this);
+            this._comparisonInstance = this._comparisonInstance.bind(this);
             this.VRAnimator.addEventListener('saveToJSON', this._saveJSON);
+            this.VRAnimator.addEventListener('comparison', this._comparisonInstance);
 
             if(this.reproject)
                 this.reproject.reset(pose.views[1].projectionMatrix);
@@ -956,13 +893,13 @@ _update(t, frame) {
             // console.log(this.viewport.width, this.viewport.height);
                 if(!this.right) {
                     this.changedView = this.VRAnimator.renderStateChanged || this.VRAnimator.apply(view.transform.matrix, this.VRiterations <= 1);
-                    console.log("LEFT");
-                    this.renderer.log(view.transform.matrix)
+                    // console.log("LEFT");
+                    // this.renderer.log(view.transform.matrix)
                 } 
                 else {
-                    this.VRAnimator.apply(view.transform.matrix, this.VRiterations <= 1, 1);
-                    console.log("RIGHT");
-                    this.renderer.log(view.transform.matrix)
+                    // this.VRAnimator.apply(view.transform.matrix, this.VRiterations <= 1, true);
+                    // console.log("RIGHT");
+                    // this.renderer.log(view.transform.matrix)
                 }
                 
                 if(this.changedView) {
@@ -1041,8 +978,10 @@ _saveJSON(e) {
     console.log("ENABLE", this.setupIndex);
     this.uiRenderer.depthMode = false;
     
-    if(this.setupIndex == this.setupList.length) {
-        CommonUtils.downloadJSON(e.detail, "testJSON.json");
+    if(this.setupIndex >= this.setupList.length) {
+        // CommonUtils.downloadJSON(e.detail, "testJSON.json"); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        this.setupIndex++;
+        this.uiRenderer.comparisonMode = true;
         return;
     }
     
@@ -1053,6 +992,7 @@ _saveJSON(e) {
 
     // gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
     // gl.clearBufferfv(gl.COLOR, 1, new Float32Array([1.0]));
+    this.VRAnimator.chosenRenderer = setup.renderer;
 
     if(!this.switchRenderer(setup.renderer, this.tfs[setup.depthParams.fileIndex]), true) {
         console.log("old renderer");
@@ -1163,6 +1103,57 @@ searchInstance(start) {
     this.renderer.reset();
     if(this.VRAnimator.renderState == 1)
         this.renderer2.reset();
+}
+
+_comparisonInstance(e) {
+    if(this.setupIndex <= this.setupList.length)
+        return;
+    console.log(e);
+    let index = e.detail;
+    let setup = this.instancesComparison[index];
+    console.log(setup);
+    let changeVolume = false;
+    if(this.volume != this.volumes[setup.fileIndex]) {
+        console.log("DIFFERENT VOLUME !!!!!");
+        changeVolume = true;
+        this.volume = this.volumes[setup.fileIndex];
+    }
+    this.VRAnimator.renderState = setup.reproj ? 2 : 1;
+    this.VRAnimator.chosenRenderer = setup.renderer;
+
+    if(!this.switchRenderer(setup.renderer, this.tfs[setup.fileIndex]), true) {
+        console.log("old renderer");
+        this.renderer.reset();
+        if(this.renderer2 && this.VRAnimator.renderState == 1)
+            this.renderer2.reset();
+    }
+
+    if (this.renderer) {
+        this.renderer.setTransferFunction(this.tfs[setup.fileIndex]);
+        if(changeVolume)
+            this.renderer.setVolume(this.volume);
+    }
+    if(this.renderer2) {
+        this.renderer2.setTransferFunction(this.tfs[setup.fileIndex]);
+        if(changeVolume)
+            this.renderer2.setVolume(this.volume);
+    }
+    if(this.VRAnimator.renderState == 2) {
+        if(changeVolume)
+            this.reproject.setVolume(this.volume);
+        this.reproject.reset(this.pose.views[1].projectionMatrix);
+    }
+
+    if(this.pose) {
+        this.renderer.setProjection(this.pose.views[0].projectionMatrix);
+        this.renderer2.setProjection(this.pose.views[1].projectionMatrix);
+    }
+
+    // this.VRAnimator.focusDistance = 1;
+    // this.VRAnimator.model.localTranslation = setup.translation;
+    // this.VRAnimator.model.localRotation = setup.rotation;
+    // this.VRAnimator.transform.localRotation = quat.create();
+    // this.VRAnimator.transform.localTranslation = vec3.clone([0, 0, 1]);
 }
 
 render() {
@@ -1303,7 +1294,7 @@ render() {
         // console.log("rot", this.VRAnimator.transform.localRotation[0].toFixed(2), this.VRAnimator.transform.localRotation[1].toFixed(2), this.VRAnimator.transform.localRotation[2].toFixed(2));
     }
 
-    if((this.VRAnimator && this.VRAnimator.uiActive) || this.uiRenderer.depthMode) {
+    if((this.VRAnimator && this.VRAnimator.uiActive) || this.uiRenderer.depthMode || this.uiRenderer.comparisonMode) {
         gl.bindTexture(gl.TEXTURE_2D, this.uiRenderer.getTexture());
     }
     else if(this.VRAnimator && this.VRAnimator.renderState == 2 && this.reproject) {

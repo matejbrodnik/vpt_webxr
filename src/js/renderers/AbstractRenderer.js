@@ -48,7 +48,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     });
 
     if(options.TF) {
-        console.log("ABS")
+        // console.log("ABS")
         this.setTransferFunction(options.TF);
     }
 
@@ -150,7 +150,7 @@ setVolume(volume) {
 }
 
 setTransferFunction(transferFunction) {
-    console.log(transferFunction)
+    // console.log(transferFunction)
     const gl = this._gl;
     gl.bindTexture(gl.TEXTURE_2D, this._transferFunction);
     gl.texImage2D(gl.TEXTURE_2D, 0,

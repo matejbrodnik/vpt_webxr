@@ -88,7 +88,7 @@ _generateFrame() {
     // console.log("matrices:")
     // console.log(this.VRView);
     // console.log(this.VRProjection);
-    const viewMatrix = this._VROn ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
+    const viewMatrix = this._VROn ? (this.right ? this._VRAnimator.transform.inverseGlobalMatrix : this._VRAnimator.transform.inverseGlobalMatrix) : this._camera.transform.inverseGlobalMatrix;
     // console.log("RESET ", this.name);
     const projectionMatrix = this._VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
     const matrix = mat4.create();
@@ -98,6 +98,8 @@ _generateFrame() {
     mat4.multiply(matrix, viewMatrix, matrix);
     mat4.multiply(matrix, projectionMatrix, matrix);
     mat4.invert(matrix, matrix);
+    this.matrix = matrix;
+    console.log("MIP RENDER 1")
     // this.log(matrix);
     gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix);
     gl.drawArrays(gl.TRIANGLES, 0, 3);

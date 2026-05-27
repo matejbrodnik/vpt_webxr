@@ -141,6 +141,7 @@ _resetFrame() {
     this.mip._VRProjection = this._VRProjection;
     
     this.mip.render();
+    console.log("MIP RENDER 2")
 
     this._accumulationBuffer.use();
     
@@ -302,7 +303,7 @@ _integrateFrame() {
 
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
     const modelMatrix = this._VROn ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
-    const viewMatrix = this._VROn ? this._VRAnimator.transform.inverseGlobalMatrix : this._camera.transform.inverseGlobalMatrix;
+    const viewMatrix = this._VROn ? (this.right ? this._VRAnimator.transform.inverseGlobalMatrix : this._VRAnimator.transform.inverseGlobalMatrix) : this._camera.transform.inverseGlobalMatrix;
     const projectionMatrix = this._VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
 
     const matrix = mat4.create();
@@ -319,6 +320,8 @@ _integrateFrame() {
         gl.uniformMatrix4fv(uniforms.uMvpA, false, mat4.create());
 
     mat4.invert(matrix, matrix);
+    this.matrix = matrix;
+
     // console.log("MODEL")
     // console.log("VIEW", viewMatrix);
     // console.log("PROJ", projectionMatrix)
@@ -360,8 +363,18 @@ _renderFrame() {
 
 setProjection(matrix) {
     this._VRProjection = matrix;
-    if(this.mip) 
+    if(this.mip) {
         this.mip._VRProjection = matrix;
+        this.mip.reset();
+        this.mip.render();
+    }
+    if(this._context.setupIndex >= this._context.setupList.length) {
+        if(this.matrix)
+            this.log(this.matrix);
+        console.log("---")
+        if(this.mip.matrix)
+            this.log(this.mip.matrix);
+    }
 }
 
 _getFrameBufferSpec() {
