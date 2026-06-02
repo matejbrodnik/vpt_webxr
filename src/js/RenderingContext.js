@@ -129,12 +129,12 @@ constructor(options = {}) {
     '{"position":{"x":0.902,"y":0.97},"size":{"x":0.012,"y":0.2},"color":{"r":1,"g":0.73,"b":0,"a":1}},' +
     '{"position":{"x":0.981,"y":0.97},"size":{"x":0.01,"y":0.2},"color":{"r":0.3,"g":0.3,"b":0.3,"a":1}}]';
     
-    this.tfDataManix = '[{"position":{"x":0.96,"y":0.85},"size":{"x":0.044,"y":0.2},"color":{"r":1,"g":0.54,"b":0.54,"a":1}},' +
-    '{"position":{"x":0.33,"y":0.85},"size":{"x":0.03,"y":0.2},"color":{"r":0.1,"g":0.97,"b":1,"a":1}},' +
-    '{"position":{"x":0.39,"y":0.85},"size":{"x":0.024,"y":0.2},"color":{"r":0.1,"g":0.97,"b":1,"a":1}},' +
-    '{"position":{"x":0.59,"y":0.85},"size":{"x":0.033,"y":0.2},"color":{"r":1,"g":0.87,"b":0.76,"a":1}},' +
-    '{"position":{"x":0.72,"y":0.85},"size":{"x":0.024,"y":0.2},"color":{"r":1,"g":0.95,"b":0.28,"a":1}},' +
-    '{"position":{"x":0.87,"y":0.85},"size":{"x":0.06,"y":0.2},"color":{"r":1,"g":0.73,"b":0.25,"a":1}}]';
+    this.tfDataManix = '[{"position":{"x":0.96,"y":0.94},"size":{"x":0.044,"y":0.2},"color":{"r":1,"g":0.54,"b":0.54,"a":1}},' +
+    // '{"position":{"x":0.33,"y":0.87},"size":{"x":0.03,"y":0.2},"color":{"r":0.1,"g":0.97,"b":1,"a":1}},' +
+    '{"position":{"x":0.34,"y":0.87},"size":{"x":0.03,"y":0.2},"color":{"r":0.1,"g":0.97,"b":1,"a":1}},' +
+    '{"position":{"x":0.6,"y":0.98},"size":{"x":0.042,"y":0.2},"color":{"r":1,"g":0.87,"b":0.76,"a":1}},' +
+    '{"position":{"x":0.72,"y":0.94},"size":{"x":0.024,"y":0.2},"color":{"r":1,"g":0.95,"b":0.28,"a":1}},' +
+    '{"position":{"x":0.87,"y":0.94},"size":{"x":0.06,"y":0.2},"color":{"r":1,"g":0.73,"b":0.25,"a":1}}]';
 
     this.tf = new TransferFunction();
     this.tf.bumps = JSON.parse(this.tfData);
@@ -148,6 +148,8 @@ constructor(options = {}) {
     this.tfManix._rebuildHandles();
     this.tfs.push(this.tfManix.canvas);
     
+    this.activeTf = this.tf.canvas;
+
     console.log("INIT");
 
     // this.renderer.setTransferFunction(this.tf.canvas);
@@ -215,56 +217,56 @@ constructor(options = {}) {
             closer: false,
             fileIndex: 0,
         },
-        // {
-        //     id: 1,
-        //     xA: 131, yA: 119,
-        //     xB: 193, yB: 131,
-        //     xA2: 183, yA2: 107,
-        //     xB2: 253, yB2: 120,
-        //     rotation: quat.fromEuler(quat.create(), 90, -10, 180), translation: vec3.clone([0.05, 0.1, 0]),
-        //     closer: true,
-        //     fileIndex: 0,
-        // },
-        // {
-        //     id: 2,
-        //     xA: 123, yA: 183,
-        //     xB: 188, yB: 160,
-        //     xA2: 173, yA2: 174,
-        //     xB2: 246, yB2: 151,
-        //     rotation: quat.fromEuler(quat.create(), -90, -10, 0), translation: vec3.clone([0.07, -0.18, 0]),
-        //     closer: false,
-        //     fileIndex: 0,
-        // },
-        // {
-        //     id: 3,
-        //     xA: 139, yA: 167,
-        //     xB: 179, yB: 185,
-        //     xA2: 192, yA2: 157,
-        //     xB2: 237, yB2: 177,
-        //     rotation: quat.fromEuler(quat.create(), -90, -10, 180), translation: vec3.clone([0.1, -0.1, -0.2]),
-        //     closer: false,
-        //     fileIndex: 0,
-        // },
-        // {
-        //     id: 4,
-        //     xA: 136, yA: 163,
-        //     xB: 170, yB: 184,
-        //     xA2: 189, yA2: 156,
-        //     xB2: 227, yB2: 177,
-        //     rotation: quat.fromEuler(quat.create(), 90, 90, 15), translation: vec3.clone([0.1, -0.2, -0.1]),
-        //     closer: true,
-        //     fileIndex: 0,
-        // },
-        // {
-        //     id: 5,
-        //     xA: 140, yA: 165,
-        //     xB: 166, yB: 171,
-        //     xA2: 192, yA2: 156,
-        //     xB2: 223, yB2: 162,
-        //     rotation: quat.fromEuler(quat.create(), 90, -90, 15), translation: vec3.clone([0.1, 0, -0.1]),
-        //     closer: false,
-        //     fileIndex: 0,
-        // },
+        {
+            id: 1,
+            xA: 131, yA: 119,
+            xB: 193, yB: 131,
+            xA2: 183, yA2: 107,
+            xB2: 253, yB2: 120,
+            rotation: quat.fromEuler(quat.create(), 90, -10, 180), translation: vec3.clone([0.05, 0.1, 0]),
+            closer: true,
+            fileIndex: 0,
+        },
+        {
+            id: 2,
+            xA: 123, yA: 183,
+            xB: 188, yB: 160,
+            xA2: 173, yA2: 174,
+            xB2: 246, yB2: 151,
+            rotation: quat.fromEuler(quat.create(), -90, -10, 0), translation: vec3.clone([0.07, -0.18, 0]),
+            closer: false,
+            fileIndex: 0,
+        },
+        {
+            id: 3,
+            xA: 139, yA: 167,
+            xB: 179, yB: 185,
+            xA2: 192, yA2: 157,
+            xB2: 237, yB2: 177,
+            rotation: quat.fromEuler(quat.create(), -90, -10, 180), translation: vec3.clone([0.1, -0.1, -0.2]),
+            closer: false,
+            fileIndex: 0,
+        },
+        {
+            id: 4,
+            xA: 136, yA: 163,
+            xB: 170, yB: 184,
+            xA2: 189, yA2: 156,
+            xB2: 227, yB2: 177,
+            rotation: quat.fromEuler(quat.create(), 90, 90, 15), translation: vec3.clone([0.1, -0.2, -0.1]),
+            closer: true,
+            fileIndex: 0,
+        },
+        {
+            id: 5,
+            xA: 140, yA: 165,
+            xB: 166, yB: 171,
+            xA2: 192, yA2: 156,
+            xB2: 223, yB2: 162,
+            rotation: quat.fromEuler(quat.create(), 90, -90, 15), translation: vec3.clone([0.1, 0, -0.1]),
+            closer: false,
+            fileIndex: 0,
+        },
     ];
 
     let instancesManix = [ 
@@ -276,65 +278,66 @@ constructor(options = {}) {
             xB2: 238, yB2: 159,
             rotation: quat.fromEuler(quat.create(), -70, 0, 10), translation: vec3.clone([0.2, 0.1, 0]),
             closer: false,
-            fileIndex: 0,
+            fileIndex: 1,
         },
-        // {
-        //     id: 11,
-        //     xA: 139, yA: 129,
-        //     xB: 181, yB: 143,
-        //     xA2: 191, yA2: 118,
-        //     xB2: 239, yB2: 132,
-        //     rotation: quat.fromEuler(quat.create(), -90, 20, 0), translation: vec3.clone([0, 0, 0]),
-        //     closer: false,
-        //     fileIndex: 1,
-        // },
-        // {
-        //     id: 12,
-        //     xA: 142, yA: 120,
-        //     xB: 136, yB: 178,
-        //     xA2: 193, yA2: 109,
-        //     xB2: 186, yB2: 169,
-        //     rotation: quat.fromEuler(quat.create(), -105, 20, 0), translation: vec3.clone([0, 0, 0]),
-        //     closer: true,
-        //     fileIndex: 1,
-        // },
-        // {
-        //     id: 13,
-        //     xA: 157, yA: 115,
-        //     xB: 168, yB: 181,
-        //     xA2: 212, yA2: 101,
-        //     xB2: 227, yB2: 171,
-        //     rotation: quat.fromEuler(quat.create(), -115, -40, 0), translation: vec3.clone([0, -0.1, -0.3]), 
-        //     closer: true,
-        //     fileIndex: 1,
-        // },
-        // {
-        //     id: 14,
-        //     xA: 128, yA: 162,
-        //     xB: 172, yB: 190,
-        //     xA2: 179, yA2: 153,
-        //     xB2: 232, yB2: 182,
-        //     rotation: quat.fromEuler(quat.create(), -80, 0, 10), translation: vec3.clone([0.2, -0.05, 0.35]),
-        //     closer: false,
-        //     fileIndex: 1,
-        // },
-        // {
-        //     id: 15,
-        //     xA: 150, yA: 130,
-        //     xB: 141, yB: 198,
-        //     xA2: 204, yA2: 120,
-        //     xB2: 195, yB2: 189,
-        //     rotation: quat.fromEuler(quat.create(), -95, 80, 0), translation: vec3.clone([-0.05, 0.07, -0.1]),
-        //     closer: false,
-        //     fileIndex: 1,
-        // },
+        {
+            id: 11,
+            xA: 139, yA: 129,
+            xB: 181, yB: 143,
+            xA2: 191, yA2: 118,
+            xB2: 239, yB2: 132,
+            rotation: quat.fromEuler(quat.create(), -90, 20, 0), translation: vec3.clone([0, 0, 0]),
+            closer: false,
+            fileIndex: 1,
+        },
+        {
+            id: 12,
+            xA: 142, yA: 120,
+            xB: 136, yB: 178,
+            xA2: 193, yA2: 109,
+            xB2: 186, yB2: 169,
+            rotation: quat.fromEuler(quat.create(), -105, 20, 0), translation: vec3.clone([0, 0, 0]),
+            closer: true,
+            fileIndex: 1,
+        },
+        {
+            id: 13,
+            xA: 157, yA: 115,
+            xB: 168, yB: 181,
+            xA2: 212, yA2: 101,
+            xB2: 227, yB2: 171,
+            rotation: quat.fromEuler(quat.create(), -115, -40, 0), translation: vec3.clone([0, -0.1, -0.3]), 
+            closer: true,
+            fileIndex: 1,
+        },
+        {
+            id: 14,
+            xA: 128, yA: 162,
+            xB: 172, yB: 190,
+            xA2: 179, yA2: 153,
+            xB2: 232, yB2: 182,
+            rotation: quat.fromEuler(quat.create(), -80, 0, 10), translation: vec3.clone([0.2, -0.05, 0.35]),
+            closer: false,
+            fileIndex: 1,
+        },
+        {
+            id: 15,
+            xA: 150, yA: 130,
+            xB: 141, yB: 198,
+            xA2: 204, yA2: 120,
+            xB2: 195, yB2: 189,
+            rotation: quat.fromEuler(quat.create(), -95, 80, 0), translation: vec3.clone([-0.05, 0.07, -0.1]),
+            closer: false,
+            fileIndex: 1,
+        },
     ];
 
     // instances.concat(instancesManix);
-    // let renderers = [];
     // for(let i = 0; i < instances.length; i++) {
     //     renderers.push([0, 3, 4, 5]);
     // }
+    let renderersBase = [2, 3, 4, 5];
+
     let renderersFibers = [];
     for(let i = 0; i < instancesFibers.length; i++) {
         renderersFibers.push([2, 3, 4, 5]);
@@ -346,26 +349,30 @@ constructor(options = {}) {
     
     let complete = [];
     for(let i = 0; i < 4; i++) {
-        // CommonUtils.doubleShuffle(instancesFibers, renderersFibers);
-        // CommonUtils.doubleShuffle(instancesManix, renderersManix);
+        CommonUtils.doubleShuffle(instancesFibers, renderersFibers);
+        CommonUtils.doubleShuffle(instancesManix, renderersManix);
         let instances = instancesFibers.slice();
         instances = instances.concat(instancesManix);
         let renderers = renderersFibers.slice();
         renderers = renderers.concat(renderersManix);
         for(let j = 0; j < instances.length; j++) {
-            console.log(instances[j]);
-            let index = Math.floor(Math.random() * renderers[j].length);
-            complete.push({depthParams: instances[j], renderer: 4});
+            // let index = Math.floor(Math.random() * renderers[j].length);
             // complete.push({depthParams: instances[j], renderer: renderers[j][index]});
-            renderers[j].splice(index, 1);
-            // console.log(renderers, index);
+            complete.push({depthParams: instances[j], renderer: renderersBase[i], disable: false});
+            // renderers[j].splice(index, 1);
         }
-        console.log(renderers);
-        renderersFibers = renderers.slice(0, instancesFibers.length);
-        renderersManix = renderers.slice(instancesFibers.length);
-        console.log(renderersFibers);
-        console.log(renderersManix);
-        console.log("---------");
+        for(let j = 0; j < instances.length; j++) {
+            // let index = Math.floor(Math.random() * renderers[j].length);
+            // complete.push({depthParams: instances[j], renderer: renderers[j][index]});
+            complete.push({depthParams: instances[j], renderer: renderersBase[i], disable: true});
+            // renderers[j].splice(index, 1);
+        }
+        // console.log(renderers);
+        // renderersFibers = renderers.slice(0, instancesFibers.length);
+        // renderersManix = renderers.slice(instancesFibers.length);
+        // console.log(renderersFibers);
+        // console.log(renderersManix);
+        // console.log("---------");
 
     }
     console.log(complete);
@@ -373,7 +380,6 @@ constructor(options = {}) {
     this.currFileIndex = 0;
     this.setupIndex = 0;
     // 0 - FOV2, 1 - MIP, 2 - MCM, 3 - ISO, 4 - DOS, 5 - EAM, 6 - LAO, 7 - Depth
-
 
     this.instancesComparison = [
         {
@@ -393,18 +399,21 @@ constructor(options = {}) {
         {
             id: 22,
             rotation: quat.fromEuler(quat.create(), 90, 0, 0), translation: vec3.clone([0, 0, 0]), 
-            renderer: 4,
-            reproj: false,
+            renderer: 0,
+            reproj: true,
             fileIndex: 0,
         },
         {
             id: 23,
             rotation: quat.fromEuler(quat.create(), 90, 0, 0), translation: vec3.clone([0, 0, 0]), 
-            renderer: 5,
-            reproj: false,
+            renderer: 2,
+            reproj: true,
             fileIndex: 0,
         },
     ];
+
+    this.pairs = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]];
+
     
     this.delayedReset = -1;
     
@@ -579,7 +588,7 @@ chooseRenderer(renderer, reset=true, tf = null) {
         VRAnimator: this.VRAnimator,
         VRProjection: this.VRProjection,
         VROn: this.VROn,
-        TF: this.tf.canvas,
+        TF: this.activeTf,
         // TF: tf ?? this.tf.canvas,
     });
     this.renderer.setContext(this);
@@ -632,7 +641,7 @@ chooseRenderer2(renderer, reset=true, tf = null) {
         VRAnimator: this.VRAnimator,
         VRProjection: this.VRProjection,
         VROn: this.VROn,
-        TF: this.tf.canvas,
+        TF: this.activeTf,
         // TF: tf ?? this.tf.canvas,
     });
     this.renderer2.setContext(this);
@@ -707,8 +716,8 @@ switchRenderer(index, TF = null, force = false) {
         if(this.renderer2)
             this.chooseRenderer2("fov2", this.VRAnimator.renderState == 1, TF);
         console.log("CHANGED TO FOV2");
-        if(this.VRAnimator.steps > 100 || this.VRAnimator.steps < 6)
-            this.VRAnimator.steps = 30;
+        // if(this.VRAnimator.steps > 100 || this.VRAnimator.steps < 6)
+        //     this.VRAnimator.steps = 30;
         this.VRAnimator.extinction = 150;
         return true;
     }
@@ -721,8 +730,8 @@ switchRenderer(index, TF = null, force = false) {
             this.renderer2.reset(true);
         }
         console.log("CHANGED TO MIP");
-        if(this.VRAnimator.steps > 100 || this.VRAnimator.steps < 6)
-            this.VRAnimator.steps = 30;
+        // if(this.VRAnimator.steps > 100 || this.VRAnimator.steps < 6)
+        //     this.VRAnimator.steps = 30;
         return true;
     }
     if(index == 2 && (!(this.renderer instanceof MCMRenderer) || force)) {
@@ -731,8 +740,8 @@ switchRenderer(index, TF = null, force = false) {
         if(this.renderer2)
             this.chooseRenderer2("mcm", this.VRAnimator.renderState == 1, TF);
         console.log("CHANGED TO MCM");
-        if(this.VRAnimator.steps > 100 || this.VRAnimator.steps < 6)
-            this.VRAnimator.steps = 30;
+        // if(this.VRAnimator.steps > 100 || this.VRAnimator.steps < 6)
+        //     this.VRAnimator.steps = 30;
         this.VRAnimator.extinction = 150;
         return true;
     }
@@ -782,8 +791,8 @@ switchRenderer(index, TF = null, force = false) {
         if(this.renderer2)
             this.chooseRenderer2("depth", this.VRAnimator.renderState == 1, TF);
         console.log("CHANGED TO Depth");
-        if(this.VRAnimator.steps > 100 || this.VRAnimator.steps < 10)
-            this.VRAnimator.steps = 30;
+        // if(this.VRAnimator.steps > 100 || this.VRAnimator.steps < 10)
+        //     this.VRAnimator.steps = 30;
         return true;
     }
     return false;
@@ -814,7 +823,7 @@ _update(t, frame) {
     if(this.VRiterations < 15)
         this.VRAnimator.steps = 2;
     if(this.VRiterations == 15)
-        this.VRAnimator.steps = 30;
+        this.VRAnimator.steps = 100;
 
     this.dtSum += dt;
     if(this.VRiterations % 5 == 0) {
@@ -895,6 +904,10 @@ _update(t, frame) {
                     this.changedView = this.VRAnimator.renderStateChanged || this.VRAnimator.apply(view.transform.matrix, this.VRiterations <= 1);
                     // console.log("LEFT");
                     // this.renderer.log(view.transform.matrix)
+                    if(this.force) {
+                        this.changedView = true;
+                        this.force = false;
+                    }
                 } 
                 else {
                     // this.VRAnimator.apply(view.transform.matrix, this.VRiterations <= 1, true);
@@ -982,6 +995,7 @@ _saveJSON(e) {
         // CommonUtils.downloadJSON(e.detail, "testJSON.json"); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         this.setupIndex++;
         this.uiRenderer.comparisonMode = true;
+        this.VRAnimator.dispatchEvent(new CustomEvent('comparison', {detail: 0}));
         return;
     }
     
@@ -1011,6 +1025,7 @@ _saveJSON(e) {
 
     if (this.renderer) {
         this.renderer.setTransferFunction(this.tfs[setup.depthParams.fileIndex]);
+        this.activeTf = this.tfs[setup.depthParams.fileIndex];
         this.renderer.setVolume(this.volume);
     }
     if(this.renderer2) {
@@ -1039,6 +1054,8 @@ _saveJSON(e) {
     // else if(setup.type == "search")
     //     this.searchInstance(setup.start);
     this.depthInstance(setup.depthParams);
+
+    this.uiRenderer.disableCircle = setup.disable;
 
     this.setupIndex++;
     this.delayedReset = 2;
@@ -1138,9 +1155,9 @@ _comparisonInstance(e) {
         if(changeVolume)
             this.renderer2.setVolume(this.volume);
     }
+    if(changeVolume)
+        this.reproject.setVolume(this.volume);
     if(this.VRAnimator.renderState == 2) {
-        if(changeVolume)
-            this.reproject.setVolume(this.volume);
         this.reproject.reset(this.pose.views[1].projectionMatrix);
     }
 
@@ -1149,6 +1166,7 @@ _comparisonInstance(e) {
         this.renderer2.setProjection(this.pose.views[1].projectionMatrix);
     }
 
+    this.force = true;
     // this.VRAnimator.focusDistance = 1;
     // this.VRAnimator.model.localTranslation = setup.translation;
     // this.VRAnimator.model.localRotation = setup.rotation;
@@ -1185,53 +1203,53 @@ render() {
     // }
 
     // if(this.VRAnimator && this.VRAnimator.lockCircle) {
-    if(this.renderer instanceof DepthRenderer) {
-        // if(!this.switchRenderer(7) && this.renderer.iter >= 10) {
-        if(this.renderer.iter % 15 == 1) {
-            // let pixels = new Float32Array(this.resolution.width * this.resolution.height);
-            let pixels = new Float32Array(this.resolution.width * this.resolution.height * 4);
-            // gl.bindFramebuffer(gl.FRAMEBUFFER, this.renderer._accumulationBuffer._readFramebuffer);
-            // gl.readBuffer(gl.COLOR_ATTACHMENT6);
-            gl.bindFramebuffer(gl.FRAMEBUFFER, this.renderer._renderBuffer._framebuffer);
-            gl.readBuffer(gl.COLOR_ATTACHMENT0);
-            // gl.pixelStorei(gl.PACK_ALIGNMENT, 1);
-            gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.FLOAT, pixels);
-            // console.log(this.setupIndex-1);
-            let depthParams = this.setupList[this.setupIndex].depthParams;
-            // let depthParams = this.setupList[this.setupIndex-1].depthParams;
-            // let indexA = (depthParams.yA * this.resolution.width + depthParams.xA) * 4;
-            // let indexB = (depthParams.yB * this.resolution.width + depthParams.xB) * 4;
-            // let indexD = (depthParams.yD * this.resolution.width + depthParams.xD) * 4;
-            let indexA = (depthParams.yA * this.resolution.width + depthParams.xA * 2) * 4;
-            let indexB = (depthParams.yB * this.resolution.width + depthParams.xB * 2) * 4;
-            let indexD = (depthParams.yD * this.resolution.width + depthParams.xD * 2) * 4;
-            let A = vec3.fromValues(pixels[indexA], pixels[indexA + 1], pixels[indexA + 2]);
-            let B = vec3.fromValues(pixels[indexB], pixels[indexB + 1], pixels[indexB + 2]);
-            let D = vec3.fromValues(pixels[indexD], pixels[indexD + 1], pixels[indexD + 2]);
+    // if(this.renderer instanceof DepthRenderer) {
+    //     // if(!this.switchRenderer(7) && this.renderer.iter >= 10) {
+    //     if(this.renderer.iter % 15 == 1) {
+    //         // let pixels = new Float32Array(this.resolution.width * this.resolution.height);
+    //         let pixels = new Float32Array(this.resolution.width * this.resolution.height * 4);
+    //         // gl.bindFramebuffer(gl.FRAMEBUFFER, this.renderer._accumulationBuffer._readFramebuffer);
+    //         // gl.readBuffer(gl.COLOR_ATTACHMENT6);
+    //         gl.bindFramebuffer(gl.FRAMEBUFFER, this.renderer._renderBuffer._framebuffer);
+    //         gl.readBuffer(gl.COLOR_ATTACHMENT0);
+    //         // gl.pixelStorei(gl.PACK_ALIGNMENT, 1);
+    //         gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.FLOAT, pixels);
+    //         // console.log(this.setupIndex-1);
+    //         let depthParams = this.setupList[this.setupIndex].depthParams;
+    //         // let depthParams = this.setupList[this.setupIndex-1].depthParams;
+    //         // let indexA = (depthParams.yA * this.resolution.width + depthParams.xA) * 4;
+    //         // let indexB = (depthParams.yB * this.resolution.width + depthParams.xB) * 4;
+    //         // let indexD = (depthParams.yD * this.resolution.width + depthParams.xD) * 4;
+    //         let indexA = (depthParams.yA * this.resolution.width + depthParams.xA * 2) * 4;
+    //         let indexB = (depthParams.yB * this.resolution.width + depthParams.xB * 2) * 4;
+    //         let indexD = (depthParams.yD * this.resolution.width + depthParams.xD * 2) * 4;
+    //         let A = vec3.fromValues(pixels[indexA], pixels[indexA + 1], pixels[indexA + 2]);
+    //         let B = vec3.fromValues(pixels[indexB], pixels[indexB + 1], pixels[indexB + 2]);
+    //         let D = vec3.fromValues(pixels[indexD], pixels[indexD + 1], pixels[indexD + 2]);
 
-            // console.log(depthParams.yA, depthParams.yD, depthParams.yB)
-            console.log(A[0].toFixed(4), A[1].toFixed(4), A[2].toFixed(4));
-            // console.log(D[0].toFixed(4), D[1].toFixed(4), D[2].toFixed(4));
-            console.log(B[0].toFixed(4), B[1].toFixed(4), B[2].toFixed(4));
+    //         // console.log(depthParams.yA, depthParams.yD, depthParams.yB)
+    //         console.log(A[0].toFixed(4), A[1].toFixed(4), A[2].toFixed(4));
+    //         // console.log(D[0].toFixed(4), D[1].toFixed(4), D[2].toFixed(4));
+    //         console.log(B[0].toFixed(4), B[1].toFixed(4), B[2].toFixed(4));
             
-            // let inv = this.VRAnimator.transform.inverseGlobalMatrix;
-            // let cameraPos = vec3.fromValues(inv[12], inv[13], inv[14]);
+    //         // let inv = this.VRAnimator.transform.inverseGlobalMatrix;
+    //         // let cameraPos = vec3.fromValues(inv[12], inv[13], inv[14]);
 
-            // mat4.invert(inv, inv);
-            // cameraPos = vec3.fromValues(inv[12], inv[13], inv[14]);
-            // console.log(cameraPos[0].toFixed(2), cameraPos[1].toFixed(2), cameraPos[2].toFixed(2));
-            // console.log(vec3.distance(cameraPos, A).toFixed(2));
-            // console.log(vec3.distance(cameraPos, D).toFixed(2));
-            // console.log(vec3.distance(cameraPos, B).toFixed(2));
+    //         // mat4.invert(inv, inv);
+    //         // cameraPos = vec3.fromValues(inv[12], inv[13], inv[14]);
+    //         // console.log(cameraPos[0].toFixed(2), cameraPos[1].toFixed(2), cameraPos[2].toFixed(2));
+    //         // console.log(vec3.distance(cameraPos, A).toFixed(2));
+    //         // console.log(vec3.distance(cameraPos, D).toFixed(2));
+    //         // console.log(vec3.distance(cameraPos, B).toFixed(2));
 
-            // console.log("---");
-        }
+    //         // console.log("---");
+    //     }
 
-        else {
-            // console.log("...")
-            // this.VRAnimator.chosenRenderer = 7;
-        }
-    }
+    //     else {
+    //         // console.log("...")
+    //         // this.VRAnimator.chosenRenderer = 7;
+    //     }
+    // }
 
     // if(!this.VROn && !this.uiTest && this.renderer.iter == 10) {
     //     this.uiTest = true;

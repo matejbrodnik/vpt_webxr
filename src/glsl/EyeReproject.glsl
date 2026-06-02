@@ -157,7 +157,7 @@ void main() {
 
     vec3 pos = vec3(0);
     uint count = 0u;
-    for(uint i = 0u; i < 100u; i++) {
+    for(uint i = 0u; i < 150u; i++) {
         float dist = random_exponential(state, 100.0);
         photon.position += dist * photon.direction;
         // photon.position += 0.0173 * photon.direction;

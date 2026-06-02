@@ -35,7 +35,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'light',
             label: 'Light direction',
             type: 'vector-spinner',
-            value: [ 2, -3, -5 ],
+            value: [ 1, -2, -7 ],
         },
         {
             name: 'transferFunction',

@@ -37,8 +37,9 @@ constructor(volumeTransform) {
     this.reproject = false;
     this.uiActive = false;
     this.uiCount = 0;
+    this.uiCountL = 0
 
-    this.steps = 30;
+    this.steps = 100;
     this.extinction = 150;
 
     this.uiState = 0; // 0 - steps, 1 - extinction, 2 - renderer, 3 - state, 4 - filter
@@ -56,6 +57,7 @@ constructor(volumeTransform) {
 
     this.bar = 0;
     this.timer = 0;
+    this.timerCircle = 0;
     this.fps = 20;
 
     // this.circle = [0, 1];
@@ -71,7 +73,8 @@ constructor(volumeTransform) {
     this.upHold = false;
 
     this.jsonReady = true;
-    this.unlockA = true;
+    this.unlockA = 0;
+    this.unlockAL = 0;
     this.survey = new Survey();
 
     this.comparison = 0;
@@ -188,7 +191,13 @@ update(inputs, dt) {
         if(this.unlockA <= 0) {
             console.log("A pressed", this.depthMode)
             if(this.lockCircle) {
-                this.survey.data.results.push({id: this.currentId, renderer: this.chosenRenderer, reprojected: this.renderState == 2, selectedL: this.selectedL, time: (this.timer / 1000).toFixed(3)});
+                this.survey.data.results.push({
+                    id: this.currentId, 
+                    renderer: this.chosenRenderer, 
+                    reprojected: this.renderState == 2, 
+                    selectedL: this.selectedL, 
+                    time: (this.timer / 1000).toFixed(3), 
+                    timeCircle: (this.timer / 1000).toFixed(3)});
                 this.lockCircle = false;
                 this.focusDistance = 1;
             }
@@ -199,127 +208,59 @@ update(inputs, dt) {
             this.dispatchEvent(new CustomEvent('saveToJSON', {detail: this.survey.data}));
             this.unlockA = 10;
             this.timer = 0;
+            this.timerCircle = 0;
+            this.yaw = 0;
+            this.pitch = 0;
         }
     }
     else {
         this.unlockA--;
     }
 
-    if(btnsR[5].pressed) { // B
-        if(this.uiCount == 0)
-            this.uiActive = !this.uiActive;
-        this.uiCount++;
-    }   
-    else
-        this.uiCount = 0;
+    // if(btnsR[5].pressed) { // B
+    //     if(this.uiCount == 0)
+    //         this.uiActive = !this.uiActive;
+    //     this.uiCount++;
+    // }   
+    // else
+    //     this.uiCount = 0;
 
     this.circleActive--;
 
     if(axesR[2] > thr) {
-        if(this.uiActive) {
-            if(this.uiState == 0)
-                this.extinction++;
-            else if(this.uiState == 1) // && this.steps < 60)
-                this.steps++;
-            else if(this.uiState == 2) {
-                if(this.rendererTimeout % 20 == 0)
-                    this.safeIncrement("renderer", 8);
-                this.rendererTimeout++;
-            }
-            else if(this.uiState == 3) {
-                if(this.renderStateTimeout % 20 == 0)
-                    this.safeIncrement("state", 3);
-                this.renderStateTimeout++;
-                this.renderStateChanged = true;
-            }
-            else if(this.uiState == 4) {
-                if(this.filterTimeout % 20 == 0)
-                    this.filter = this.filter == 'nearest' ? 'linear' : 'nearest';
-                this.filterTimeout++;
-            }
+        if(this.lockCircle) {
+            console.log("move")
+            this.circle += 2.2 / this.fps;
+            this.circleActive = 2;
+            this.timerCircle += dt;
         }
-        else {
-            if(this.lockCircle) {
-                console.log("move")
-                this.circle -= 2.2 / this.fps;
-                this.circleActive = 2;
-            }
-            else
-                this.pitch -= this.angleStep;
-            this.change++;
-        }
+        else
+            this.pitch -= this.angleStep;
+        this.change++;
+        
     }
     else if(axesR[2] < -thr) {
-        if(this.uiActive) {
-            if(this.uiState == 0 && this.extinction > 1)
-                this.extinction--;
-            else if(this.uiState == 1 && this.steps > 1)
-                this.steps--;
-            else if(this.uiState == 2) {
-                if(this.rendererTimeout % 20 == 0)
-                    this.safeDecrement("renderer", 8);
-                this.rendererTimeout++;
-            }
-            else if(this.uiState == 3) {
-                if(this.renderStateTimeout % 20 == 0)
-                    this.safeDecrement("state", 3);
-                this.renderStateTimeout++;
-                this.renderStateChanged = true;
-            }
-            else if(this.uiState == 4) {
-                if(this.filterTimeout % 20 == 0)
-                    this.filter = this.filter == 'nearest' ? 'linear' : 'nearest';
-                this.filterTimeout++;
-            }
+        if(this.lockCircle) {
+            this.circle -= 2.2 / this.fps;
+            this.circleActive = 2;
+            this.timerCircle += dt;
         }
-        else {
-            if(this.lockCircle) {
-                this.circle += 2.2 / this.fps;
-                this.circleActive = 2;
-            }
-            else
-                this.pitch += this.angleStep;
-            this.change++;
-        }
-    }
-    else {
-        this.rendererTimeout = 0;
-        this.renderStateTimeout = 0;
-        this.filterTimeout = 0;
+        else
+            this.pitch += this.angleStep;
+        this.change++;
     }
 
+
     if(axesR[3] > thr) { 
-        if(this.uiActive) {
-            if(this.uiStateTimeout % 10 == 0) {
-                this.safeIncrement("ui", 5);
-                // this.uiState++;
-                // if(this.uiState > 2)
-                //     this.uiState = 0;
-            }
-            this.uiStateTimeout++;
-        }
-        else {
-            if(!this.lockCircle) {
-                this.yaw -= this.angleStep;
-                this.change++;
-            }
+        if(!this.lockCircle) {
+            this.yaw -= this.angleStep;
+            this.change++;
         }
     }
     else if(axesR[3] < -thr) {
-        if(this.uiActive) {
-            if(this.uiStateTimeout % 10 == 0) {
-                this.safeDecrement("ui", 5);
-                // this.uiState--;
-                // if(this.uiState < 0)
-                //     this.uiState = 2;
-            }
-            this.uiStateTimeout++;
-        }
-        else {
-            if(!this.lockCircle) {
-                this.yaw += this.angleStep;
-                this.change++;
-            }
+        if(!this.lockCircle) {
+            this.yaw += this.angleStep;
+            this.change++;
         }
     }
     else {
@@ -342,68 +283,119 @@ update(inputs, dt) {
             //     this.reproject = !this.reproject;
             // console.log("BUTTON A", this.reproject);
             // this.reproCount++;
-            console.log(this.comparison);
-            this.dispatchEvent(new CustomEvent('comparison', {detail: this.comparison}));
-
+            if(this.unlockAL <= 0) {
+                console.log(this.comparison);
+                this.dispatchEvent(new CustomEvent('comparison', {detail: this.comparison}));
+                this.unlockAL = 10;
+            }
         }
+        else 
+            this.unlockAL--;
+
         if(btnsL[5].pressed) { // B
             // this.safeDecrement("bar", 800);
-            
+            if(this.uiCountL == 0)
+                this.uiActive = !this.uiActive;
+            this.uiCountL++;
         }   
+        else
+            this.uiCountL = 0;
         
         if(axesL[2] > thr) { //right
-            // if(this.lockCircle) {
-            //     this.safeIncrement("bar", 800);
-            // }
-            // else {
-            //     this.dx -= this.translationStep;
-            //     this.change++;
-            // }
+            if(this.uiActive) {
+                if(this.uiState == 0)
+                    this.extinction++;
+                else if(this.uiState == 1) // && this.steps < 60)
+                    this.steps++;
+                else if(this.uiState == 2) {
+                    if(this.rendererTimeout % 20 == 0)
+                        this.safeIncrement("renderer", 8);
+                    this.rendererTimeout++;
+                }
+                else if(this.uiState == 3) {
+                    if(this.renderStateTimeout % 20 == 0)
+                        this.safeIncrement("state", 3);
+                    this.renderStateTimeout++;
+                    this.renderStateChanged = true;
+                }
+                else if(this.uiState == 4) {
+                    if(this.filterTimeout % 20 == 0)
+                        this.filter = this.filter == 'nearest' ? 'linear' : 'nearest';
+                    this.filterTimeout++;
+                }
+            }
+  
             if(this.comparisonTimeout % 20 == 0) {
                 this.safeIncrement("comparison", 4);
+                this.dispatchEvent(new CustomEvent('comparison', {detail: this.comparison}));
             }
             this.comparisonTimeout++;
         }
         else if(axesL[2] < -thr) { //left
-            // if(this.lockCircle) {
-            //     this.safeDecrement("bar", 800);
-            // }
-            // else {
-            //     this.dx += this.translationStep;
-            //     this.change++;
-            // }
-            if(this.comparisonTimeout % 20 == 0)
+            if(this.uiActive) {
+                if(this.uiState == 0 && this.extinction > 1)
+                    this.extinction--;
+                else if(this.uiState == 1 && this.steps > 1)
+                    this.steps--;
+                else if(this.uiState == 2) {
+                    if(this.rendererTimeout % 20 == 0)
+                        this.safeDecrement("renderer", 8);
+                    this.rendererTimeout++;
+                }
+                else if(this.uiState == 3) {
+                    if(this.renderStateTimeout % 20 == 0)
+                        this.safeDecrement("state", 3);
+                    this.renderStateTimeout++;
+                    this.renderStateChanged = true;
+                }
+                else if(this.uiState == 4) {
+                    if(this.filterTimeout % 20 == 0)
+                        this.filter = this.filter == 'nearest' ? 'linear' : 'nearest';
+                    this.filterTimeout++;
+                }
+            }
+            if(this.comparisonTimeout % 20 == 0) {
                 this.safeDecrement("comparison", 4);
+                this.dispatchEvent(new CustomEvent('comparison', {detail: this.comparison}));
+            }
             this.comparisonTimeout++;
         }
         else {
             this.comparisonTimeout = 0;
+            this.rendererTimeout = 0;
+            this.renderStateTimeout = 0;
+            this.filterTimeout = 0;
         }
         
-        if(this.lockCircle)
-            return;
-
-        if(btnsL[0].pressed) { // up hold
-            this.dz += this.translationStep;
-            this.change++;
-        }
-        if(btnsL[1].pressed) { // down hold
-            this.dz -= this.translationStep;
-            this.change++;
-        }
-
-        if(axesL[3] > thr) {
-            this.dy -= this.translationStep;
-            this.change++;
+        if(axesL[3] > thr) { 
+            if(this.uiActive) {
+                if(this.uiStateTimeout % 10 == 0) {
+                    this.safeIncrement("ui", 5);
+                    // this.uiState++;
+                    // if(this.uiState > 2)
+                    //     this.uiState = 0;
+                }
+                this.uiStateTimeout++;
+            }
         }
         else if(axesL[3] < -thr) {
-            this.dy += this.translationStep;
-            this.change++;
+            if(this.uiActive) {
+                if(this.uiStateTimeout % 10 == 0) {
+                    this.safeDecrement("ui", 5);
+                    // this.uiState--;
+                    // if(this.uiState < 0)
+                    //     this.uiState = 2;
+                }
+                this.uiStateTimeout++;
+            }
         }
-    }
+        else {
+            this.uiStateTimeout = 0;
+        }
     // console.log(axes);
     // console.log(dt);
     // console.log(this.dx, this.dz);
+    }
 }
 
 apply(viewMatrix, force = false, right = false) {

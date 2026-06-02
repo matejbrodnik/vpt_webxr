@@ -39,6 +39,7 @@ constructor(gl, texture, options = {}) {
     this.views = ["MONO", "STEREO", "REPROJ"];
     this.right = true;
 
+    this.disableCircle = false;
     this.depthMode = false;
     this.depthParams = {
         xA: 300, yA: 250,
@@ -141,21 +142,34 @@ _drawUIText(reset = false) {
     ctx.textBaseline = 'bottom';
     // if(reset || !(this.VRAnimator))
     //     ctx.fillText("TEST test", this.uiCanvas.width - 140, 195);
-    let rightOffset = 123;
+    let rightOffset = 81;
     if(this.VRAnimator) {
         if(this.comparisonMode) {
-            let x = this._resolution.width / 2.8; // 120
+            let x = this._resolution.width / 3.2; // 120
             // let x = 310;
             if(this.right)
                 x = x - rightOffset;
-            let y = this._resolution.height / 2.5;
+            let y = this._resolution.height / 2.8;
             ctx.strokeStyle = 'black';
             ctx.fillStyle = 'black';
+            ctx.font = '22px sans-serif';
             
-            ctx.fillText("Mode: " + this.VRAnimator.comparison, x, y);
+            let comp = "A";
+            if(this.VRAnimator.comparison == 1)
+                comp = "B";
+            if(this.VRAnimator.comparison == 2)
+                comp = "C";
+            if(this.VRAnimator.comparison == 3)
+                comp = "D";
+            ctx.fillText(comp, x, y);
+            ctx.font = '12px sans-serif';
+
         }
         if(this.VRAnimator.lockCircle) {
-            if(this.VRAnimator.circleActive > 0) {
+            ctx.font = '22px sans-serif';
+            ctx.fillText(this.renderers[this.VRAnimator.chosenRenderer], this._resolution.width / 2.8 - (this.right ? rightOffset : 0), this._resolution.height / 1.45);
+            ctx.font = '12px sans-serif';
+            if(this.VRAnimator.circleActive > 0 || this.disableCircle) {
                 // this.VRAnimator.model.localTranslation = this.depthParams.translation;
                 // this.VRAnimator.model.localRotation = this.depthParams.rotation;
                 return;
@@ -221,7 +235,7 @@ _drawUIText(reset = false) {
                 ctx.fillStyle = 'blue';
             else
                 ctx.fillStyle = style;
-            ctx.fillText(cursor[count++] + this.right ? "STEPS: " : "steps" + this.VRAnimator.steps, x, y);
+            ctx.fillText(cursor[count++] + (this.right ? "STEPS: " : "STEPS: ") + this.VRAnimator.steps, x, y);
             y += yStep;
             if(this.VRAnimator.uiState == count)
                 ctx.fillStyle = 'blue';
@@ -249,23 +263,23 @@ _drawUIText(reset = false) {
                 //     x = x - 80;
                 y = this._resolution.height / 2.8;
                 // y = 231;
-                if(this.VRAnimator.timer)
-                    y = y + 18
+                // if(this.VRAnimator.timer)
+                //     y = y + 18
                 ctx.fillStyle = style;
                 ctx.fillText("FPS: " + this.renderingContext.fps, x, y);
             }
         }
     
-        if(this.VRAnimator.timer) {
-            let x = this._resolution.width / 2.8 + 50;
-            if(this.right)
-                x = x - rightOffset;
-            let y = this._resolution.height / 2.8;
-            // let y = 231;
-            let style = (this.VRAnimator.chosenRenderer == 5 || this.VRAnimator.chosenRenderer == 6 || this.VRAnimator.chosenRenderer == 7) ? 'white' : 'black';
-            ctx.fillStyle = style;
-            ctx.fillText("T: " + (this.VRAnimator.timer / 1000).toFixed(1), x, y);
-        }
+        // if(this.VRAnimator.timer) {
+        //     let x = this._resolution.width / 2.8 + 50;
+        //     if(this.right)
+        //         x = x - rightOffset;
+        //     let y = this._resolution.height / 2.8;
+        //     // let y = 231;
+        //     let style = (this.VRAnimator.chosenRenderer == 5 || this.VRAnimator.chosenRenderer == 6 || this.VRAnimator.chosenRenderer == 7) ? 'white' : 'black';
+        //     ctx.fillStyle = style;
+        //     ctx.fillText("T: " + (this.VRAnimator.timer / 1000).toFixed(1), x, y);
+        // }
 
     }
 

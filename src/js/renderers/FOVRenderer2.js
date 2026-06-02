@@ -141,7 +141,7 @@ _resetFrame() {
     this.mip._VRProjection = this._VRProjection;
     
     this.mip.render();
-    console.log("MIP RENDER 2")
+    // console.log("MIP RENDER 2")
 
     this._accumulationBuffer.use();
     
@@ -174,7 +174,7 @@ _resetFrame() {
 
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
     const modelMatrix = this._VROn ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
-    const viewMatrix = this._VROn ? (this.right ? this._VRAnimator.transform2.inverseGlobalMatrix : this._VRAnimator.transform.inverseGlobalMatrix) : this._camera.transform.inverseGlobalMatrix;
+    const viewMatrix = this._VROn ? (this.right ? this._VRAnimator.transform.inverseGlobalMatrix : this._VRAnimator.transform.inverseGlobalMatrix) : this._camera.transform.inverseGlobalMatrix;
     const projectionMatrix = this._VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
     
     // this.log(this._camera.getComponent(PerspectiveCamera).projectionMatrix);
@@ -365,8 +365,8 @@ setProjection(matrix) {
     this._VRProjection = matrix;
     if(this.mip) {
         this.mip._VRProjection = matrix;
-        this.mip.reset();
-        this.mip.render();
+        // this.mip.reset(true);
+        // this.mip.render();
     }
     if(this._context.setupIndex >= this._context.setupList.length) {
         if(this.matrix)
@@ -375,6 +375,7 @@ setProjection(matrix) {
         if(this.mip.matrix)
             this.log(this.mip.matrix);
     }
+    this.reset(true);
 }
 
 _getFrameBufferSpec() {

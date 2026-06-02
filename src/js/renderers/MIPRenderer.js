@@ -99,7 +99,7 @@ _generateFrame() {
     mat4.multiply(matrix, projectionMatrix, matrix);
     mat4.invert(matrix, matrix);
     this.matrix = matrix;
-    console.log("MIP RENDER 1")
+    // console.log("MIP RENDER 1")
     // this.log(matrix);
     gl.uniformMatrix4fv(uniforms.uMvpInverseMatrix, false, matrix);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
