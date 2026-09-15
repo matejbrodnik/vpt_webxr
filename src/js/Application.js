@@ -28,6 +28,8 @@ constructor() {
     this._handleVolumeLoad = this._handleVolumeLoad.bind(this);
     this._handleEnvmapLoad = this._handleEnvmapLoad.bind(this);
     this._handleVRLoad = this._handleVRLoad.bind(this);
+    this._handleRepro = this._handleRepro.bind(this);
+    this._handleEye = this._handleEye.bind(this);
     this._handleRecordAnimation = this._handleRecordAnimation.bind(this);
 
     this.binds = DOMUtils.bind(document.body);
@@ -52,6 +54,8 @@ constructor() {
     this.VRLoadDialog = new VRLoadDialog();
     this.mainDialog.getVRLoadContainer().appendChild(this.VRLoadDialog.object);
     this.VRLoadDialog.addEventListener('enter', this._handleVRLoad);
+    this.VRLoadDialog.addEventListener('repro', this._handleRepro);
+    this.VRLoadDialog.addEventListener('eye', this._handleEye);
 
     this.renderingContextDialog = new RenderingContextDialog();
     this.mainDialog.getRenderingContextSettingsContainer().appendChild(
@@ -108,6 +112,13 @@ constructor() {
 
 async _handleRecordAnimation(e) {
     this.renderingContext.recordAnimation(e.detail);
+}
+
+_handleEye() {
+    console.log(this);
+    this.renderingContext.renderer.reset();
+    this.right = true;
+    this.renderingContext.reproReady = true;
 }
 
 _handleFileDrop(e) {
@@ -244,6 +255,9 @@ _handleVRLoad(e) {
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.bindTexture(gl.TEXTURE_2D, null);
         gl.bindTexture(gl.TEXTURE_3D, null);
+        // this.xrDevice = new IWER.XRDevice(IWER.metaQuest3);
+        // this.xrDevice.installRuntime({ forceInstall: true });
+        // console.log(this.xrDevice)
         navigator.xr.requestSession('immersive-vr', {requiredFeatures: ['local-floor']}).then((session) => {
             // session.addEventListener("inputsourcechange", (event) => {
             //     console.log("inputs", event.session.inputSources);
@@ -296,6 +310,13 @@ _reset() {
     Ticker.reset();
     Ticker.add(this.renderingContext._update);
     Ticker.start(this.renderingContext.session, this.renderingContext.gl);
+}
+
+_handleRepro() {
+    this.renderingContext.reproBrick = true;
+    // this.renderingContext.brick = false;
+    this.renderingContext.cameraAnimator._rotateAroundFocus(0.15, -1.7);
+    // this.renderingContext.angle += 0.10;
 }
 
 }

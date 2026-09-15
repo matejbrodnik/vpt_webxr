@@ -9,7 +9,7 @@ constructor() {
 
 
 save(name) {
-    CommonUtils.downloadJSON(this, `${name}.json`)
+    // CommonUtils.downloadJSON(this, `${name}.json`)
 }
 
 }

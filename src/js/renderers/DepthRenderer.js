@@ -69,6 +69,10 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             this.reset();
         }
     });
+    this.xA = 0.5;
+    this.yA = 0.5;
+    this.xB = 0.5;
+    this.yB = 0.5;
 
     this._programs = WebGL.buildPrograms(this._gl, SHADERS.renderers.DepthRenderer, MIXINS);
     this._frameNumber = 0;
@@ -158,6 +162,8 @@ _renderFrame() {
     gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[0]);
 
     gl.uniform1i(uniforms.uAccumulator, 0);
+    gl.uniform2f(uniforms.uPointA, this.xA, this.yA);
+    gl.uniform2f(uniforms.uPointB, this.xB, this.yB);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     // this._context.brick = true;

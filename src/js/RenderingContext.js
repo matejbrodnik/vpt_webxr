@@ -63,6 +63,8 @@ constructor(options = {}) {
     this.useTimer = false; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     this.right = false;
     this.changedView = false;
+    this.timeList = [];
+
 
     this.resolution = options.resolution ?? {width: 512, height: 512};
     this.filter = options.filter ?? 'nearest'; //'linear';
@@ -74,7 +76,7 @@ constructor(options = {}) {
     this.camera.transform.addEventListener('change', e => {
         // console.log("CAMERA CHANGE")
         if (this.renderer && !this.disable) {
-            console.log("CAMERA CHANGE RESET")
+            // console.log("CAMERA CHANGE RESET")
             this.renderer.random = Math.random();
             this.renderer.reset(); //move outside to prevent stuttering on reset
 
@@ -86,11 +88,23 @@ constructor(options = {}) {
     //    radius: 0.01,
     //    frequency: 1,
     //});
+
+    this.whiteP = 0.5;
     this.cameraAnimator = new OrbitCameraAnimator(this.camera, this.canvas, this.volumeTransform);
-    // this.cameraAnimator._rotateAroundFocus(1.25, 0);
+    this.cameraAnimator._rotateAroundFocus(0, -1.7);
+    // this.cameraAnimator._rotateAroundFocus(0.2, -1.7);
     // this.cameraAnimator._rotateAroundFocus(2.6, 0);
     // this.cameraAnimator._zoom(-0.7, 0);
-    // this.cameraAnimator._zoom(-0.4, 0);
+
+    if(this.whiteP == 0.75)
+        this.cameraAnimator._zoom(0.59, 0); //0.75
+    if(this.whiteP == 0.5)
+        this.cameraAnimator._zoom(-0.3644, 0); //0.5
+        // this.cameraAnimator._zoom(0.254, 0); //0.5
+    if(this.whiteP == 0.25)
+        this.cameraAnimator._zoom(0.0627, 0); //0.25
+    if(this.whiteP == 0)
+        this.cameraAnimator._zoom(-0.71, 0); //0.0
 
 
     this.once = false;
@@ -131,13 +145,13 @@ constructor(options = {}) {
     
     this.tfDataManix = '[{"position":{"x":0.96,"y":0.94},"size":{"x":0.044,"y":0.2},"color":{"r":1,"g":0.54,"b":0.54,"a":1}},' +
     // '{"position":{"x":0.33,"y":0.87},"size":{"x":0.03,"y":0.2},"color":{"r":0.1,"g":0.97,"b":1,"a":1}},' +
-    '{"position":{"x":0.34,"y":0.87},"size":{"x":0.03,"y":0.2},"color":{"r":0.1,"g":0.97,"b":1,"a":1}},' +
+    '{"position":{"x":0.39,"y":0.87},"size":{"x":0.03,"y":0.2},"color":{"r":0.1,"g":0.97,"b":1,"a":1}},' +
     '{"position":{"x":0.6,"y":0.98},"size":{"x":0.042,"y":0.2},"color":{"r":1,"g":0.87,"b":0.76,"a":1}},' +
     '{"position":{"x":0.72,"y":0.94},"size":{"x":0.024,"y":0.2},"color":{"r":1,"g":0.95,"b":0.28,"a":1}},' +
     '{"position":{"x":0.87,"y":0.94},"size":{"x":0.06,"y":0.2},"color":{"r":1,"g":0.73,"b":0.25,"a":1}}]';
 
     this.tf = new TransferFunction();
-    this.tf.bumps = JSON.parse(this.tfData);
+    this.tf.bumps = JSON.parse(this.tfDataManix);
     this.tf.render();
     this.tf._rebuildHandles();
     this.tfs.push(this.tf.canvas);
@@ -154,57 +168,6 @@ constructor(options = {}) {
 
     // this.renderer.setTransferFunction(this.tf.canvas);
     // this.VRAnimator = new VRCameraAnimator(this.volumeTransform);
-    // let instancesFibers = [
-    //     {
-    //         // xA: 129, yA: 117,
-    //         id: 0,
-    //         xA: 250, yA: 130,
-    //         xB: 255, yB: 140,
-    //         rotation: quat.fromEuler(quat.create(), -90, 0, 0), translation: vec3.clone([0, 0, 0]),
-    //         closer: false,
-    //         fileIndex: 0,
-    //     },
-    //     {
-    //         id: 1,
-    //         xA: 260, yA: 130,
-    //         xB: 265, yB: 140,
-    //         rotation: quat.fromEuler(quat.create(), -90, 0, 0), translation: vec3.clone([0, 0, 0]),
-    //         closer: true,
-    //         fileIndex: 0,
-    //     },
-    //     {
-    //         id: 2,
-    //         xA: 270, yA: 130,
-    //         xB: 275, yB: 140,
-    //         rotation: quat.fromEuler(quat.create(), -90, 0, 0), translation: vec3.clone([0, 0, 0]),
-    //         closer: false,
-    //         fileIndex: 0,
-    //     },
-    //     {
-    //         id: 3,
-    //         xA: 280, yA: 130,
-    //         xB: 285, yB: 140,
-    //         rotation: quat.fromEuler(quat.create(), -90, 0, 0), translation: vec3.clone([0, 0, 0]),
-    //         closer: false,
-    //         fileIndex: 0,
-    //     },
-    //     {
-    //         id: 4,
-    //         xA: 40, yA: 130,
-    //         xB: 45, yB: 140,
-    //         rotation: quat.fromEuler(quat.create(), -90, 0, 0), translation: vec3.clone([0, 0, 0]),
-    //         closer: true,
-    //         fileIndex: 0,
-    //     },
-    //     {
-    //         id: 5,
-    //         xA: 50, yA: 130,
-    //         xB: 55, yB: 140,
-    //         rotation: quat.fromEuler(quat.create(), -90, 0, 0), translation: vec3.clone([0, 0, 0]),
-    //         closer: false,
-    //         fileIndex: 0,
-    //     },
-    // ];
 
     let instancesFibers = [
         {
@@ -224,7 +187,7 @@ constructor(options = {}) {
             xA2: 183, yA2: 107,
             xB2: 253, yB2: 120,
             rotation: quat.fromEuler(quat.create(), 90, -10, 180), translation: vec3.clone([0.05, 0.1, 0]),
-            closer: true,
+            closer: true, //false
             fileIndex: 0,
         },
         {
@@ -332,24 +295,71 @@ constructor(options = {}) {
         },
     ];
 
+    let instancesBlank = [
+        {
+            id: 20,
+            xA: 128, yA: 128,
+            xB: 169, yB: 149,
+            xA2: 179, yA2: 116,
+            xB2: 226, yB2: 139,
+            rotation: quat.fromEuler(quat.create(), 100, 20, 170), translation: vec3.clone([0.02, -0.02, 0]), 
+            closer: false,
+            fileIndex: 0,
+        },
+        // {
+        //     id: 21,
+        //     xA: 128, yA: 128,
+        //     xB: 169, yB: 149,
+        //     xA2: 179, yA2: 116,
+        //     xB2: 226, yB2: 139,
+        //     rotation: quat.fromEuler(quat.create(), -100, -20, 190), translation: vec3.clone([-0.02, 0.1, 0]), 
+        //     closer: false,
+        //     fileIndex: 0,
+        // },
+        // {
+        //     id: 22,
+        //     xA: 131, yA: 119,
+        //     xB: 193, yB: 131,
+        //     xA2: 183, yA2: 107,
+        //     xB2: 253, yB2: 120,
+        //     rotation: quat.fromEuler(quat.create(), -80, -10, 0), translation: vec3.clone([0.05, 0.1, 0]),
+        //     closer: true,
+        //     fileIndex: 1,
+        // },
+        // {
+        //     id: 23,
+        //     xA: 131, yA: 119,
+        //     xB: 193, yB: 131,
+        //     xA2: 183, yA2: 107,
+        //     xB2: 253, yB2: 120,
+        //     rotation: quat.fromEuler(quat.create(), -100, 80, 0), translation: vec3.clone([0.05, 0.1, 0]),
+        //     closer: true,
+        //     fileIndex: 1,
+        // },
+    ];
+    // instancesBlank = [];
+
     // instances.concat(instancesManix);
     // for(let i = 0; i < instances.length; i++) {
     //     renderers.push([0, 3, 4, 5]);
     // }
-    let renderersBase = [2, 3, 4, 5];
+    let renderersBase = [4, 3, 2, 5];
 
     let renderersFibers = [];
     for(let i = 0; i < instancesFibers.length; i++) {
-        renderersFibers.push([2, 3, 4, 5]);
+        renderersFibers.push(renderersBase);
     }
     let renderersManix = [];
     for(let i = 0; i < instancesManix.length; i++) {
-        renderersManix.push([2, 3, 4, 5]);
+        renderersManix.push(renderersBase);
     }
     
     let complete = [];
     for(let i = 0; i < 4; i++) {
         CommonUtils.doubleShuffle(instancesFibers, renderersFibers);
+        while(instancesFibers[0].id == 4 || instancesFibers[5].id == 4) {
+            CommonUtils.doubleShuffle(instancesFibers, renderersFibers);
+        }
         CommonUtils.doubleShuffle(instancesManix, renderersManix);
         let instances = instancesFibers.slice();
         instances = instances.concat(instancesManix);
@@ -361,10 +371,10 @@ constructor(options = {}) {
             complete.push({depthParams: instances[j], renderer: renderersBase[i], disable: false});
             // renderers[j].splice(index, 1);
         }
-        for(let j = 0; j < instances.length; j++) {
+        for(let j = 0; j < instancesBlank.length; j++) {
             // let index = Math.floor(Math.random() * renderers[j].length);
             // complete.push({depthParams: instances[j], renderer: renderers[j][index]});
-            complete.push({depthParams: instances[j], renderer: renderersBase[i], disable: true});
+            complete.push({depthParams: instancesBlank[j], renderer: renderersBase[i], disable: true});
             // renderers[j].splice(index, 1);
         }
         // console.log(renderers);
@@ -385,38 +395,42 @@ constructor(options = {}) {
         {
             id: 20,
             rotation: quat.fromEuler(quat.create(), 90, 0, 0), translation: vec3.clone([0, 0, 0]), 
-            renderer: 0,
+            renderer: 2,
             reproj: false,
             fileIndex: 0,
         },
         {
             id: 21,
             rotation: quat.fromEuler(quat.create(), 90, 0, 0), translation: vec3.clone([0, 0, 0]), 
-            renderer: 2,
+            renderer: 0,
             reproj: false,
             fileIndex: 0,
         },
         {
             id: 22,
             rotation: quat.fromEuler(quat.create(), 90, 0, 0), translation: vec3.clone([0, 0, 0]), 
-            renderer: 0,
+            renderer: 2,
             reproj: true,
             fileIndex: 0,
         },
         {
             id: 23,
             rotation: quat.fromEuler(quat.create(), 90, 0, 0), translation: vec3.clone([0, 0, 0]), 
-            renderer: 2,
+            renderer: 0,
             reproj: true,
             fileIndex: 0,
         },
     ];
 
     this.pairs = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]];
-
     
     this.delayedReset = -1;
+    this.angle = -0.3;
     
+    this.reproCount = 0;
+    this.divList = Array(200).fill(0);
+    this.iterList = Array(200).fill(0);
+
     console.log(this.camera.transform);
 }
 
@@ -608,6 +622,10 @@ chooseRenderer(renderer, reset=true, tf = null) {
     this.countMCM = 0;
     this.countFOV = 0;
     this.timer = 0;
+    this.timeList = [];
+    this.timerMCMLow = 10;
+    this.timerFOVLow = 10;
+    this.timerTotal = 0;
     this.count = 0;
     if(this.query) {
         this.gl.endQuery(this.extTime.TIME_ELAPSED_EXT);
@@ -628,6 +646,9 @@ chooseRenderer(renderer, reset=true, tf = null) {
         this.iter = 0;
         this.bench = true;
     }
+    // this.right = true;
+    this.setupReprojection(); //manual
+    // this.reproject.setMVPleft();
 }
 
 chooseRenderer2(renderer, reset=true, tf = null) {
@@ -689,6 +710,7 @@ chooseToneMapper(toneMapper) {
 
 
 setupUI(toneMapper) {
+    console.log("setupUI")
     let ui = new UIRenderer(this.gl, toneMapper.getTexture(), {
         resolution: this.resolution,
         VRAnimator: this.VRAnimator,
@@ -702,6 +724,8 @@ setupReprojection() {
     this.reproject = new EyeReproject(this.gl, this.volume, this.renderer, this.toneMapper, {
         resolution: this.resolution,
         VRAnimator: this.VRAnimator,
+        camera: this.camera,
+        transform: this.volumeTransform,
     });
     // this.reproject.reset(projMatrix);
 }
@@ -717,8 +741,11 @@ switchRenderer(index, TF = null, force = false) {
             this.chooseRenderer2("fov2", this.VRAnimator.renderState == 1, TF);
         console.log("CHANGED TO FOV2");
         // if(this.VRAnimator.steps > 100 || this.VRAnimator.steps < 6)
-        //     this.VRAnimator.steps = 30;
-        this.VRAnimator.extinction = 150;
+        if(this.uiRenderer.comparisonMode)
+            this.VRAnimator.steps = 200;
+        else
+            this.VRAnimator.steps = 150;
+        this.VRAnimator.extinction = 160;
         return true;
     }
     if(index == 1 && (!(this.renderer instanceof MIPRenderer) || force)) {
@@ -741,8 +768,12 @@ switchRenderer(index, TF = null, force = false) {
             this.chooseRenderer2("mcm", this.VRAnimator.renderState == 1, TF);
         console.log("CHANGED TO MCM");
         // if(this.VRAnimator.steps > 100 || this.VRAnimator.steps < 6)
-        //     this.VRAnimator.steps = 30;
-        this.VRAnimator.extinction = 150;
+        if(this.uiRenderer.comparisonMode)
+            this.VRAnimator.steps = 200;
+        else
+            this.VRAnimator.steps = 150;
+        this.VRAnimator.extinction = 160;
+        this.VRAnimator.extinction = 160;
         return true;
     }
     if(index == 3 && (!(this.renderer instanceof ISORenderer) || force)) {
@@ -791,6 +822,22 @@ switchRenderer(index, TF = null, force = false) {
         if(this.renderer2)
             this.chooseRenderer2("depth", this.VRAnimator.renderState == 1, TF);
         console.log("CHANGED TO Depth");
+        let setup = this.setupList[this.setupIndex-1];
+
+        this.renderer.xA = ((setup.depthParams.xA2 - 0) / (this.uiRenderer.uiCanvas.width));
+        this.renderer.yA = 1 - (setup.depthParams.yA2 / (this.uiRenderer.uiCanvas.height));
+        console.log("POINT A_L AT (" + this.renderer.xA + ", " + this.renderer.yA + ")");
+        this.renderer2.xA = ((setup.depthParams.xA2 - 81) / (this.uiRenderer.uiCanvas.width));
+        this.renderer2.yA = 1 - (setup.depthParams.yA2 / (this.uiRenderer.uiCanvas.height));
+        console.log("POINT A_R AT (" + this.renderer2.xA + ", " + this.renderer2.yA + ")");
+
+        this.renderer.xB = ((setup.depthParams.xB2 - 0) / (this.uiRenderer.uiCanvas.width));
+        this.renderer.yB = 1 - (setup.depthParams.yB2 / (this.uiRenderer.uiCanvas.height));
+        console.log("POINT B_L AT (" + this.renderer.xB + ", " + this.renderer.yB + ")");
+        this.renderer2.xB = ((setup.depthParams.xB2 - 81) / (this.uiRenderer.uiCanvas.width));
+        this.renderer2.yB = 1 - (setup.depthParams.yB2 / (this.uiRenderer.uiCanvas.height));
+        console.log("POINT B_R AT (" + this.renderer2.xB + ", " + this.renderer2.yB + ")");
+
         // if(this.VRAnimator.steps > 100 || this.VRAnimator.steps < 10)
         //     this.VRAnimator.steps = 30;
         return true;
@@ -861,15 +908,17 @@ _update(t, frame) {
             this.chooseRenderer2("fov2");
             this.setupReprojection();
 
-            this.renderer.setName("1");
-            this.renderer2.setName("2");
+            // this.renderer.setName("1");
+            // this.renderer2.setName("2");
             this.renderer.setProjection(pose.views[0].projectionMatrix);
             this.renderer2.setProjection(pose.views[1].projectionMatrix);
             
             this._saveJSON = this._saveJSON.bind(this);
             this._comparisonInstance = this._comparisonInstance.bind(this);
+            this._fullReset = this._fullReset.bind(this);
             this.VRAnimator.addEventListener('saveToJSON', this._saveJSON);
             this.VRAnimator.addEventListener('comparison', this._comparisonInstance);
+            this.VRAnimator.addEventListener('reset', this._fullReset);
 
             if(this.reproject)
                 this.reproject.reset(pose.views[1].projectionMatrix);
@@ -914,6 +963,13 @@ _update(t, frame) {
                     // console.log("RIGHT");
                     // this.renderer.log(view.transform.matrix)
                 }
+                console.log(this.right);
+                console.log("---PROJ---");
+                this.renderer.log(view.projectionMatrix);
+                // console.log("---VIEW---");
+                // this.renderer.log(this._VRAnimator ? (this.right ? this._VRAnimator.transform.inverseGlobalMatrix : this._VRAnimator.transform.inverseGlobalMatrix) : "NULL");
+                // console.log("---MODEL---");
+                // this.renderer.log(this._VRAnimator ? this._VRAnimator.model.globalMatrix : "NULL");
                 
                 if(this.changedView) {
                     if(this.right) {
@@ -991,11 +1047,18 @@ _saveJSON(e) {
     console.log("ENABLE", this.setupIndex);
     this.uiRenderer.depthMode = false;
     
-    if(this.setupIndex >= this.setupList.length) {
-        // CommonUtils.downloadJSON(e.detail, "testJSON.json"); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    if(this.setupIndex == this.setupList.length) {
+        console.log(this.setupIndex);
+        console.log(this.uiRenderer.comparisonMode);
+        if(!this.uiRenderer.comparisonMode && this.setupIndex == this.setupList.length) {
+            CommonUtils.downloadJSON(e.detail, "testJSON.json"); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        }
         this.setupIndex++;
+        this.VRAnimator.comparisonMode = true;
         this.uiRenderer.comparisonMode = true;
         this.VRAnimator.dispatchEvent(new CustomEvent('comparison', {detail: 0}));
+    }
+    if(this.setupIndex >= this.setupList.length) {
         return;
     }
     
@@ -1039,6 +1102,8 @@ _saveJSON(e) {
         }
     }
     this.VRAnimator.currentId = setup.depthParams.id;
+    this.VRAnimator.closer = setup.depthParams.closer;
+    this.VRAnimator.disable = setup.disable;
 
     if(this.pose) {
         this.renderer.setProjection(this.pose.views[0].projectionMatrix);
@@ -1065,30 +1130,7 @@ depthInstance(depthParams) {
     console.log("DEPTH TEST START");
     this.uiRenderer.depthMode = true;
     this.uiRenderer.depthParams = depthParams;
-    // let repro = mat4.fromValues(
-    //     1.035, 0, 0, 0,
-    //     0, 0.869, 0, 0,
-    //     0.035, -0.035, -1, -1,
-    //     0, 0, -0.2, 0
-    // );
-    // let repro = mat4.fromValues(
-    //     0.93, 0, 0, 0,
-    //     0, 0.869, 0, 0,
-    //     -0.07, -0.035, -1, -1,
-    //     0, 0, -0.2, 0
-    // );
-    // this.renderer.log(repro);
-    // this.renderer.log(this.renderer._VRProjection);
-    // this.renderer._VRProjection = repro;
-    // if(this.renderer2) {
-    //     repro = mat4.fromValues(
-    //         0.93, 0, 0, 0,
-    //         0, 0.869, 0, 0,
-    //         0.07, -0.035, -1, -1,
-    //         0, 0, -0.2, 0
-    //     );
-    //     this.renderer2._VRProjection = repro;
-    // }
+
     if(this.VRAnimator) {
         // this.VRAnimator.depthMode = true;
         this.VRAnimator.lockCircle = true;
@@ -1126,8 +1168,11 @@ _comparisonInstance(e) {
     if(this.setupIndex <= this.setupList.length)
         return;
     console.log(e);
-    let index = e.detail;
+    console.log(this.VRAnimator.pairIndex);
+
+    let index = this.pairs[this.VRAnimator.pairIndex][e.detail]; // 0 ali 1
     let setup = this.instancesComparison[index];
+    console.log(index);
     console.log(setup);
     let changeVolume = false;
     if(this.volume != this.volumes[setup.fileIndex]) {
@@ -1174,12 +1219,61 @@ _comparisonInstance(e) {
     // this.VRAnimator.transform.localTranslation = vec3.clone([0, 0, 1]);
 }
 
+_fullReset() {
+    console.log("To do");
+    this.setupIndex = 0;
+    this.VRFirst = true;
+    this.VRiterations = 0;
+    this.VRAnimator.comparisonMode = false;
+    this.uiRenderer.comparisonMode = false;
+    this.uiRenderer.depthMode = false;
+    // this.VRAnimator = new VRCameraAnimator(this.volumeTransform);
+
+}
+
 render() {
     const gl = this.gl;
-
+    this.right = !this.right;//manual
+    
+    if(this.right && this.reproReady) {
+        this.reproject.reset();
+        console.log("repro begin")
+        this.reproReady = false;
+    }
+    
     if (!gl || !this.renderer || !this.toneMapper) {
         return;
     }
+    if(this.brick) {
+        return;
+    }
+    // if(this.brick || this.renderer.iter > 1000) {
+    //     let pixels = new Uint8Array(this.resolution.width * this.resolution.height * 4);
+    //     // this.timer3 = performance.now().toFixed(3);
+    //     gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+    //     let white = 0;
+    //     let red = 0;
+    //     let cyan = 0;
+    //     let it = 0;
+    //     for(let i = 0; i < this.resolution.height; i++) {
+    //         for(let j = 0; j < this.resolution.width; j++) {
+    //             let index = (i * this.resolution.height + j) * 4;
+    //             let R = pixels[index];
+    //             let G = pixels[index+1];
+    //             let B = pixels[index+2];
+    //             if(R == 255 && G == 0 && B == 0)
+    //                 red++;
+    //             if(R == 0 && G == 255 && B == 255)
+    //                 cyan++;
+    //             if(R + G + B == 765)
+    //                 white++;
+    //             it++;
+    //         }
+    //     }
+    //     console.log(cyan / (cyan + red));
+    //     console.log("brick");
+    //     return;
+    // }
     let ext = this.extTime;
 
     if(this.useTimer) {
@@ -1203,60 +1297,67 @@ render() {
     // }
 
     // if(this.VRAnimator && this.VRAnimator.lockCircle) {
-    // if(this.renderer instanceof DepthRenderer) {
-    //     // if(!this.switchRenderer(7) && this.renderer.iter >= 10) {
-    //     if(this.renderer.iter % 15 == 1) {
-    //         // let pixels = new Float32Array(this.resolution.width * this.resolution.height);
-    //         let pixels = new Float32Array(this.resolution.width * this.resolution.height * 4);
-    //         // gl.bindFramebuffer(gl.FRAMEBUFFER, this.renderer._accumulationBuffer._readFramebuffer);
-    //         // gl.readBuffer(gl.COLOR_ATTACHMENT6);
-    //         gl.bindFramebuffer(gl.FRAMEBUFFER, this.renderer._renderBuffer._framebuffer);
-    //         gl.readBuffer(gl.COLOR_ATTACHMENT0);
-    //         // gl.pixelStorei(gl.PACK_ALIGNMENT, 1);
-    //         gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.FLOAT, pixels);
-    //         // console.log(this.setupIndex-1);
-    //         let depthParams = this.setupList[this.setupIndex].depthParams;
-    //         // let depthParams = this.setupList[this.setupIndex-1].depthParams;
-    //         // let indexA = (depthParams.yA * this.resolution.width + depthParams.xA) * 4;
-    //         // let indexB = (depthParams.yB * this.resolution.width + depthParams.xB) * 4;
-    //         // let indexD = (depthParams.yD * this.resolution.width + depthParams.xD) * 4;
-    //         let indexA = (depthParams.yA * this.resolution.width + depthParams.xA * 2) * 4;
-    //         let indexB = (depthParams.yB * this.resolution.width + depthParams.xB * 2) * 4;
-    //         let indexD = (depthParams.yD * this.resolution.width + depthParams.xD * 2) * 4;
-    //         let A = vec3.fromValues(pixels[indexA], pixels[indexA + 1], pixels[indexA + 2]);
-    //         let B = vec3.fromValues(pixels[indexB], pixels[indexB + 1], pixels[indexB + 2]);
-    //         let D = vec3.fromValues(pixels[indexD], pixels[indexD + 1], pixels[indexD + 2]);
-
-    //         // console.log(depthParams.yA, depthParams.yD, depthParams.yB)
-    //         console.log(A[0].toFixed(4), A[1].toFixed(4), A[2].toFixed(4));
-    //         // console.log(D[0].toFixed(4), D[1].toFixed(4), D[2].toFixed(4));
-    //         console.log(B[0].toFixed(4), B[1].toFixed(4), B[2].toFixed(4));
+    if(this.renderer instanceof DepthRenderer && !this.right) {
+        // if(!this.switchRenderer(7) && this.renderer.iter >= 10) {
+        if(this.renderer.iter % 100 == 2) {
+            // let pixels = new Float32Array(this.resolution.width * this.resolution.height);
+            let pixels = new Float32Array(this.resolution.width * this.resolution.height * 4);
+            // gl.bindFramebuffer(gl.FRAMEBUFFER, this.renderer._accumulationBuffer._readFramebuffer);
+            // gl.readBuffer(gl.COLOR_ATTACHMENT6);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this.renderer._renderBuffer._framebuffer);
+            gl.readBuffer(gl.COLOR_ATTACHMENT0);
+            // gl.pixelStorei(gl.PACK_ALIGNMENT, 1);
+            gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.FLOAT, pixels);
+            // console.log(this.setupIndex-1);
+            let depthParams = this.setupList[this.setupIndex-1].depthParams;
+            // let depthParams = this.setupList[this.setupIndex-1].depthParams;
+            // let indexA = (depthParams.yA * this.resolution.width + depthParams.xA) * 4;
+            // let indexB = (depthParams.yB * this.resolution.width + depthParams.xB) * 4;
+            // let indexD = (depthParams.yD * this.resolution.width + depthParams.xD) * 4;
             
-    //         // let inv = this.VRAnimator.transform.inverseGlobalMatrix;
-    //         // let cameraPos = vec3.fromValues(inv[12], inv[13], inv[14]);
+            // this.renderer.xA = ((setup.depthParams.xA2 - 0) / (this.uiRenderer.uiCanvas.width));
+            // this.renderer.yA = 1 - (setup.depthParams.yA2 / (this.uiRenderer.uiCanvas.height));
+            // this.renderer2.xA = ((setup.depthParams.xA2 - 81) / (this.uiRenderer.uiCanvas.width));
+            // this.renderer2.yA = 1 - (setup.depthParams.yA2 / (this.uiRenderer.uiCanvas.height));
+            console.log(this.renderer.xA);
+            console.log(this.renderer.yA);
 
-    //         // mat4.invert(inv, inv);
-    //         // cameraPos = vec3.fromValues(inv[12], inv[13], inv[14]);
-    //         // console.log(cameraPos[0].toFixed(2), cameraPos[1].toFixed(2), cameraPos[2].toFixed(2));
-    //         // console.log(vec3.distance(cameraPos, A).toFixed(2));
-    //         // console.log(vec3.distance(cameraPos, D).toFixed(2));
-    //         // console.log(vec3.distance(cameraPos, B).toFixed(2));
+            let indexA = (Math.round(this.renderer.yA * this.resolution.height) * this.resolution.width + this.renderer.xA * this.resolution.width) * 4;
+            let indexB = (Math.round(this.renderer.yB * this.resolution.height) * this.resolution.width + this.renderer.xB * this.resolution.width) * 4;
+            let A = vec3.fromValues(pixels[indexA], pixels[indexA + 1], pixels[indexA + 2]);
+            let B = vec3.fromValues(pixels[indexB], pixels[indexB + 1], pixels[indexB + 2]);
 
-    //         // console.log("---");
-    //     }
+            // let indexA = (depthParams.yA * this.resolution.width + depthParams.xA * 2) * 4;
+            // let indexB = (depthParams.yB * this.resolution.width + depthParams.xB * 2) * 4;
+            // let A = vec3.fromValues(pixels[indexA], pixels[indexA + 1], pixels[indexA + 2]);
+            // let B = vec3.fromValues(pixels[indexB], pixels[indexB + 1], pixels[indexB + 2]);
 
-    //     else {
-    //         // console.log("...")
-    //         // this.VRAnimator.chosenRenderer = 7;
-    //     }
-    // }
+            // console.log(depthParams.yA, depthParams.yD, depthParams.yB)
+            console.log(A[0].toFixed(6), A[1].toFixed(6), A[2].toFixed(6));
+            // console.log(D[0].toFixed(4), D[1].toFixed(4), D[2].toFixed(4));
+            console.log(B[0].toFixed(6), B[1].toFixed(6), B[2].toFixed(6));
+            
+            console.log("DEEPER " + (A[0] < B[0]))
+            // console.log(A[0] < B[0])
+            console.log("CLOSER " + depthParams.closer)
+            // let inv = this.VRAnimator.transform.inverseGlobalMatrix;
+            // let cameraPos = vec3.fromValues(inv[12], inv[13], inv[14]);
 
-    // if(!this.VROn && !this.uiTest && this.renderer.iter == 10) {
-    //     this.uiTest = true;
-    //     console.log("AAAAAA")
-    //     this._saveJSON(null);
-    //     this.setupIndex = 0;
-    // }
+            // mat4.invert(inv, inv);
+            // cameraPos = vec3.fromValues(inv[12], inv[13], inv[14]);
+            // console.log(cameraPos[0].toFixed(2), cameraPos[1].toFixed(2), cameraPos[2].toFixed(2));
+            // console.log(vec3.distance(cameraPos, A).toFixed(2));
+            // console.log(vec3.distance(cameraPos, D).toFixed(2));
+            // console.log(vec3.distance(cameraPos, B).toFixed(2));
+
+            // console.log("---");
+        }
+
+        else {
+            // console.log("...")
+            // this.VRAnimator.chosenRenderer = 7;
+        }
+    }
     
     if(this.UIinit) {
         this.uiRenderer = this.setupUI(this.toneMapper);
@@ -1264,21 +1365,32 @@ render() {
     }
 
     this.random = Math.random();
-    if(this.right) {
-        if(this.VRAnimator.renderState == 2) {
-            this.reproject.render();
-        }
-        else if(this.VRAnimator.renderState == 1) {
-            this.renderer2.random = this.random;
-            this.renderer2.render(); //2
-            this.toneMapper.render(this.renderer2.getTexture()); //2
-        }
+    //manual
+    if(this.right && this.reproject && this.reproject.invMVP && this.reproject._tonemapper) {
+        this.reproject.render();
+        // console.log("repro")
     }
     else {
         this.renderer.random = this.random;
         this.renderer.render();
         this.toneMapper.render(this.renderer.getTexture());
+        // console.log("render")
     }
+    // if(this.right) {
+    //     if(this.VRAnimator.renderState == 2) {
+    //         this.reproject.render();
+    //     }
+    //     else if(this.VRAnimator.renderState == 1) {
+    //         this.renderer2.random = this.random;
+    //         this.renderer2.render(); //2
+    //         this.toneMapper.render(this.renderer2.getTexture()); //2
+    //     }
+    // }
+    // else {
+    //     this.renderer.random = this.random;
+    //     this.renderer.render();
+    //     this.toneMapper.render(this.renderer.getTexture());
+    // }
 
     this.uiRenderer.render((this.VRAnimator && this.right && this.VRAnimator.renderState == 2) ? this.reproject.getTexture() : this.toneMapper.getTexture(), this.right);
 
@@ -1316,10 +1428,28 @@ render() {
         gl.bindTexture(gl.TEXTURE_2D, this.uiRenderer.getTexture());
     }
     else if(this.VRAnimator && this.VRAnimator.renderState == 2 && this.reproject) {
-        gl.bindTexture(gl.TEXTURE_2D, this.right ? this.reproject.getTexture() : this.toneMapper.getTexture());
+        // gl.bindTexture(gl.TEXTURE_2D, this.right ? this.reproject.getTexture() : this.toneMapper.getTexture());
+        gl.bindTexture(gl.TEXTURE_2D, this.reproject.getTexture());
     }
     else {
-        gl.bindTexture(gl.TEXTURE_2D, this.toneMapper.getTexture());
+        if(this.reproject.invMVP && this.reproject._tonemapper) {
+            gl.bindTexture(gl.TEXTURE_2D, this.reproject.getTexture());
+            console.log("repro")
+            
+        }
+        else {
+            gl.bindTexture(gl.TEXTURE_2D, this.toneMapper.getTexture());
+            console.log("render")
+        }//manual
+        // gl.bindTexture(gl.TEXTURE_2D, this.toneMapper.getTexture());
+
+        // if(this.right) {
+        //     console.log("right")
+        // }
+        // else {
+        //     console.log("left")
+        // }
+        
     }
 
     gl.uniform1i(uniforms.uTexture, 0);
@@ -1330,9 +1460,9 @@ render() {
         this.delayedReset--;
     }
     
-    if(this.brick) {
-        Ticker.reset();
-    }
+    // if(this.brick) {
+    //     Ticker.reset();
+    // }
 
     // if(this.loop == 0) {
     //     this.cameraAnimator._rotateAroundFocus(0.04, 0);
@@ -1359,16 +1489,20 @@ render() {
         if (available) {
             if (!disjoint) {
                 const elapsedTime = gl.getQueryParameter(q, gl.QUERY_RESULT);
-                this.timer += elapsedTime;
+                if(this.count >= 10) {
+                    this.timer += elapsedTime;
+                    this.timeList.push(elapsedTime / 1000000.0)
+                }
+
                 // console.log("TIME: ", (elapsedTime / 1000000.0).toFixed(2));
-                if((this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3) && this.countMCM > 500 && this.countMCM < 1001) {
+                if((this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3) && this.countMCM < 201) {
                 // if(this.renderer instanceof MCMRenderer && this.countMCM < 501) {
                     if(this.first)
                         this.timerMCM2 += elapsedTime;
                     else
                         this.timerMCM += elapsedTime;
                 }
-                if((this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2) && this.countFOV < 501)
+                if((this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2) && this.countFOV < 201)
                     this.timerFOV += elapsedTime;
                 this.count++;
             }
@@ -1379,12 +1513,12 @@ render() {
             // q = null;
             this.queries.shift();
         }
-        // else
-        //     console.log("NOT READY");
+        else
+            console.log("NOT READY");
     }
     // }
 
-    if(this.renderer instanceof FOVRenderer2) {
+    if(false && this.renderer instanceof FOVRenderer2) {
         if(this.initial > 0) {
             this.initial--;
             return;
@@ -1395,10 +1529,11 @@ render() {
             this.initial--;
             return;
         }
-        let angle = 0.1;
-        let frames = 2;
+        let degrees = 10;
+        let angle = (degrees * Math.PI) / 180.0;
+        let frames = 4;
         // console.log(this.iter);
-        if(this.iter >= 0 && this.iter <= 100) { // reprojekcija OFF
+        if(this.iter >= 0 && this.iter <= 200) { // reprojekcija OFF
             if(this.bench) {
                 if(this.iter == 0) {
                     console.log("START1")
@@ -1407,7 +1542,7 @@ render() {
                 gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsBench);
                 this.benchList.push(pixelsBench);
 
-                if(this.iter == 100) {
+                if(this.iter == 200) {
                     this.bench = false;
                     this.renderer.allow = false;
                     // this.cameraAnimator._move([0, 0, angle]);
@@ -1425,11 +1560,13 @@ render() {
                 gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsRepro);
                 this.reproList.push(pixelsRepro);
                 
-                if(this.iter == 100) {
+                if(this.iter == 200) {
                     this.renderer.allow = false;
                     this.iter = -1;
                     this.renderer.reset();
                     console.log("STEP 4");
+                    if(this.reproCount > 0)
+                        this.evalRepro();
                 }
             }
             
@@ -1445,28 +1582,211 @@ render() {
             console.log("STEP 2,3");
         }
 
-        if(this.iter == 1000){
-            console.log("STEP 5,6");
+        // return;
+        if(this.iter == 5000 && this.reproCount == 0) {
             this.pixels = new Uint8Array(this.resolution.width * this.resolution.height * 4);
             gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, this.pixels);
-            let ratio = 1.00;
-            let resultsRepro = "";
-            let resultsBench = "";
-            let bpRepro = "";
-            let bpBench = "";
+            this.evalRepro();
+        }
+        // if(this.iter == 500){
+        //     console.log("STEP 5,6");
+        //     this.pixels = new Uint8Array(this.resolution.width * this.resolution.height * 4);
+        //     gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, this.pixels);
+        //     let ratio = 1.00;
+        //     // let resultsRepro = "";
+        //     // let resultsBench = "";
+        //     // let bpRepro = "";
+        //     // let bpBench = "";
+        //     let diff = "";
+        //     let div = "";
+        //     let mseR_all = [];
+        //     let mseB_all = [];
+        //     let iterDiff = "";
+        //     this.reproCount++;
+        //     for(let k = 0; k < this.reproList.length; k++) {
+        //         // if(k % 5 != 0)
+        //         //     continue;
+        //         // if(k >= 10 && k % 5 != 0)
+        //         //     continue;
+        //         let k2 = Math.round(k * ratio);
+        //         // let k2 = Math.floor(k * ratio);
+        //         // let k2p = k * ratio - k2;
+        //         if(k2 >= this.benchList.length)
+        //             break;
+        //         let mseR = 0;
+        //         let mseB = 0;
+        //         for(let i = 0; i < this.canvas.height; i++) {
+        //             for(let j = 0; j < this.canvas.width; j++) {
+        //                 let index = (i * this.canvas.height + j) * 4;
+        //                 let R = this.pixels[index];
+        //                 let G = this.pixels[index+1];
+        //                 let B = this.pixels[index+2];
+    
+        //                 let r = this.reproList[k][index];
+        //                 let g = this.reproList[k][index+1];
+        //                 let b = this.reproList[k][index+2];
+    
+        //                 let rr = this.benchList[k2][index];
+        //                 let gg = this.benchList[k2][index+1];
+        //                 let bb = this.benchList[k2][index+2];
+    
+        //                 mseR += ((R - r) ** 2 + (G - g) ** 2 + (B - b) ** 2) / 3.0;
+        //                 mseB += ((R - rr) ** 2 + (G - gg) ** 2 + (B - bb) ** 2) / 3.0;
+
+        //             }
+        //         }
+        //         mseR /= (this.resolution.width * this.resolution.height);
+        //         mseB /= (this.resolution.width * this.resolution.height);
+                
+        //         mseB_all.push(mseB);
+        //         mseR_all.push(mseR);
+        //         let d = 0;
+        //         let c = 0;
+        //         while(d >= 0 && mseR_all.length > k-c) {
+        //             d = mseB - mseR_all[k-c];
+        //             c++;
+        //         }
+        //         if(mseR_all.length > c-1) {
+        //             d = mseB - mseR_all[k-c+1];
+        //             // console.log(d.toFixed(2) + " / (" + mseR_all[k-c+2] + " - " + mseR_all[k-c+1] + ")")
+        //             c += 1 - Math.abs(d / (mseR_all[k-c+2] - mseR_all[k-c+1]));
+        //         }
+        //         // diff += (mseR - mseB).toFixed(2) + "\n";
+        //         this.divList[k] += (mseR / mseB);
+        //         div += (this.divList[k] / this.reproCount).toFixed(2) + "\n";
+        //         // if(k < 40)
+        //         this.iterList[k] += (c-2);
+        //         iterDiff += (this.iterList[k] / this.reproCount).toFixed(2) + "\n";
+        //         // console.log("Repro " + k + " Bench " + k2); // + " iter ahead " + (c-2).toFixed(4));
+        //         // console.log(mseR);
+        //         // console.log(mseB);
+        //     }
+        //     // console.log("RATIO (used):", ratio.toFixed(2));
+        //     // console.log("DIFFERENCE:\n" + diff);
+        //     console.log("R/B RATIO:\n" + div);
+        //     console.log("ITERATIONS AHEAD:\n" + iterDiff);
+        //     if(this.reproCount >= 10) {
+        //         console.log("END");
+        //     }
+        //     else {
+        //         this.iter = -1;
+        //         this.initial = 100;
+        //         this.renderer.allow = true;
+        //         this.bench = true;
+        //         this.reproList = [];
+        //         this.benchList = [];
+        //     }
+        // }
+
+        this.iter++;
+    }
+
+    // return;
+
+    let totalIter = 500;
+    let measureIter = 250;
+    if(false && (this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3)) {
+        // if(this.countMCM == 1) {
+        //     this.brick = true;
+        // }
+        if(this.countMCM == totalIter) {
+            this.pixels = new Uint8Array(this.resolution.width * this.resolution.height * 4);
+            gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, this.pixels);
+            console.log("-\n-\n-\nMEASURE READY\n-\n-\n-");
+            this.first = true;
+            this.toneMapper._Ref = { ...this.renderer._renderBuffer.getAttachments() };
+
+            this.copy = WebGL.createTexture(gl, {
+                width   : this._resolution.width,
+                height  : this._resolution.height,
+                min     : gl.NEAREST,
+                mag     : gl.NEAREST,
+                format  : gl.RGBA,
+                iformat : gl.RGBA32F,
+                type    : gl.FLOAT,
+            })
+
+            const fboSrc = gl.createFramebuffer();
+            gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fboSrc);
+            gl.framebufferTexture2D(gl.READ_FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+                                    gl.TEXTURE_2D, this.renderer._renderBuffer.getAttachments().color[0], 0);
+
+            const fboDst = gl.createFramebuffer();
+            gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, fboDst);
+            gl.framebufferTexture2D(gl.DRAW_FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+                                    gl.TEXTURE_2D, this.copy, 0);
+
+            gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fboSrc);
+            // gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, fboDst);
+            gl.blitFramebuffer(0, 0, this.resolution.width, this.resolution.height,
+                            0, 0, this.resolution.width, this.resolution.height,
+                            gl.COLOR_BUFFER_BIT, gl.NEAREST);
+
+            this.compare = 1.0;
+            if(this.autoMeasure)
+                this.chooseRenderer("fov2");
+        }
+        // if(this.first && this.countMCM % 2 == 0 && this.countMCM < 501) {
+        if(this.first && this.countMCM <= measureIter) {
+            let pixelsMCM = new Uint8Array(this.resolution.width * this.resolution.height * 4);
+            // this.timer3 = performance.now().toFixed(3);
+            gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsMCM);
+            this.MCMList.push(pixelsMCM);
+            // this.timeoffsetM += performance.now().toFixed(3) - this.timer3;
+            // this.timeoffsetM += performance.now().toFixed(3) - this.timer3;
+
+            if(this.countMCM == 200) {
+                console.log("MCM READY");
+                this.second = true;
+            }
+        }
+        if(this.countMCM == measureIter && this.second && this.autoMeasure) { // MEASURE AVERAGE PREPROCESSING TIME
+            console.log("FOV TIME: ", (this.timerFOV / 500.0).toFixed(2));
+            console.log("MCM TIME (speedup):", (this.timerMCM2 / 500.0).toFixed(2));
+            console.log("MCM TIME (used): ", (this.timerMCM / 500.0).toFixed(2));
+            let ratio = this.timerFOV / this.timerMCM;
+            console.log("RATIO (speedup):", (this.timerFOV / this.timerMCM2).toFixed(2));
+            console.log("RATIO (used):", ratio.toFixed(2));
+            // ratio = 1.06; // 50
+            let cons = 0;
+            if(this.whiteP == 0.75) {
+                ratio = 2.224; // 75
+                cons = 0.254;
+            }
+            if(this.whiteP == 0.5) {
+                ratio = 1.30; // 50
+                cons = 0.316;
+            }
+            if(this.whiteP == 0.25) {
+                ratio = 1.09; // 25
+                cons = 0.358;
+            }
+            if(this.whiteP == 0) {
+                ratio = 0.977; // 0
+                cons = 0.494;
+            }
+            // cons = 0.39;
+            let listF = [];
+            let listM = [];
+            let resultsFOV = "";
+            let resultsMCM = "";
+            let bpFOV = "";
+            let bpMCM = "";
             let diff = "";
             let div = "";
-            let mseR_all = [];
-            let mseB_all = [];
-            let iterDiff = "";
-            for(let k = 0; k < this.reproList.length; k++) {
-                // if(k % 5 != 0)
-                //     continue;
-                let k2 = Math.round(k * ratio);
-                if(k2 >= this.benchList.length)
+            for(let k = 0; k < this.FOVList.length-1; k++) { //FOVList length = MCMList length - 1?
+                if(k >= 10 && k % 5 != 0)
+                    continue;
+                let k2 = Math.floor((k+1 + cons) * ratio - 1);
+                let k2p = ((k+1 + cons) * ratio - 1) - k2;
+                // if(k==10)
+                //     console.log(k2, k2p)
+                // let k2 = Math.round((k+1) * ratio)-1;
+                if(k2+1 >= this.MCMList.length)
                     break;
-                let mseR = 0;
-                let mseB = 0;
+                let mseF = 0;
+                let mseM = 0;
+                let mseM2 = 0;
                 for(let i = 0; i < this.canvas.height; i++) {
                     for(let j = 0; j < this.canvas.width; j++) {
                         let index = (i * this.canvas.height + j) * 4;
@@ -1474,203 +1794,103 @@ render() {
                         let G = this.pixels[index+1];
                         let B = this.pixels[index+2];
     
-                        let r = this.reproList[k][index];
-                        let g = this.reproList[k][index+1];
-                        let b = this.reproList[k][index+2];
+                        let r = this.FOVList[k][index];
+                        let g = this.FOVList[k][index+1];
+                        let b = this.FOVList[k][index+2];
     
-                        let rr = this.benchList[k2][index];
-                        let gg = this.benchList[k2][index+1];
-                        let bb = this.benchList[k2][index+2];
-    
-                        mseR += ((R - r) ** 2 + (G - g) ** 2 + (B - b) ** 2) / 3.0;
-                        mseB += ((R - rr) ** 2 + (G - gg) ** 2 + (B - bb) ** 2) / 3.0;
-
+                        let rr = this.MCMList[k2][index];
+                        let gg = this.MCMList[k2][index+1];
+                        let bb = this.MCMList[k2][index+2];
+        
+                        let rr2 = this.MCMList[k2+1][index];
+                        let gg2 = this.MCMList[k2+1][index+1];
+                        let bb2 = this.MCMList[k2+1][index+2];
+                        // let bb2 = this.MCMList[k2][index+2]; * k2p + this.MCMList[k2+1][index+2] * (1-k2p);
+                        mseF += ((R - r) ** 2 + (G - g) ** 2 + (B - b) ** 2) / 3.0;
+                        mseM += ((R - rr) ** 2 + (G - gg) ** 2 + (B - bb) ** 2) / 3.0;
+                        mseM2 += ((R - rr2) ** 2 + (G - gg2) ** 2 + (B - bb2) ** 2) / 3.0;
+                        // mseF += (R - r) ** 2;
+                        // mseM += (R - rr) ** 2;
+                        //console.log(mse);
                     }
                 }
-                mseR /= (this.resolution.width * this.resolution.height);
-                mseB /= (this.resolution.width * this.resolution.height);
-                
-                mseB_all.push(mseB);
-                mseR_all.push(mseR);
-                let d = 0;
-                let c = 0;
-                while(d >= 0 && mseR_all.length > k-c) {
-                    d = mseB - mseR_all[k-c];
-                    c++;
-                }
-                if(mseR_all.length > c-1) {
-                    d = mseB - mseR_all[k-c+1];
-                    // console.log(d.toFixed(2) + " / (" + mseR_all[k-c+2] + " - " + mseR_all[k-c+1] + ")")
-                    c += 1 - Math.abs(d / (mseR_all[k-c+2] - mseR_all[k-c+1]));
-                }
-                diff += (mseR - mseB).toFixed(2) + "\n";
-                div += (mseR / mseB).toFixed(2) + "\n";
-                if(k < 40)
-                    iterDiff += (c-2).toFixed(2) + "\n";
-                console.log("Repro " + k + " Bench " + k2); // + " iter ahead " + (c-2).toFixed(4));
-                console.log(mseR);
-                console.log(mseB);
+                mseF /= (this.resolution.width * this.resolution.height);
+                mseM /= (this.resolution.width * this.resolution.height);
+                mseM2 /= (this.resolution.width * this.resolution.height);
+                let mseM0 = mseM;
+                mseM = mseM * (1-k2p) + mseM2 * k2p;
+                // let mseMLOG = Math.exp(Math.log(mseM) * (1-k2p) + Math.log(mseM2) * k2p);
+                // bpFOV += "FOV " + k * 2 + "\n";
+                // bpMCM += "MCM " + k2 * 2 + "\n";
+                // bpFOV += "FOV " + k + "\n";
+                // bpMCM += "MCM " + (k2 + k2p) + "\n";
+                // resultsFOV += mseF.toFixed(2) + "\n";
+                // resultsMCM += mseM.toFixed(2) + "\n";
+                // diff += (mseF - mseM).toFixed(2) + "\n";
+                div += (mseF/ mseM).toFixed(4) + "\n";
+                // console.log("FOV " + k * 2 + " MCM " + k2 * 2);
+
+                console.log("FOV " + k + " MCM " + (k2 + k2p));
+                console.log(mseF);
+                console.log(mseM);
+                // console.log(mseMLOG);
+                console.log("-----");
+                console.log(k2 + k2p, k2, k2p);
+                console.log(mseM0);
+                console.log(mseM2);
+
+
             }
             console.log("RATIO (used):", ratio.toFixed(2));
             // console.log("DIFFERENCE:\n" + diff);
-            console.log("R/B RATIO:\n" + div);
-            console.log("ITERATIONS AHEAD:\n" + iterDiff);
+            console.log("F/M RATIO:\n" + div);
+            this.timerMCM = 0;
+            this.timerFOV = 0;
+            this.autoMeasure = false;
+            this.second = false;
+            // console.log("FOV BP:\n" + bpFOV);
+            // console.log("MCM BP:\n" + bpMCM);
+
+            let white = 0;
+            let it = 0;
+            for(let i = 0; i < this.resolution.height; i++) {
+                for(let j = 0; j < this.resolution.width; j++) {
+                    let index = (i * this.resolution.height + j) * 4;
+                    let R = this.pixels[index];
+                    let G = this.pixels[index+1];
+                    let B = this.pixels[index+2];
+                    if(R + G + B == 765)
+                        white++;
+                    it++;
+                }
+            }
+            console.log("WHITE %: " + white / it);
         }
 
-        this.iter++;
+        this.countMCM++;
+    }
+    else if(false && (this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2)) {
+        // if(this.countFOV == 0) {
+        //     this.brick = true;
+        // }
+        // if(this.countFOV % 2 == 0 && this.countFOV < 501) {
+        if(this.countFOV <= measureIter) {
+            let pixelsFOV = new Uint8Array(this.resolution.width * this.resolution.height * 4);
+            gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsFOV);
+            this.FOVList.push(pixelsFOV);
+
+            if(this.countFOV == measureIter) {
+                console.log("--- FOV READY ---");
+                if(this.autoMeasure)
+                    this.chooseRenderer("mcm");
+            }
+        }
+        
+        this.countFOV++;
     }
 
-    // if((this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3)) {
-    //     if(this.countMCM == 5000) {
-    //         this.pixels = new Uint8Array(this.resolution.width * this.resolution.height * 4);
-    //         gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, this.pixels);
-    //         console.log("-\n-\n-\nMEASURE READY\n-\n-\n-");
-    //         this.first = true;
-    //         this.toneMapper._Ref = { ...this.renderer._renderBuffer.getAttachments() };
-
-    //         this.copy = WebGL.createTexture(gl, {
-    //             width   : this._resolution.width,
-    //             height  : this._resolution.height,
-    //             min     : gl.NEAREST,
-    //             mag     : gl.NEAREST,
-    //             format  : gl.RGBA,
-    //             iformat : gl.RGBA32F,
-    //             type    : gl.FLOAT,
-    //         })
-
-    //         const fboSrc = gl.createFramebuffer();
-    //         gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fboSrc);
-    //         gl.framebufferTexture2D(gl.READ_FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
-    //                                 gl.TEXTURE_2D, this.renderer._renderBuffer.getAttachments().color[0], 0);
-
-    //         const fboDst = gl.createFramebuffer();
-    //         gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, fboDst);
-    //         gl.framebufferTexture2D(gl.DRAW_FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
-    //                                 gl.TEXTURE_2D, this.copy, 0);
-
-    //         gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fboSrc);
-    //         // gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, fboDst);
-    //         gl.blitFramebuffer(0, 0, this.resolution.width, this.resolution.height,
-    //                         0, 0, this.resolution.width, this.resolution.height,
-    //                         gl.COLOR_BUFFER_BIT, gl.NEAREST);
-
-    //         this.compare = 1.0;
-    //         if(this.autoMeasure)
-    //             this.chooseRenderer("fov2");
-    //     }
-    //     if(this.first && this.countMCM % 2 == 0 && this.countMCM < 501) {
-    //         let pixelsMCM = new Uint8Array(this.resolution.width * this.resolution.height * 4);
-    //         // this.timer3 = performance.now().toFixed(3);
-    //         gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsMCM);
-    //         this.MCMList.push(pixelsMCM);
-    //         // this.timeoffsetM += performance.now().toFixed(3) - this.timer3;
-    //         // this.timeoffsetM += performance.now().toFixed(3) - this.timer3;
-
-    //         if(this.countMCM == 500) {
-    //             console.log("MCM READY");
-    //             this.second = true;
-    //         }
-    //     }
-    //     if(this.countMCM == 500 && this.second) {
-    //         console.log("FOV TIME: ", (this.timerFOV / 500.0).toFixed(2));
-    //         console.log("MCM TIME (speedup):", (this.timerMCM2 / 500.0).toFixed(2));
-    //         console.log("MCM TIME (used): ", (this.timerMCM / 500.0).toFixed(2));
-    //         let ratio = this.timerFOV / this.timerMCM;
-    //         console.log("RATIO (speedup):", (this.timerFOV / this.timerMCM2).toFixed(2));
-    //         console.log("RATIO (used):", ratio.toFixed(2));
-    //         // ratio = 0.95;
-    //         ratio = 1.00;
-    //         let listF = [];
-    //         let listM = [];
-    //         let resultsFOV = "";
-    //         let resultsMCM = "";
-    //         let bpFOV = "";
-    //         let bpMCM = "";
-    //         let diff = "";
-    //         let div = "";
-    //         for(let k = 0; k < this.FOVList.length; k++) { //FOVList length = MCMList length - 1?
-    //             if(k % 5 != 0)
-    //                 continue;
-    //             let k2 = Math.round(k * ratio);
-    //             if(k2 >= this.MCMList.length)
-    //                 break;
-    //             let mseF = 0;
-    //             let mseM = 0;
-    //             for(let i = 0; i < this.canvas.height; i++) {
-    //                 for(let j = 0; j < this.canvas.width; j++) {
-    //                     let index = (i * this.canvas.height + j) * 4;
-    //                     let R = this.pixels[index];
-    //                     let G = this.pixels[index+1];
-    //                     let B = this.pixels[index+2];
-    
-    //                     let r = this.FOVList[k][index];
-    //                     let g = this.FOVList[k][index+1];
-    //                     let b = this.FOVList[k][index+2];
-    
-    //                     let rr = this.MCMList[k2][index];
-    //                     let gg = this.MCMList[k2][index+1];
-    //                     let bb = this.MCMList[k2][index+2];
-    
-    //                     mseF += ((R - r) ** 2 + (G - g) ** 2 + (B - b) ** 2) / 3.0;
-    //                     mseM += ((R - rr) ** 2 + (G - gg) ** 2 + (B - bb) ** 2) / 3.0;
-    //                     // mseF += (R - r) ** 2;
-    //                     // mseM += (R - rr) ** 2;
-    //                     //console.log(mse);
-    //                 }
-    //             }
-    //             mseF /= (this.resolution.width * this.resolution.height);
-    //             mseM /= (this.resolution.width * this.resolution.height);
-    //             bpFOV += "FOV " + k * 2 + "\n";
-    //             bpMCM += "MCM " + k2 * 2 + "\n";
-    //             resultsFOV += mseF.toFixed(2) + "\n";
-    //             resultsMCM += mseM.toFixed(2) + "\n";
-    //             diff += (mseF - mseM).toFixed(2) + "\n";
-    //             div += (mseF/ mseM).toFixed(2) + "\n";
-    //             console.log("FOV " + k * 2 + " MCM " + k2 * 2);
-    //             console.log(mseF);
-    //             console.log(mseM);
-    //         }
-    //         console.log("RATIO (used):", ratio.toFixed(2));
-    //         console.log("DIFFERENCE:\n" + diff);
-    //         console.log("F/M RATIO:\n" + div);
-    //         // console.log("FOV BP:\n" + bpFOV);
-    //         // console.log("MCM BP:\n" + bpMCM);
-
-    //         let white = 0;
-    //         let it = 0;
-    //         for(let i = 0; i < this.resolution.height; i++) {
-    //             for(let j = 0; j < this.resolution.width; j++) {
-    //                 let index = (i * this.resolution.height + j) * 4;
-    //                 let R = this.pixels[index];
-    //                 let G = this.pixels[index+1];
-    //                 let B = this.pixels[index+2];
-    //                 if(R + G + B == 765)
-    //                     white++;
-    //                 it++;
-    //             }
-    //         }
-    //         console.log("WHITE %: " + white / it);
-    //     }
-
-    //     this.countMCM++;
-    // }
-    // else if((this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2)) {
-    //     if(this.countFOV % 2 == 0 && this.countFOV < 501) {
-    //         let pixelsFOV = new Uint8Array(this.resolution.width * this.resolution.height * 4);
-    //         gl.readPixels(0, 0, this.resolution.width, this.resolution.height, gl.RGBA, gl.UNSIGNED_BYTE, pixelsFOV);
-    //         this.FOVList.push(pixelsFOV);
-
-    //         if(this.countFOV == 500) {
-    //             console.log("--- FOV READY ---");
-    //             if(this.autoMeasure)
-    //                 this.chooseRenderer("mcm");
-    //         }
-    //     }
-        
-    //     this.countFOV++;
-    // }
-
-    // if(this.count % 25 == 0 && this.timer != 0) {
+    // if(this.count >= 1000 && (this.count - 1000) % 2000 == 0 && this.timer != 0) {
+    // if(this.count % 499 == 0 && this.timer != 0) {
     //     let type = "READ";
     //     if(this.renderer instanceof FOVRenderer || this.renderer instanceof FOVRenderer2)
     //         type = "FOV";
@@ -1678,10 +1898,170 @@ render() {
     //         type = "MCM";
     //     else if(this.renderer instanceof MIPRenderer)
     //         type = "MIP";
-    //     console.log(`${type} Time: ${((this.timer / 25.0) / 1000000.0).toFixed(2)} ms`);
+    //     console.log(`${type} Time: ${((this.timer / 200.0) / 1000000.0).toFixed(2)} ms`);
+    //     this.timerTotal += this.timer;
+    //     // console.log(`TOTAL AVG Time: ${((this.timerTotal / this.count) / 1000000.0).toFixed(2)} ms`);
     //     this.timer = 0;
     // }
+    
+    // if(this.count > 20) {
+    //     this.timer /= 1000000.0;
+    //     if(this.renderer instanceof FOVRenderer || this.renderer instanceof FOVRenderer2) {
+    //         if(this.timer > 0 && this.timer < this.timerFOVLow) {
+    //             this.timerFOVLow = this.timer;
+    //             console.log("FOV low:", this.timerFOVLow.toFixed(2), this.count);
+    //         }
+    //     }
+    //     if(this.renderer instanceof MCMRenderer) {
+    //         if(this.timer > 0 && this.timer < this.timerMCMLow) {
+    //             this.timerMCMLow = this.timer;
+    //             console.log("MCM low:", this.timerMCMLow.toFixed(2), this.count);
+    //         }
+    //     }
+    //     this.timer = 0;
+    // }
+    // if(this.count % 500 == 0) {
+    //     console.log(`${this.count / 50}%`)
+    // }
+    if(this.count % 5000 == 0 && this.count != 0) {
+        // console.log(this.timeList);
+        console.log(`${this.count / 5000}%`)
+
+        console.log(`MEDIAN Time: ${this.median(this.timeList).toFixed(3)} ms`);
+        console.log(`AVERAG Time: ${((this.timer / (this.count - 10)) / 1000000.0).toFixed(3)} ms`);
+        console.log(`MIN: ${Math.min(...this.timeList)}`)
+        console.log(`MAX: ${Math.max(...this.timeList)}`)
+    }
+
 }
+
+median(numbers) {
+    const sorted = Array.from(numbers).sort((a, b) => a - b);
+    const middle = Math.floor(sorted.length / 2);
+
+    if (sorted.length % 2 === 0) {
+        return (sorted[middle - 1] + sorted[middle]) / 2;
+    }
+
+    return sorted[middle];
+}
+
+evalRepro() {
+    let ratio = 1.00;
+    let div = "";
+    let mseR_all = [];
+    let mseB_all = [];
+    let iterDiff = "";
+    this.reproCount++;
+    for(let k = 0; k < this.reproList.length; k++) {
+        let k2 = Math.round(k * ratio);
+        if(k2 >= this.benchList.length)
+            break;
+        let mseR = 0;
+        let mseB = 0;
+        for(let i = 0; i < this.canvas.height; i++) {
+            for(let j = 0; j < this.canvas.width; j++) {
+                let index = (i * this.canvas.height + j) * 4;
+                let R = this.pixels[index];
+                let G = this.pixels[index+1];
+                let B = this.pixels[index+2];
+
+                let r = this.reproList[k][index];
+                let g = this.reproList[k][index+1];
+                let b = this.reproList[k][index+2];
+
+                let rr = this.benchList[k2][index];
+                let gg = this.benchList[k2][index+1];
+                let bb = this.benchList[k2][index+2];
+
+                mseR += ((R - r) ** 2 + (G - g) ** 2 + (B - b) ** 2) / 3.0;
+                mseB += ((R - rr) ** 2 + (G - gg) ** 2 + (B - bb) ** 2) / 3.0;
+
+            }
+        }
+        mseR /= (this.resolution.width * this.resolution.height);
+        mseB /= (this.resolution.width * this.resolution.height);
+        
+        mseB_all.push(mseB);
+        mseR_all.push(mseR);
+        let d = 0;
+        let c = 0;
+        // while(d >= 0 && mseR_all.length > k-c) {
+        //     d = mseB - mseR_all[k-c];
+        //     c++;
+        // }
+        // if(mseR_all.length > c-1) {
+        //     d = mseB - mseR_all[k-c+1];
+        //     // console.log(d.toFixed(2) + " / (" + mseR_all[k-c+2] + " - " + mseR_all[k-c+1] + ")")
+        //     c += 1 - Math.abs(d / (mseR_all[k-c+2] - mseR_all[k-c+1]));
+        // }
+        if(k >= 20 && k % 5 != 0)
+            continue;
+        this.divList[k] += (mseR / mseB);
+        div += (this.divList[k] / this.reproCount).toFixed(3) + "\n";
+        // if(k < 40)
+        // if(isNaN(c)) {
+        //     c = 2;
+        //     this.iterList[k] += (c-2);
+        //     iterDiff += (this.iterList[k] / this.reproCount).toFixed(3) + "\n";
+        //     // console.log(this.iterList[k], c);
+        // }
+        // else {
+        //     this.iterList[k] += (c-2);
+        //     iterDiff += (this.iterList[k] / this.reproCount).toFixed(3) + "\n";
+
+        // }
+
+        // console.log("Repro " + k + " Bench " + k2); // + " iter ahead " + (c-2).toFixed(4));
+        // console.log(mseR.toFixed(4));
+        // console.log(mseB.toFixed(4));
+    }
+    for(let k = 0; k < this.reproList.length; k++) {
+        if(k < 20 || k % 5 == 0) {
+            console.log(k)
+            let mseB = mseB_all[k];
+            let mseR = mseR_all[k];
+            let d = 0;
+            let c = 0;
+            while(k + c < this.reproList.length && mseR < mseB_all[k+c]) {
+                c++;
+            }
+            if(k + c + 1 < this.reproList.length) {
+                // console.log("R", mseR);
+                // console.log("B", mseB_all[k+c]);
+                d = mseR - mseB_all[k+c];
+                // console.log(d.toFixed(3) + " / (" + mseB_all[k+c] + " - " + mseB_all[k+c-1] + ")")
+                c -= Math.abs(d / (mseB_all[k+c] - mseB_all[k+c-1]));
+            }
+    
+            if(isNaN(c)) {
+                console.log("R:", mseR, "B:", mseB);
+                c = 0;
+            }
+            this.iterList[k] += c;
+            iterDiff += (this.iterList[k] / this.reproCount).toFixed(3) + "\n";
+            // console.log(c);
+        }
+    }
+    
+
+    // console.log("RATIO (used):", ratio.toFixed(2));
+    if(this.reproCount >= 20) {
+        console.log("R/B RATIO:\n" + div);
+        console.log("ITERATIONS AHEAD:\n" + iterDiff);
+        console.log("END");
+    }
+    else {
+        console.log("PROGRESS: ", this.reproCount * 5 + "%");
+        this.iter = -1;
+        this.initial = 100;
+        this.renderer.allow = true;
+        this.bench = true;
+        this.reproList = [];
+        this.benchList = [];
+    }
+}
+
 
     // let imageURL  = this.canvas.toDataURL('image/png');
     // var downloadLink = document.createElement('a');

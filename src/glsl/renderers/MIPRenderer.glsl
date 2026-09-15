@@ -134,6 +134,7 @@ precision mediump sampler2D;
 
 uniform sampler2D uAccumulator;
 uniform uint uMono;
+uniform vec2 uResolution;
 
 in vec2 vPosition;
 
@@ -152,7 +153,7 @@ void main() {
     if(acc == 0.0) {
         for (int dx = -k; dx <= k; ++dx) {
             for (int dy = -k; dy <= k; ++dy) {
-                vec2 offset = vec2(dx, dy) / 512.0;
+                vec2 offset = vec2(dx, dy) / uResolution;
                 float val = texture(uAccumulator, vPosition + offset).r;
                 maxVal = max(maxVal, val);
             }

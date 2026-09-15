@@ -149,16 +149,16 @@ void main() {
     float mip = M2MIP.a;
 
     float avg;
-    avg = texelFetch(uMIP, ivec2(0, 0), uLod).a;
+    // avg = texelFetch(uMIP, ivec2(0, 0), uLod).a;
 
-    // if(uCycles <= uThr) {
-    //     avg = texelFetch(uMIP, ivec2(0, 0), 9).a;
-    // }
+    if(uCycles <= uThr) {
+        avg = texelFetch(uMIP, ivec2(0, 0), uLod).a;
+    }
 
-    // if(uCycles >= uThr) {
-    //     mip = texture(uTransmittance, mappedPosition).a;
-    //     avg = texelFetch(uTransmittance, ivec2(0, 0), uLod).a;
-    // }
+    if(uCycles > uThr) {
+        mip = texture(uTransmittance, mappedPosition).a;
+        avg = texelFetch(uTransmittance, ivec2(0, 0), uLod).a;
+    }
     uint steps = uint(float(uSteps) * mip / avg);
 
     // avg
@@ -166,9 +166,9 @@ void main() {
     //     photon.radiance = texture(uEnvironment, mappedPosition).rgb;
     //     photon.radiance = vec3(0.0, 0.7, 0.7);
     // }
-    if(steps > 250u) {
-        steps = 250u;
-    }
+    // if(steps > 250u) {
+    //     steps = 250u;
+    // }
     vec3 saved = vec3(0);
 
     for (uint i = 0u; i < steps; i++) {
@@ -197,7 +197,7 @@ void main() {
             photon.samples2+=1.0;
             vec3 delta = radiance - photon.radiance;
             photon.radiance += delta / photon.samples2;
-            // photon.M2 += delta * (radiance - photon.radiance);
+            photon.M2 += delta * (radiance - photon.radiance);
             resetPhoton(state, photon);
         } else if (fortuneWheel < PAbsorption) {
             // absorption
@@ -208,7 +208,7 @@ void main() {
             photon.samples2+=1.0;
             vec3 delta = radiance - photon.radiance;
             photon.radiance += delta / photon.samples2;
-            // photon.M2 += delta * (radiance - photon.radiance);
+            photon.M2 += delta * (radiance - photon.radiance);
             resetPhoton(state, photon);
         } else if (fortuneWheel < PAbsorption + PScattering) {
             // scattering
@@ -223,19 +223,25 @@ void main() {
         }
     }
 
-    // vec2 uvA = vec2(0);
-    // if(reproject > 0u && saved != vec3(0)) {
-    //     vec4 clipA = uMvpA * vec4(saved, 1.0);
-    //     vec3 ndcA = clipA.xyz / clipA.w;
-    //     uvA = ndcA.xy * 0.5 + 0.5;
-    //     vec3 old = texture(uOld, uvA).rgb;
-    //     float prevSamples = texture(uOld, uvA).a;
-    //     if (prevSamples >= 1.0 && uvA.x >= 0.0 && uvA.x <= 1.0 && uvA.y >= 0.0 && uvA.y <= 1.0) {
-    //         float s = min(10.0, (log(prevSamples + 1.0) * (mip + 0.1) / (avg * 3.0)) + 1.2);
-    //         photon.radiance = (photon.radiance * photon.samples2 + old * s) / (photon.samples2 + s);
-    //         photon.samples2 += s;
-    //     }
-    // }
+    vec2 uvA = vec2(0);
+    if(reproject > 0u && saved != vec3(0)) {
+        vec4 clipA = uMvpA * vec4(saved, 1.0);
+        vec3 ndcA = clipA.xyz / clipA.w;
+        uvA = ndcA.xy * 0.5 + 0.5;
+        vec3 old = texture(uOld, uvA).rgb;
+        float prevSamples = texture(uOld, uvA).a;
+        if (uvA.x >= 0.0 && uvA.x <= 1.0 && uvA.y >= 0.0 && uvA.y <= 1.0) {
+            // photon.radiance = vec3(0, 1, 1);
+            if (prevSamples >= 1.0) {
+                float s = min(10.0, (log(prevSamples + 1.0) * (mip + 0.1) / (avg * 3.0)) + 1.2);
+                photon.radiance = (photon.radiance * photon.samples2 + old * s) / (photon.samples2 + s);
+                photon.samples2 += s;
+            }
+        }
+        // else {
+        //     photon.radiance = vec3(1, 0, 0);
+        // }
+    }
 
     oPosition = vec4(photon.position, float(steps));
     // oPosition = vec4(photon.position, avg);
@@ -254,45 +260,43 @@ void main() {
     float sum = variance.r + variance.g + variance.b;
     // oTransmittance = vec4(photon.transmittance, sum);
     
+    // oTransmittance = vec4(photon.transmittance, float(steps) / 250.0);
     oTransmittance = vec4(photon.transmittance, texture(uTransmittance, mappedPosition).a);
 
     if(uCycles < uThr) {
         oTransmittance = vec4(photon.transmittance, sum);
     }
     if(steps > 0u && uCycles == uThr - 1u) {
-        sum = max(0.0, sum - 0.1);
-        sum = pow(sum + 0.2, 0.4);
+        sum = max(0.0, sum);
+        sum = pow(sum, 0.33);
         oTransmittance = vec4(photon.transmittance, sum);
     }
-    // else if (uCycles == uThr) {
-    //     if(steps > 0u) {
-    //         const int m = 3;
-    //         const int k = (m-1)/2;
-    //         float kernel[m];
-    //         float final_colour = 0.0;
+    else if (uCycles == uThr) {
+        if(steps > 0u) {
+            const int m = 5;
+            const int k = (m-1)/2;
+            float kernel[m];
+            float final_colour = 0.0;
             
-    //         //create the 1-D kernel
-    //         float sigma = 2.0;
-    //         float Z = 0.0;
-    //         for (int j = 0; j <= k; ++j) {
-    //             kernel[k+j] = kernel[k-j] = normpdf(float(j), sigma);
-    //         }
+            float sigma = 2.0;
+            float Z = 0.0;
+            for (int j = 0; j <= k; ++j) {
+                kernel[k+j] = kernel[k-j] = normpdf(float(j), sigma);
+            }
             
-    //         //get the normalization factor (as the gaussian has been clamped)
-    //         for (int j = 0; j < m; ++j) {
-    //             Z += kernel[j];
-    //         }
+            for (int j = 0; j < m; ++j) {
+                Z += kernel[j];
+            }
             
-    //         //read out the texels
-    //         for (int i = -k; i <= k; ++i) {
-    //             for (int j = -k; j <= k; ++j) {
-    //                 final_colour += kernel[k+j] * kernel[k+i] * texture(uTransmittance, (mappedPosition + vec2(float(i),float(j)) / 512.0)).a;
-    //             }
-    //         }
+            for (int i = -k; i <= k; ++i) {
+                for (int j = -k; j <= k; ++j) {
+                    final_colour += kernel[k+j] * kernel[k+i] * texture(uTransmittance, (mappedPosition + vec2(float(i),float(j)) * uInverseResolution)).a;
+                }
+            }
             
-    //         oTransmittance = vec4(photon.transmittance, final_colour / (Z*Z));
-    //     }
-    // }
+            oTransmittance = vec4(photon.transmittance, final_colour / (Z*Z));
+        }
+    }
 
     // if(steps == 250u) {
     //     oRadiance = vec4(0, 0.7, 0.7, photon.samples2);
@@ -335,6 +339,7 @@ out vec4 oColor;
 void main() {
     // oColor = vec4(texture(uMIP, vPosition).r, 0, 0, 1);
     oColor = vec4(texture(uColor, vPosition).rgb, 1);
+    // float acc = texelFetch(uMIP, ivec2(0, 0), 9).a;
     // float acc = texture(uMIP, vPosition).a;
     // oColor = vec4(acc, acc, acc, 1);
     // if(acc >= 0.8) {

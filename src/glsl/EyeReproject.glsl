@@ -28,6 +28,7 @@ precision highp float;
 
 uniform sampler2D uColor;
 uniform sampler2D uPosition;
+uniform sampler2D uColor2;
 
 uniform mat4 uMvp;
 uniform vec2 uInverseResolution;
@@ -44,6 +45,7 @@ void main() {
     vec2 mappedPosition = vPosition * 0.5 + 0.5;
     
     vec3 color = texture(uColor, mappedPosition).rgb;
+    vec3 color2 = texture(uColor2, mappedPosition).rgb;
     vec3 position = texture(uPosition, mappedPosition).rgb;
 
     if(position.x > 0.0 && position.y > 0.0 && position.z > 0.0 && position.x < 1.0 && position.y < 1.0 && position.z < 1.0) {
@@ -157,7 +159,7 @@ void main() {
 
     vec3 pos = vec3(0);
     uint count = 0u;
-    for(uint i = 0u; i < 150u; i++) {
+    for(uint i = 0u; i < 130u; i++) {
         float dist = random_exponential(state, 100.0);
         photon.position += dist * photon.direction;
         // photon.position += 0.0173 * photon.direction;

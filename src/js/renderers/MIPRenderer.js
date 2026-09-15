@@ -134,6 +134,7 @@ _renderFrame() {
 
     gl.uniform1i(uniforms.uAccumulator, 0);
     gl.uniform1ui(uniforms.uMono, this.mono);
+    gl.uniform2f(uniforms.uResolution, this._resolution.width, this._resolution.height);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 }

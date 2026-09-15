@@ -24,8 +24,8 @@ constructor(volumeTransform) {
     this.transform2.localTranslation = vec3.clone([0, 0, this.focusDistance]);
     // console.log("focus", this.focusDistance)
     
-    this.thr = 0.74;
-    this.thrAuto = 0.01;
+    this.thr = 0.5;
+    this.thrAuto = 0.006;
     this.translationSpeed = 0.0008;
     this.rotationSpeed = 0.005;
     this.translationStep = 0.012;
@@ -39,7 +39,7 @@ constructor(volumeTransform) {
     this.uiCount = 0;
     this.uiCountL = 0
 
-    this.steps = 100;
+    this.steps = 120;
     this.extinction = 150;
 
     this.uiState = 0; // 0 - steps, 1 - extinction, 2 - renderer, 3 - state, 4 - filter
@@ -65,20 +65,25 @@ constructor(volumeTransform) {
     this.circle = Math.PI / 2;
     this.circleActive = 0;
     this.depthMode = false;
+    this.disable = false;
     this.searchMode = false;
     this.start = [0, 0, 0];
     this.changeT = vec3.clone([0, 0, 0]);
 
     this.selectedL = true; // selected circle A
+    this.closer = true; 
     this.upHold = false;
 
     this.jsonReady = true;
     this.unlockA = 0;
     this.unlockAL = 0;
+    this.countAL = 0;
     this.survey = new Survey();
 
+    this.pairIndex = 0;
     this.comparison = 0;
     this.comparisonTimeout = 0;
+    this.comparisonMode = false;
 
 }
 
@@ -107,6 +112,11 @@ safeIncrement(val, num) {
         this.comparison++;
         if(this.comparison >= num)
             this.comparison = 0;
+    }
+    else if(val == "pair") {
+        this.pairIndex++;
+        if(this.pairIndex >= num)
+            this.pairIndex = 0;
     }
 }
 
@@ -161,43 +171,60 @@ update(inputs, dt) {
     let btnsR = gpR.buttons;
     let thr = this.thr;
 
-    if(btnsR[0].pressed) { // up hold
-        if(!this.lockCircle) {
-            this.focusDistance -= 0.01;
-            this.change++;
-        }
-        else if(!this.upHold) {
-            this.selectedL = !this.selectedL;
-        }
-        this.upHold = true;
-    }
-    else {
-        this.upHold = false;
-    }
+    // if(btnsR[0].pressed) { // up hold
+    //     if(!this.lockCircle) {
+    //         this.focusDistance -= 0.012;
+    //         this.change++;
+    //     }
+    //     else if(!this.upHold) {
+    //         this.selectedL = !this.selectedL;
+    //     }
+    //     this.upHold = true;
+    // }
+    // else {
+    //     this.upHold = false;
+    // }
 
-    if(btnsR[1].pressed) { // down hold
-        if(!this.lockCircle) {
-            this.focusDistance += 0.01;
-            this.change++;
-        }
-        // if(this.uiCount == 0)
-        //     this.uiActive = !this.uiActive;
-        // this.uiCount++;
-    }
+    // if(btnsR[1].pressed) { // down hold
+    //     if(!this.lockCircle) {
+    //         this.focusDistance += 0.012;
+    //         this.change++;
+    //     }
+    //     // if(this.uiCount == 0)
+    //     //     this.uiActive = !this.uiActive;
+    //     // this.uiCount++;
+    // }
     // else
     //     this.uiCount = 0;
 
     if(btnsR[4].pressed) { // A
         if(this.unlockA <= 0) {
             console.log("A pressed", this.depthMode)
+            if(this.comparisonMode) {
+                if(this.comparison == 0) {
+                    this.comparison = 1;
+                }
+                else {
+                    this.comparison = 0;
+                }
+                this.dispatchEvent(new CustomEvent('comparison', {detail: this.comparison}));
+                this.unlockA = 7;
+                return;
+            }
             if(this.lockCircle) {
-                this.survey.data.results.push({
-                    id: this.currentId, 
-                    renderer: this.chosenRenderer, 
-                    reprojected: this.renderState == 2, 
-                    selectedL: this.selectedL, 
-                    time: (this.timer / 1000).toFixed(3), 
-                    timeCircle: (this.timer / 1000).toFixed(3)});
+                if(this.disable) {
+                    this.unlockA = 10;
+                    return;
+                }
+                else {
+                    this.survey.data.results.push({
+                        id: this.currentId, 
+                        renderer: this.chosenRenderer, 
+                        reprojected: this.renderState == 2, 
+                        correct: this.selectedL == this.closer, 
+                        time: (this.timer / 1000).toFixed(3), 
+                        timeCircle: (this.timerCircle / 1000).toFixed(3)});
+                }
                 this.lockCircle = false;
                 this.focusDistance = 1;
             }
@@ -235,7 +262,8 @@ update(inputs, dt) {
             this.timerCircle += dt;
         }
         else
-            this.pitch -= this.angleStep;
+            this.pitch -= this.angleStep * Math.max(axesR[2] * axesR[2], 0.9) * (30 / this.fps);
+            // this.pitch -= this.angleStep * (Math.abs(axesR[2])) * (30 / this.fps);
         this.change++;
         
     }
@@ -246,25 +274,22 @@ update(inputs, dt) {
             this.timerCircle += dt;
         }
         else
-            this.pitch += this.angleStep;
+            this.pitch += this.angleStep * Math.max(axesR[2] * axesR[2], 0.9) * (30 / this.fps);
         this.change++;
     }
 
 
     if(axesR[3] > thr) { 
         if(!this.lockCircle) {
-            this.yaw -= this.angleStep;
+            this.yaw -= this.angleStep * Math.max(axesR[3] * axesR[3], 0.9) * (30 / this.fps);
             this.change++;
         }
     }
     else if(axesR[3] < -thr) {
         if(!this.lockCircle) {
-            this.yaw += this.angleStep;
+            this.yaw += this.angleStep * Math.max(axesR[3] * axesR[3], 0.9) * (30 / this.fps);
             this.change++;
         }
-    }
-    else {
-        this.uiStateTimeout = 0;
     }
     
     if(inputs.length > 1) {
@@ -283,14 +308,47 @@ update(inputs, dt) {
             //     this.reproject = !this.reproject;
             // console.log("BUTTON A", this.reproject);
             // this.reproCount++;
-            if(this.unlockAL <= 0) {
-                console.log(this.comparison);
-                this.dispatchEvent(new CustomEvent('comparison', {detail: this.comparison}));
-                this.unlockAL = 10;
+            // if(this.unlockAL <= 0) {
+            //     if(this.comparisonMode) {
+            //         console.log(this.comparison);
+            //         // this.dispatchEvent(new CustomEvent('comparison', {detail: this.comparison}));
+            //         this.unlockAL = 10;
+            //         this.safeIncrement("pair", 6);
+            //         this.dispatchEvent(new CustomEvent('comparison', {detail: this.comparison}));
+            //         return;
+            //     }
+            // }
+            if(this.unlockAL > 0)
+                return
+            if(this.unlockAL <= 0 && this.lockCircle && this.disable) {
+                this.lockCircle = false;
+                this.focusDistance = 1;
+                this.dispatchEvent(new CustomEvent('saveToJSON', {detail: this.survey.data}));
+                this.unlockAL = 20;
+                this.timer = 0;
+                this.timerCircle = 0;
+                this.yaw = 0;
+                this.pitch = 0;
+                this.countAL++;
             }
+            if(this.countAL == 0) {
+
+                // this.dispatchEvent(new CustomEvent('reset'));
+                console.log(this.comparison);
+                // this.dispatchEvent(new CustomEvent('comparison', {detail: this.comparison}));
+                this.unlockAL = 10;
+                this.safeIncrement("pair", 6);
+                this.dispatchEvent(new CustomEvent('comparison', {detail: this.comparison}));
+            }
+            if(this.countAL == 100) {
+                this.dispatchEvent(new CustomEvent('reset'));
+            }
+            this.countAL++;
         }
-        else 
+        else {
+            this.countAL = 0;
             this.unlockAL--;
+        }
 
         if(btnsL[5].pressed) { // B
             // this.safeDecrement("bar", 800);
@@ -325,11 +383,11 @@ update(inputs, dt) {
                 }
             }
   
-            if(this.comparisonTimeout % 20 == 0) {
-                this.safeIncrement("comparison", 4);
-                this.dispatchEvent(new CustomEvent('comparison', {detail: this.comparison}));
-            }
-            this.comparisonTimeout++;
+            // if(this.comparisonTimeout % 20 == 0) {
+            //     this.safeIncrement("comparison", 4);
+            //     this.dispatchEvent(new CustomEvent('comparison', {detail: this.comparison}));
+            // }
+            // this.comparisonTimeout++;
         }
         else if(axesL[2] < -thr) { //left
             if(this.uiActive) {
@@ -354,11 +412,11 @@ update(inputs, dt) {
                     this.filterTimeout++;
                 }
             }
-            if(this.comparisonTimeout % 20 == 0) {
-                this.safeDecrement("comparison", 4);
-                this.dispatchEvent(new CustomEvent('comparison', {detail: this.comparison}));
-            }
-            this.comparisonTimeout++;
+            // if(this.comparisonTimeout % 20 == 0) {
+            //     this.safeDecrement("comparison", 4);
+            //     this.dispatchEvent(new CustomEvent('comparison', {detail: this.comparison}));
+            // }
+            // this.comparisonTimeout++;
         }
         else {
             this.comparisonTimeout = 0;
@@ -369,7 +427,7 @@ update(inputs, dt) {
         
         if(axesL[3] > thr) { 
             if(this.uiActive) {
-                if(this.uiStateTimeout % 10 == 0) {
+                if(this.uiStateTimeout % 15 == 0) {
                     this.safeIncrement("ui", 5);
                     // this.uiState++;
                     // if(this.uiState > 2)
@@ -380,7 +438,7 @@ update(inputs, dt) {
         }
         else if(axesL[3] < -thr) {
             if(this.uiActive) {
-                if(this.uiStateTimeout % 10 == 0) {
+                if(this.uiStateTimeout % 15 == 0) {
                     this.safeDecrement("ui", 5);
                     // this.uiState--;
                     // if(this.uiState < 0)

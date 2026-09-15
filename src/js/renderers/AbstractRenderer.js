@@ -7,6 +7,7 @@ import { DoubleBuffer } from '../DoubleBuffer.js';
 
 import { Transform } from '../Transform.js';
 import { MIPRenderer } from './MIPRenderer.js';
+// import { FOVRenderer2 } from './FOVRenderer2.js';
 
 const [ SHADERS, MIXINS ] = await Promise.all([
     'shaders.json',
@@ -14,7 +15,6 @@ const [ SHADERS, MIXINS ] = await Promise.all([
 ].map(url => fetch(url).then(response => response.json())));
 
 export class AbstractRenderer extends PropertyBag {
-
 constructor(gl, volume, camera, environmentTexture, options = {}) {
     super();
 
@@ -60,13 +60,6 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     // this._VROn = false;
     this.iter = 10;
     this.name = "0";
-    this.disable = false;
-    this.right = false;
-    console.log("CREATED: ", this);
-}
-
-setName(name) {
-    this.name = name;
 }
 
 destroy(destroyRender = true) {
@@ -93,6 +86,7 @@ render() {
     // console.log("render #" + this.name, "iter: " + this.iter);
     this.ready = true;
     this.iter++;
+
 }
 
 reset(force = false) {
@@ -111,6 +105,15 @@ reset(force = false) {
     this._accumulationBuffer.swap();
     // this.ready = false;
     this.iter = 0;
+
+    // if(this.FOV2 && this._context.reproject) {
+    //     this._context.reproject.reset();
+    // }
+    if(this.FOV2 && this._context.reproject) {
+        // this.renderingContext.renderer.reset();
+        this._context.right = true;
+        this._context.reproReady = true;
+    }
 }
 
 _rebuildBuffers() {

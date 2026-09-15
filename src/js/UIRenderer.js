@@ -144,78 +144,77 @@ _drawUIText(reset = false) {
     //     ctx.fillText("TEST test", this.uiCanvas.width - 140, 195);
     let rightOffset = 81;
     if(this.VRAnimator) {
-        if(this.comparisonMode) {
-            let x = this._resolution.width / 3.2; // 120
-            // let x = 310;
-            if(this.right)
-                x = x - rightOffset;
-            let y = this._resolution.height / 2.8;
+        if(this.VRAnimator.comparisonMode) {
+            let x = this._resolution.width / 3.2 - (this.right ? rightOffset : 0); // 120
+            let y = this._resolution.height / 3.1;
             ctx.strokeStyle = 'black';
             ctx.fillStyle = 'black';
             ctx.font = '22px sans-serif';
             
-            let comp = "A";
-            if(this.VRAnimator.comparison == 1)
-                comp = "B";
-            if(this.VRAnimator.comparison == 2)
-                comp = "C";
-            if(this.VRAnimator.comparison == 3)
-                comp = "D";
-            ctx.fillText(comp, x, y);
+            let comp = ["A", "B", "C", "D"];
+            let pair = this.renderingContext.pairs[this.VRAnimator.pairIndex];
+            let index = pair[this.VRAnimator.comparison];
+            ctx.fillText(comp[index], x, y);
             ctx.font = '12px sans-serif';
+            ctx.fillText(comp[pair[0]] + "-" + comp[pair[1]], x + 1, y - 20);
 
         }
         if(this.VRAnimator.lockCircle) {
+            let x = this._resolution.width / 2.8 - (this.right ? rightOffset : 0);
+            let y = this._resolution.height / 1.5;
+            if(this.VRAnimator.chosenRenderer == 5)
+                ctx.fillStyle = 'white';
             ctx.font = '22px sans-serif';
-            ctx.fillText(this.renderers[this.VRAnimator.chosenRenderer], this._resolution.width / 2.8 - (this.right ? rightOffset : 0), this._resolution.height / 1.45);
+            // ctx.fillText(this.renderers[this.VRAnimator.chosenRenderer], x, y);
             ctx.font = '12px sans-serif';
+            ctx.fillStyle = 'black';
             if(this.VRAnimator.circleActive > 0 || this.disableCircle) {
                 // this.VRAnimator.model.localTranslation = this.depthParams.translation;
                 // this.VRAnimator.model.localRotation = this.depthParams.rotation;
-                return;
+                // return;
             }
-            let w = 6;
-            let offset = [0, 0];
-            let offsetR = 0;
-            let multi = 1;
-
-            let three = [
-                {A: -18, B: -13},
-                {A: -18, B: -12},
-                {A: -19, B: -11},
-                {A: -14, B: -11},
-                {A: -15, B: -13},
-                {A: -16, B: -13},
-
-                {A: -18, B: -13},
-                {A: -18, B: -13},
-                {A: -18, B: -13},
-                {A: -18, B: -13},
-                {A: -18, B: -13},
-                {A: -18, B: -13}
-            ];
-
-            let index = this.depthParams.id;
-            if(index >= 10)
-                index -= 4;
-
-            offset = [0, 0];
-            if(this.right)
-                offsetR = this.renderingContext.filename == "fibersB" ? -81 : -20;
-            
-            console.log(this.renderingContext.filename);
-            this._drawCircle(Math.round(((this.renderingContext.filename == "fibersB" ? this.depthParams.xA2 : this.depthParams.xA) + offset[0] + offsetR) * multi), this.renderingContext.filename == "fibersB" ? this.depthParams.yA2 : this.depthParams.yA, w, this.VRAnimator.selectedL ? 'rgb(109, 255, 41)' : 'rgb(161, 161, 161)')
-            this._drawCircle(Math.round(((this.renderingContext.filename == "fibersB" ? this.depthParams.xB2 : this.depthParams.xB) + offset[1] + offsetR) * multi), this.renderingContext.filename == "fibersB" ? this.depthParams.yB2 : this.depthParams.yB, w, this.VRAnimator.selectedL ? 'rgb(161, 161, 161)' : 'rgb(109, 255, 41)')
-            // this._drawCircle(this.depthParams.xB - (this.right ? 20 : 0), this.depthParams.yB, w, 'rgb(237, 41, 255)')
-            
-            ctx.strokeStyle = 'black';
+            else {
+                let w = 6;
+                let offset = [0, 0];
+                let offsetR = 0;
+                let multi = 1;
+    
+                let three = [
+                    {A: -18, B: -13},
+                    {A: -18, B: -12},
+                    {A: -19, B: -11},
+                    {A: -14, B: -11},
+                    {A: -15, B: -13},
+                    {A: -16, B: -13},
+    
+                    {A: -18, B: -13},
+                    {A: -18, B: -13},
+                    {A: -18, B: -13},
+                    {A: -18, B: -13},
+                    {A: -18, B: -13},
+                    {A: -18, B: -13}
+                ];
+    
+                let index = this.depthParams.id;
+                if(index >= 10)
+                    index -= 4;
+    
+                offset = [0, 0];
+                if(this.right)
+                    offsetR = this.renderingContext.filename == "fibersB" ? -81 : -20;
+                
+                // console.log(this.renderingContext.filename);
+                this._drawCircle(Math.round(((this.renderingContext.filename == "fibersB" ? this.depthParams.xA2 : this.depthParams.xA) + offset[0] + offsetR) * multi), this.renderingContext.filename == "fibersB" ? this.depthParams.yA2 : this.depthParams.yA, w, this.VRAnimator.selectedL ? 'rgb(10, 255, 10)' : 'rgb(216, 216, 216)')
+                this._drawCircle(Math.round(((this.renderingContext.filename == "fibersB" ? this.depthParams.xB2 : this.depthParams.xB) + offset[1] + offsetR) * multi), this.renderingContext.filename == "fibersB" ? this.depthParams.yB2 : this.depthParams.yB, w, this.VRAnimator.selectedL ? 'rgb(216, 216, 216)' : 'rgb(10, 255, 10)')
+                // this._drawCircle(this.depthParams.xB - (this.right ? 20 : 0), this.depthParams.yB, w, 'rgb(237, 41, 255)')
+                
+                ctx.strokeStyle = 'black';
+            }
         }
         if(this.VRAnimator.uiActive) {
             // let x = this.uiCanvas.width - 160;
-            let x = this._resolution.width / 2.8; // 120
+            let x = this._resolution.width / 2.8 - (this.right ? rightOffset : 0); // 120
             // let x = 310;
-            if(this.right)
-                x = x - rightOffset;
             let y = this._resolution.height / 2.8;
             // let y = 195;
             let yStep = 14;
@@ -258,7 +257,7 @@ _drawUIText(reset = false) {
             ctx.fillText(cursor[count++] + "FIL:" + this.renderingContext.filter, x, y);
     
             if(this.renderingContext.fps) {
-                x += 50;
+                x += 60;
                 // if(this.right)
                 //     x = x - 80;
                 y = this._resolution.height / 2.8;

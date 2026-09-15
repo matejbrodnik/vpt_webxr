@@ -2,6 +2,7 @@ import { mat4 } from '../../lib/gl-matrix-module.js';
 
 import { WebGL } from './WebGL.js';
 import { SingleBuffer } from './SingleBuffer.js';
+import { PerspectiveCamera } from './PerspectiveCamera.js';
 
 const [ SHADERS, MIXINS ] = await Promise.all([
     'shaders.json',
@@ -21,7 +22,10 @@ constructor(gl, volume, renderer, tonemapper, options = {}) {
     this._renderer = renderer;
     this._tonemapper = tonemapper;
     this._views = [];
-
+    this._volumeTransform = options.transform ?? new Transform();
+    this._camera = options.camera;
+    console.log(this._camera)
+    console.log(options)
     this._frameBuffer = new SingleBuffer(gl, this._getRenderBufferSpec());
     this._renderBuffer = new SingleBuffer(gl, this._getRenderBufferSpec());
 
@@ -40,8 +44,9 @@ constructor(gl, volume, renderer, tonemapper, options = {}) {
         mag     : gl.LINEAR,
     });
 
-
+    // this._VROn = 
     this._VRAnimator = options.VRAnimator;
+    this._VRAnimator = null;
 
     this.MVP = mat4.create();
 }
@@ -51,16 +56,17 @@ updateViews(views) {
 }
 
 
-setMVPleft(projectionMatrix) {
+setMVPleft(projectionMatrix = mat4.create()) {
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
-    const modelMatrix = this._VRAnimator.model.globalMatrix;
-    const viewMatrix = this._VRAnimator.transform.inverseGlobalMatrix;
+    const modelMatrix = this._VRAnimator ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
+    const viewMatrix = this._VRAnimator ? (this.right ? this._VRAnimator.transform.inverseGlobalMatrix : this._VRAnimator.transform.inverseGlobalMatrix) : this._camera.transform.inverseGlobalMatrix;
+    const projectionMatrix2 = this._VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrixR;
     // this.log(this._camera.getComponent(PerspectiveCamera).projectionMatrix);
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);
     mat4.multiply(matrix, modelMatrix, matrix);
     mat4.multiply(matrix, viewMatrix, matrix);
-    mat4.multiply(matrix, projectionMatrix, matrix);
+    mat4.multiply(matrix, projectionMatrix2, matrix);
 
     this.MVP = matrix;
 }
@@ -68,7 +74,8 @@ setMVPleft(projectionMatrix) {
 setMVP(projectionMatrix) {
 }
 
-reset(projectionMatrix) {
+reset(projectionMatrix = mat4.create()) {
+    this.setMVPleft();//manual
     const gl = this._gl;
     this._frameBuffer.use();
 
@@ -93,14 +100,15 @@ reset(projectionMatrix) {
     gl.uniform1f(uniforms.uRandSeed, Math.random());
 
     const centerMatrix = mat4.fromTranslation(mat4.create(), [-0.5, -0.5, -0.5]);
-    const modelMatrix = this._VRAnimator.model.globalMatrix;
-    const viewMatrix = this._VRAnimator.transform.inverseGlobalMatrix;
+    const modelMatrix = this._VRAnimator ? this._VRAnimator.model.globalMatrix : this._volumeTransform.globalMatrix;
+    const viewMatrix = this._VRAnimator ? (this.right ? this._VRAnimator.transform.inverseGlobalMatrix : this._VRAnimator.transform.inverseGlobalMatrix) : this._camera.transform.inverseGlobalMatrix;
+    const projectionMatrix2 = this._VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrixR;
     // this.log(this._camera.getComponent(PerspectiveCamera).projectionMatrix);
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);
     mat4.multiply(matrix, modelMatrix, matrix);
     mat4.multiply(matrix, viewMatrix, matrix);
-    mat4.multiply(matrix, projectionMatrix, matrix);
+    mat4.multiply(matrix, projectionMatrix2, matrix);
     // this.MVP = mat4.clone(matrix);
     mat4.invert(matrix, matrix);
     this.invMVP = matrix;
@@ -132,6 +140,10 @@ render() {
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this._frameBuffer.getAttachments().color[0]);
     gl.uniform1i(uniforms.uPosition, 1);
+
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this._frameBuffer.getAttachments().color[0]);
+    gl.uniform1i(uniforms.uColor2, 2);
 
     // gl.activeTexture(gl.TEXTURE2);
     // gl.bindTexture(gl.TEXTURE_2D, this._frameBuffer.getAttachments().color[0]);

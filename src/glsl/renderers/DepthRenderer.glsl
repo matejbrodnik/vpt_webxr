@@ -142,6 +142,8 @@ precision mediump float;
 precision mediump sampler2D;
 
 uniform sampler2D uAccumulator;
+uniform vec2 uPointA;
+uniform vec2 uPointB;
 
 in vec2 vPosition;
 
@@ -150,6 +152,14 @@ out vec4 oColor;
 void main() {
     float depth = texture(uAccumulator, vPosition).r;
     oColor = vec4(vec3(depth), 1);
+    float off = 0.004;
+    // if(vPosition.x > uPointA.x - off && vPosition.x < uPointA.x + off && vPosition.y > uPointA.y - off && vPosition.y < uPointA.y + off) {
+    //     oColor = vec4(1, 0, 0, 1);
+    // }
+    // if(vPosition.x > uPointB.x - off && vPosition.x < uPointB.x + off && vPosition.y > uPointB.y - off && vPosition.y < uPointB.y + off) {
+    //     oColor = vec4(0, 0, 1, 1);
+    // }
+    
 }
 
 // #part /glsl/shaders/renderers/DepthRenderer/reset/vertex

@@ -43,7 +43,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
             name: 'steps',
             label: 'Steps',
             type: 'spinner',
-            value: 30,
+            value: 60,
             min: 0,
         },
         {
@@ -80,6 +80,12 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     this.allow = true;
     this.lod = Math.floor(Math.log2(Math.max(this._resolution.width, this._resolution.height)));
     console.log("LOD:", this.lod);
+    this.queries = [];
+    this.timer = 0;
+    this.timerLow = 10;
+    this.timerCount = 0;
+
+    this.FOV2 = true;
 }
 
 destroy() {
@@ -116,11 +122,18 @@ _resetFrame() {
     // else if(this.iter >= 2 && this.allow && this._VRAnimator && this._VRAnimator.reproject) {
     //     this.reproject = 1;
     // }
-    else if (this.iter >= 2 && this.allow) {
+    else if (this.iter >= 1 && this.allow) {
         this.reproject = 1;
     }
 
     // console.log("reset");
+
+    let ext = this._context.extTime;
+    if(this._context.useTimer) {
+        this.query = gl.createQuery();
+        gl.beginQuery(ext.TIME_ELAPSED_EXT, this.query);
+    }
+    
     if(this.mip == null) {
         console.log("MIP REINIT");
         this.mip = new MIPRenderer(gl, this._volume, this._camera, this._environmentTexture, {
@@ -147,6 +160,47 @@ _resetFrame() {
     
     this._context.count2 = 0;
 
+    if(this._context.useTimer) {
+        gl.endQuery(ext.TIME_ELAPSED_EXT);
+        this.queries.push(this.query);
+        this.query = null;
+        
+        if (this.queries.length > 0) {
+            const q = this.queries[0];
+            const available = gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE);
+            const disjoint = gl.getParameter(ext.GPU_DISJOINT_EXT);
+            
+            if (available) {
+                if (!disjoint) {
+                    const elapsedTime = gl.getQueryParameter(q, gl.QUERY_RESULT);
+                    let time = (elapsedTime / 1000000.0).toFixed(2);
+                    // console.log(time, "ms");
+                    if(time<7) {
+                        this.timer += elapsedTime;
+                        this.timerCount++;
+                        if(time < this.timerLow) {
+                            this.timerLow = time;
+                            console.log("Lowest: ", time, "ms");
+                        }
+                    }
+                }
+                else
+                    console.log("DISJOINT");
+                
+                gl.deleteQuery(q);
+                // q = null;
+                this.queries.shift();
+            }
+            else
+                console.log("NOT READY");
+            if(this.timerCount == 10) {
+                console.log("AVERAGE: ", (this.timer / 10000000.0).toFixed(2), "ms");
+                this.timerCount = 0;
+                this.timer = 0;
+            }
+        }
+    }
+        
     const { program, uniforms } = this._programs.reset;
     gl.useProgram(program);
 
@@ -177,7 +231,7 @@ _resetFrame() {
     const viewMatrix = this._VROn ? (this.right ? this._VRAnimator.transform.inverseGlobalMatrix : this._VRAnimator.transform.inverseGlobalMatrix) : this._camera.transform.inverseGlobalMatrix;
     const projectionMatrix = this._VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
     
-    // this.log(this._camera.getComponent(PerspectiveCamera).projectionMatrix);
+    this.log(this._camera.getComponent(PerspectiveCamera).projectionMatrix);
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);
     mat4.multiply(matrix, modelMatrix, matrix);
@@ -205,7 +259,7 @@ _resetFrame() {
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     this.cycles = 0;
-    this.thr = 100;
+    this.thr = 10;
 
     // if(this.reproject) {
     //     this._frameBuffer.use();
@@ -222,6 +276,7 @@ _resetFrame() {
 }
 
 _generateFrame() {
+
 }
 
 _integrateFrame() {
@@ -241,6 +296,10 @@ _integrateFrame() {
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[2]);
     gl.uniform1i(uniforms.uTransmittance, 2);
+
+    // if(this.cycles == this.thr - 1)
+    //     this._context.brick= true;
+
     if(this.cycles == this.thr || this.thr + 1) { // +1 with blur
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
         gl.generateMipmap(gl.TEXTURE_2D);
@@ -294,7 +353,10 @@ _integrateFrame() {
     //     this.reproject = 0;
     gl.uniform1ui(uniforms.reproject, this.reproject);
     if(this.reproject) {
-        // this._context.brick = true;
+        // if(this._context.reproBrick){
+            // this._context.brick = true;
+        //     this._context.reproBrick = false;
+        // }
         // this.log(this.forwardMatrixOld);
         // console.log("---------------");
     }
@@ -353,8 +415,8 @@ _renderFrame() {
     gl.uniform1i(uniforms.uColor, 0);
     
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, this.mip._renderBuffer.getAttachments().color[0]);
-    // gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[2]);
+    // gl.bindTexture(gl.TEXTURE_2D, this.mip._renderBuffer.getAttachments().color[0]);
+    gl.bindTexture(gl.TEXTURE_2D, this._accumulationBuffer.getAttachments().color[2]);
     gl.uniform1i(uniforms.uMIP, 1);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -368,13 +430,13 @@ setProjection(matrix) {
         // this.mip.reset(true);
         // this.mip.render();
     }
-    if(this._context.setupIndex >= this._context.setupList.length) {
-        if(this.matrix)
-            this.log(this.matrix);
-        console.log("---")
-        if(this.mip.matrix)
-            this.log(this.mip.matrix);
-    }
+    // if(this._context.setupIndex >= this._context.setupList.length) {
+    //     if(this.matrix)
+    //         this.log(this.matrix);
+    //     console.log("---")
+    //     if(this.mip.matrix)
+    //         this.log(this.mip.matrix);
+    // }
     this.reset(true);
 }
 
