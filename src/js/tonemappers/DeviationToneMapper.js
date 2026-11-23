@@ -108,7 +108,7 @@ _renderFrame() {
 
 _rebuildBuffers() {
     super._rebuildBuffers();
-    this._accumulationBuffer = new DoubleBuffer(gl, this._getAccumulationBufferSpec());
+    this._accumulationBuffer = new DoubleBuffer(this._gl, this._getAccumulationBufferSpec());
 }
 
 _getRenderBufferSpec() {

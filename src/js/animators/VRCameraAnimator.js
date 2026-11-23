@@ -49,7 +49,7 @@ constructor(volumeTransform) {
     this.renderStateTimeout = 0;
     this.renderStateChanged = false;
 
-    this.chosenRenderer = 0; // 0 - FOV2, 1 - MIP, 2 - MCM, 3 - ISO, 4 - DOS, 5 - EAM, 6 - LAO, 7 - Depth
+    this.chosenRenderer = 2; // 0 - FOV2, 1 - MIP, 2 - MCM, 3 - ISO, 4 - DOS, 5 - EAM, 6 - LAO, 7 - Depth
     this.currentId = -1;
     
     this.filter = 'nearest';

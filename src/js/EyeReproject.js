@@ -75,7 +75,7 @@ setMVP(projectionMatrix) {
 }
 
 reset(projectionMatrix = mat4.create()) {
-    this.setMVPleft();//manual
+    // this.setMVPleft();//manual
     const gl = this._gl;
     this._frameBuffer.use();
 

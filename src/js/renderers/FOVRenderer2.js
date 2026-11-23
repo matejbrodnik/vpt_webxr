@@ -82,6 +82,7 @@ constructor(gl, volume, camera, environmentTexture, options = {}) {
     console.log("LOD:", this.lod);
     this.queries = [];
     this.timer = 0;
+    this.timeList = [];
     this.timerLow = 10;
     this.timerCount = 0;
 
@@ -173,15 +174,17 @@ _resetFrame() {
             if (available) {
                 if (!disjoint) {
                     const elapsedTime = gl.getQueryParameter(q, gl.QUERY_RESULT);
-                    let time = (elapsedTime / 1000000.0).toFixed(2);
-                    // console.log(time, "ms");
-                    if(time<7) {
-                        this.timer += elapsedTime;
-                        this.timerCount++;
-                        if(time < this.timerLow) {
-                            this.timerLow = time;
-                            console.log("Lowest: ", time, "ms");
-                        }
+                    let time = (elapsedTime / 1000000.0);
+                    this.timer += time;
+                    // console.log(this.timer, "ms");
+                    this.timeList.push(time);
+                    this.timerCount++;
+                    if(this.timeList.length % 1000 == 0) {
+                                // console.log(this.timeList);
+                        console.log(`MEDIAN Time: ${this.median(this.timeList).toFixed(3)} ms`);
+                        console.log(`AVERAG Time: ${((this.timer / (this.timerCount - 10)) / 1000000.0).toFixed(3)} ms`);
+                        console.log(`MIN: ${Math.min(...this.timeList)}`)
+                        console.log(`MAX: ${Math.max(...this.timeList)}`)
                     }
                 }
                 else
@@ -193,11 +196,11 @@ _resetFrame() {
             }
             else
                 console.log("NOT READY");
-            if(this.timerCount == 10) {
-                console.log("AVERAGE: ", (this.timer / 10000000.0).toFixed(2), "ms");
-                this.timerCount = 0;
-                this.timer = 0;
-            }
+            // if(this.timerCount == 10) {
+            //     console.log("AVERAGE: ", (this.timer / 10000000.0).toFixed(2), "ms");
+            //     this.timerCount = 0;
+            //     this.timer = 0;
+            // }
         }
     }
         
@@ -231,7 +234,6 @@ _resetFrame() {
     const viewMatrix = this._VROn ? (this.right ? this._VRAnimator.transform.inverseGlobalMatrix : this._VRAnimator.transform.inverseGlobalMatrix) : this._camera.transform.inverseGlobalMatrix;
     const projectionMatrix = this._VRProjection || this._camera.getComponent(PerspectiveCamera).projectionMatrix;
     
-    this.log(this._camera.getComponent(PerspectiveCamera).projectionMatrix);
     const matrix = mat4.create();
     mat4.multiply(matrix, centerMatrix, matrix);
     mat4.multiply(matrix, modelMatrix, matrix);
@@ -274,7 +276,16 @@ _resetFrame() {
     //     gl.drawArrays(gl.TRIANGLES, 0, 3);
     // }
 }
+median(numbers) {
+    const sorted = Array.from(numbers).sort((a, b) => a - b);
+    const middle = Math.floor(sorted.length / 2);
 
+    if (sorted.length % 2 === 0) {
+        return (sorted[middle - 1] + sorted[middle]) / 2;
+    }
+
+    return sorted[middle];
+}
 _generateFrame() {
 
 }

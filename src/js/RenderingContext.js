@@ -99,8 +99,8 @@ constructor(options = {}) {
     if(this.whiteP == 0.75)
         this.cameraAnimator._zoom(0.59, 0); //0.75
     if(this.whiteP == 0.5)
-        this.cameraAnimator._zoom(-0.3644, 0); //0.5
-        // this.cameraAnimator._zoom(0.254, 0); //0.5
+        // this.cameraAnimator._zoom(-0.3644, 0); //0.5
+        this.cameraAnimator._zoom(0.254, 0); //0.5
     if(this.whiteP == 0.25)
         this.cameraAnimator._zoom(0.0627, 0); //0.25
     if(this.whiteP == 0)
@@ -428,8 +428,10 @@ constructor(options = {}) {
     this.angle = -0.3;
     
     this.reproCount = 0;
-    this.divList = Array(200).fill(0);
+    this.divList = Array(2000).fill(0);
+    this.divList2 = Array(2000).fill(0);
     this.iterList = Array(200).fill(0);
+
 
     console.log(this.camera.transform);
 }
@@ -647,7 +649,7 @@ chooseRenderer(renderer, reset=true, tf = null) {
         this.bench = true;
     }
     // this.right = true;
-    this.setupReprojection(); //manual
+    // this.setupReprojection(); //manual
     // this.reproject.setMVPleft();
 }
 
@@ -963,9 +965,10 @@ _update(t, frame) {
                     // console.log("RIGHT");
                     // this.renderer.log(view.transform.matrix)
                 }
-                console.log(this.right);
-                console.log("---PROJ---");
-                this.renderer.log(view.projectionMatrix);
+                // console.log(this.right);
+                // console.log("---PROJ---");
+                // this.renderer.log(view.projectionMatrix);
+                
                 // console.log("---VIEW---");
                 // this.renderer.log(this._VRAnimator ? (this.right ? this._VRAnimator.transform.inverseGlobalMatrix : this._VRAnimator.transform.inverseGlobalMatrix) : "NULL");
                 // console.log("---MODEL---");
@@ -1233,13 +1236,17 @@ _fullReset() {
 
 render() {
     const gl = this.gl;
-    this.right = !this.right;//manual
+    // this.right = !this.right;//manual
     
+    // if(this.renderer.iter > 1)
+    //     this.renderer.reset();
+
     if(this.right && this.reproReady) {
         this.reproject.reset();
         console.log("repro begin")
         this.reproReady = false;
     }
+
     
     if (!gl || !this.renderer || !this.toneMapper) {
         return;
@@ -1274,12 +1281,13 @@ render() {
     //     console.log("brick");
     //     return;
     // }
-    let ext = this.extTime;
 
-    if(this.useTimer) {
-        this.query = gl.createQuery();
-        gl.beginQuery(ext.TIME_ELAPSED_EXT, this.query);
-    }
+    // let ext = this.extTime;
+
+    // if(this.useTimer) {
+    //     this.query = gl.createQuery();
+    //     gl.beginQuery(ext.TIME_ELAPSED_EXT, this.query);
+    // }
 
     // if(this.delayedReset == 0) {
     //     // if(this.renderer.mip) {
@@ -1366,31 +1374,31 @@ render() {
 
     this.random = Math.random();
     //manual
-    if(this.right && this.reproject && this.reproject.invMVP && this.reproject._tonemapper) {
-        this.reproject.render();
-        // console.log("repro")
-    }
-    else {
-        this.renderer.random = this.random;
-        this.renderer.render();
-        this.toneMapper.render(this.renderer.getTexture());
-        // console.log("render")
-    }
-    // if(this.right) {
-    //     if(this.VRAnimator.renderState == 2) {
-    //         this.reproject.render();
-    //     }
-    //     else if(this.VRAnimator.renderState == 1) {
-    //         this.renderer2.random = this.random;
-    //         this.renderer2.render(); //2
-    //         this.toneMapper.render(this.renderer2.getTexture()); //2
-    //     }
+    // if(this.right && this.reproject && this.reproject.invMVP && this.reproject._tonemapper) {
+    //     this.reproject.render();
+    //     // console.log("repro")
     // }
     // else {
     //     this.renderer.random = this.random;
     //     this.renderer.render();
     //     this.toneMapper.render(this.renderer.getTexture());
+    //     // console.log("render")
     // }
+    if(this.right) {
+        if(this.VRAnimator.renderState == 2) {
+            this.reproject.render();
+        }
+        else if(this.VRAnimator.renderState == 1) {
+            this.renderer2.random = this.random;
+            this.renderer2.render(); //2
+            this.toneMapper.render(this.renderer2.getTexture()); //2
+        }
+    }
+    else {
+        this.renderer.random = this.random;
+        this.renderer.render();
+        this.toneMapper.render(this.renderer.getTexture());
+    }
 
     this.uiRenderer.render((this.VRAnimator && this.right && this.VRAnimator.renderState == 2) ? this.reproject.getTexture() : this.toneMapper.getTexture(), this.right);
 
@@ -1432,16 +1440,16 @@ render() {
         gl.bindTexture(gl.TEXTURE_2D, this.reproject.getTexture());
     }
     else {
-        if(this.reproject.invMVP && this.reproject._tonemapper) {
-            gl.bindTexture(gl.TEXTURE_2D, this.reproject.getTexture());
-            console.log("repro")
+        // if(this.reproject.invMVP && this.reproject._tonemapper) {
+        //     gl.bindTexture(gl.TEXTURE_2D, this.reproject.getTexture());
+        //     console.log("repro")
             
-        }
-        else {
-            gl.bindTexture(gl.TEXTURE_2D, this.toneMapper.getTexture());
-            console.log("render")
-        }//manual
-        // gl.bindTexture(gl.TEXTURE_2D, this.toneMapper.getTexture());
+        // }
+        // else {
+        //     gl.bindTexture(gl.TEXTURE_2D, this.toneMapper.getTexture());
+        //     console.log("render")
+        // }//manual
+        gl.bindTexture(gl.TEXTURE_2D, this.toneMapper.getTexture());
 
         // if(this.right) {
         //     console.log("right")
@@ -1473,49 +1481,51 @@ render() {
     if(!this.useTimer) {
         return;
     }
-    gl.endQuery(ext.TIME_ELAPSED_EXT);
-    this.queries.push(this.query);
-    this.query = null;
+    // gl.endQuery(ext.TIME_ELAPSED_EXT);
+    // this.queries.push(this.query);
+    // this.query = null;
 
-    // this.pendingQueries.push(query);
-    // const readyQueries = [];
-    // for (let q of this.pendingQueries) {
-    //     console.log(this.query);
-    if (this.queries.length > 0) {
-        const q = this.queries[0];
-        const available = gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE);
-        const disjoint = gl.getParameter(ext.GPU_DISJOINT_EXT);
+    // // this.pendingQueries.push(query);
+    // // const readyQueries = [];
+    // // for (let q of this.pendingQueries) {
+    // //     console.log(this.query);
+    // if (this.queries.length > 0) {
+    //     const q = this.queries[0];
+    //     const available = gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE);
+    //     const disjoint = gl.getParameter(ext.GPU_DISJOINT_EXT);
 
-        if (available) {
-            if (!disjoint) {
-                const elapsedTime = gl.getQueryParameter(q, gl.QUERY_RESULT);
-                if(this.count >= 10) {
-                    this.timer += elapsedTime;
-                    this.timeList.push(elapsedTime / 1000000.0)
-                }
+    //     if (available) {
+    //         if (!disjoint) {
+    //             const elapsedTime = gl.getQueryParameter(q, gl.QUERY_RESULT);
+    //             if(this.count >= 10) {
+    //                 this.timer += elapsedTime;
+    //                 this.timeList.push(elapsedTime / 1000000.0)
+    //             }
 
-                // console.log("TIME: ", (elapsedTime / 1000000.0).toFixed(2));
-                if((this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3) && this.countMCM < 201) {
-                // if(this.renderer instanceof MCMRenderer && this.countMCM < 501) {
-                    if(this.first)
-                        this.timerMCM2 += elapsedTime;
-                    else
-                        this.timerMCM += elapsedTime;
-                }
-                if((this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2) && this.countFOV < 201)
-                    this.timerFOV += elapsedTime;
-                this.count++;
-            }
-            else
-                console.log("DISJOINT");
+    //             // console.log("TIME: ", (elapsedTime / 1000000.0).toFixed(2));
+    //             if((this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3) && this.countMCM < 201) {
+    //             // if(this.renderer instanceof MCMRenderer && this.countMCM < 501) {
+    //                 if(this.first)
+    //                     this.timerMCM2 += elapsedTime;
+    //                 else
+    //                     this.timerMCM += elapsedTime;
+    //             }
+    //             if((this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2) && this.countFOV < 201)
+    //                 this.timerFOV += elapsedTime;
+    //             this.count++;
+    //         }
+    //         else
+    //             console.log("DISJOINT");
 
-            gl.deleteQuery(q);
-            // q = null;
-            this.queries.shift();
-        }
-        else
-            console.log("NOT READY");
-    }
+    //         gl.deleteQuery(q);
+    //         // q = null;
+    //         this.queries.shift();
+    //     }
+    //     else
+    //         console.log("NOT READY");
+    // }
+
+
     // }
 
     if(false && this.renderer instanceof FOVRenderer2) {
@@ -1682,10 +1692,10 @@ render() {
     }
 
     // return;
-
+    console.log(this.VRAnimator.renderState, this.countMCM, this.countFOV);
     let totalIter = 500;
-    let measureIter = 250;
-    if(false && (this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3)) {
+    let measureIter = 50;
+    if(this.right && this.VRAnimator.renderState == 1) {//(this.renderer instanceof MCMRenderer || this.renderer instanceof FOVRenderer3)) {
         // if(this.countMCM == 1) {
         //     this.brick = true;
         // }
@@ -1723,8 +1733,13 @@ render() {
                             gl.COLOR_BUFFER_BIT, gl.NEAREST);
 
             this.compare = 1.0;
-            if(this.autoMeasure)
-                this.chooseRenderer("fov2");
+            if(this.autoMeasure) {
+                this.chooseRenderer("mcm");
+                this.VRAnimator.renderState = 2;
+                this.reproject.reset();
+                // this.chooseRenderer("fov2");
+                return;
+            }
         }
         // if(this.first && this.countMCM % 2 == 0 && this.countMCM < 501) {
         if(this.first && this.countMCM <= measureIter) {
@@ -1735,141 +1750,175 @@ render() {
             // this.timeoffsetM += performance.now().toFixed(3) - this.timer3;
             // this.timeoffsetM += performance.now().toFixed(3) - this.timer3;
 
-            if(this.countMCM == 200) {
+            if(this.countMCM == measureIter) {
                 console.log("MCM READY");
                 this.second = true;
             }
         }
         if(this.countMCM == measureIter && this.second && this.autoMeasure) { // MEASURE AVERAGE PREPROCESSING TIME
-            console.log("FOV TIME: ", (this.timerFOV / 500.0).toFixed(2));
-            console.log("MCM TIME (speedup):", (this.timerMCM2 / 500.0).toFixed(2));
-            console.log("MCM TIME (used): ", (this.timerMCM / 500.0).toFixed(2));
-            let ratio = this.timerFOV / this.timerMCM;
-            console.log("RATIO (speedup):", (this.timerFOV / this.timerMCM2).toFixed(2));
-            console.log("RATIO (used):", ratio.toFixed(2));
-            // ratio = 1.06; // 50
-            let cons = 0;
-            if(this.whiteP == 0.75) {
-                ratio = 2.224; // 75
-                cons = 0.254;
-            }
-            if(this.whiteP == 0.5) {
-                ratio = 1.30; // 50
-                cons = 0.316;
-            }
-            if(this.whiteP == 0.25) {
-                ratio = 1.09; // 25
-                cons = 0.358;
-            }
-            if(this.whiteP == 0) {
-                ratio = 0.977; // 0
-                cons = 0.494;
-            }
-            // cons = 0.39;
-            let listF = [];
-            let listM = [];
-            let resultsFOV = "";
-            let resultsMCM = "";
-            let bpFOV = "";
-            let bpMCM = "";
-            let diff = "";
-            let div = "";
-            for(let k = 0; k < this.FOVList.length-1; k++) { //FOVList length = MCMList length - 1?
-                if(k >= 10 && k % 5 != 0)
-                    continue;
-                let k2 = Math.floor((k+1 + cons) * ratio - 1);
-                let k2p = ((k+1 + cons) * ratio - 1) - k2;
-                // if(k==10)
-                //     console.log(k2, k2p)
-                // let k2 = Math.round((k+1) * ratio)-1;
-                if(k2+1 >= this.MCMList.length)
-                    break;
-                let mseF = 0;
-                let mseM = 0;
-                let mseM2 = 0;
-                for(let i = 0; i < this.canvas.height; i++) {
-                    for(let j = 0; j < this.canvas.width; j++) {
-                        let index = (i * this.canvas.height + j) * 4;
+            // this.evalNormal();
+            for(let f = 0; f <= 1; f++) {
+                // console.log("FOV TIME: ", (this.timerFOV / 500.0).toFixed(2));
+                // console.log("MCM TIME (speedup):", (this.timerMCM2 / 500.0).toFixed(2));
+                // console.log("MCM TIME (used): ", (this.timerMCM / 500.0).toFixed(2));
+                // let ratio = this.timerFOV / this.timerMCM;
+                // console.log("RATIO (speedup):", (this.timerFOV / this.timerMCM2).toFixed(2));
+                // console.log("RATIO (used):", ratio.toFixed(2));
+                // ratio = 1.06; // 50
+                let cons = 0;
+    
+                if(f == 0) {
+                    //min
+                    if(this.whiteP == 0.75) {
+                        ratio = 2.22; // 75
+                        cons = 0.311;
+                    }
+                    if(this.whiteP == 0.5) {
+                        ratio = 1.3; // 50
+                        cons = 0.353;
+                    }
+                    if(this.whiteP == 0.25) {
+                        ratio = 1.09; // 25
+                        cons = 0.327;
+                    }
+                    if(this.whiteP == 0) {
+                        ratio = 0.98; // 0
+                        cons = 0.513;
+                    }
+                }
+                else if(f == 1) {
+                    //median
+                    if(this.whiteP == 0.75) {
+                        ratio = 2.376; // 75
+                        cons = 0.254;
+                    }
+                    if(this.whiteP == 0.5) {
+                        ratio = 1.134; // 50
+                        cons = 0.316;
+                    }
+                    if(this.whiteP == 0.25) {
+                        ratio = 0.951; // 25
+                        cons = 0.358;
+                    }
+                    if(this.whiteP == 0) {
+                        ratio = 0.985; // 0
+                        cons = 0.494;
+                    }
+                }
+                // cons = 0.39;
+                let listF = [];
+                let listM = [];
+                let resultsFOV = "";
+                let resultsMCM = "";
+                let bpFOV = "";
+                let bpMCM = "";
+                let diff = "";
+                let div = "";
+                for(let k = 0; k < this.FOVList.length-1; k++) { //FOVList length = MCMList length - 1?
+                    if(k >= 10 && k % 5 != 0)
+                        continue;
+                    let k2 = Math.floor((k+1 + cons) * ratio - 1);
+                    let k2p = ((k+1 + cons) * ratio - 1) - k2;
+                    // if(k==10)
+                    //     console.log(k2, k2p)
+                    // let k2 = Math.round((k+1) * ratio)-1;
+                    if(k2+1 >= this.MCMList.length)
+                        break;
+                    let mseF = 0;
+                    let mseM = 0;
+                    let mseM2 = 0;
+                    for(let i = 0; i < this.canvas.height; i++) {
+                        for(let j = 0; j < this.canvas.width; j++) {
+                            let index = (i * this.canvas.height + j) * 4;
+                            let R = this.pixels[index];
+                            let G = this.pixels[index+1];
+                            let B = this.pixels[index+2];
+        
+                            let r = this.FOVList[k][index];
+                            let g = this.FOVList[k][index+1];
+                            let b = this.FOVList[k][index+2];
+        
+                            let rr = this.MCMList[k2][index];
+                            let gg = this.MCMList[k2][index+1];
+                            let bb = this.MCMList[k2][index+2];
+            
+                            let rr2 = this.MCMList[k2+1][index];
+                            let gg2 = this.MCMList[k2+1][index+1];
+                            let bb2 = this.MCMList[k2+1][index+2];
+                            // let bb2 = this.MCMList[k2][index+2]; * k2p + this.MCMList[k2+1][index+2] * (1-k2p);
+                            mseF += ((R - r) ** 2 + (G - g) ** 2 + (B - b) ** 2) / 3.0;
+                            mseM += ((R - rr) ** 2 + (G - gg) ** 2 + (B - bb) ** 2) / 3.0;
+                            mseM2 += ((R - rr2) ** 2 + (G - gg2) ** 2 + (B - bb2) ** 2) / 3.0;
+                            // mseF += (R - r) ** 2;
+                            // mseM += (R - rr) ** 2;
+                            //console.log(mse);
+                        }
+                    }
+                    mseF /= (this.resolution.width * this.resolution.height);
+                    mseM /= (this.resolution.width * this.resolution.height);
+                    mseM2 /= (this.resolution.width * this.resolution.height);
+                    let mseM0 = mseM;
+                    mseM = mseM * (1-k2p) + mseM2 * k2p;
+                    // let mseMLOG = Math.exp(Math.log(mseM) * (1-k2p) + Math.log(mseM2) * k2p);
+                    // bpFOV += "FOV " + k * 2 + "\n";
+                    // bpMCM += "MCM " + k2 * 2 + "\n";
+                    // bpFOV += "FOV " + k + "\n";
+                    // bpMCM += "MCM " + (k2 + k2p) + "\n";
+                    // resultsFOV += mseF.toFixed(2) + "\n";
+                    // resultsMCM += mseM.toFixed(2) + "\n";
+                    // diff += (mseF - mseM).toFixed(2) + "\n";
+                    div += (mseF/ mseM).toFixed(4) + "\n";
+                    // console.log("FOV " + k * 2 + " MCM " + k2 * 2);
+                    
+
+                    // console.log("FOV " + k + " MCM " + (k2 + k2p));
+                    // console.log(mseF);
+                    // console.log(mseM);
+                    // // console.log(mseMLOG);
+                    // console.log("-----");
+                    // console.log(k2 + k2p, k2, k2p);
+                    // console.log(mseM0);
+                    // console.log(mseM2);
+    
+                }
+                if(f==0) {
+                    console.log("----------MIN----------");
+                }
+                else {
+                    console.log("----------MEDIAN----------");
+
+                }
+                console.log("RATIO (used):", ratio.toFixed(2));
+                // console.log("DIFFERENCE:\n" + diff);
+                console.log("F/M RATIO:\n" + div);
+                this.timerMCM = 0;
+                this.timerFOV = 0;
+                // this.autoMeasure = false;
+                this.second = false;
+                // console.log("FOV BP:\n" + bpFOV);
+                // console.log("MCM BP:\n" + bpMCM);
+    
+                let white = 0;
+                let it = 0;
+                for(let i = 0; i < this.resolution.height; i++) {
+                    for(let j = 0; j < this.resolution.width; j++) {
+                        let index = (i * this.resolution.height + j) * 4;
                         let R = this.pixels[index];
                         let G = this.pixels[index+1];
                         let B = this.pixels[index+2];
-    
-                        let r = this.FOVList[k][index];
-                        let g = this.FOVList[k][index+1];
-                        let b = this.FOVList[k][index+2];
-    
-                        let rr = this.MCMList[k2][index];
-                        let gg = this.MCMList[k2][index+1];
-                        let bb = this.MCMList[k2][index+2];
-        
-                        let rr2 = this.MCMList[k2+1][index];
-                        let gg2 = this.MCMList[k2+1][index+1];
-                        let bb2 = this.MCMList[k2+1][index+2];
-                        // let bb2 = this.MCMList[k2][index+2]; * k2p + this.MCMList[k2+1][index+2] * (1-k2p);
-                        mseF += ((R - r) ** 2 + (G - g) ** 2 + (B - b) ** 2) / 3.0;
-                        mseM += ((R - rr) ** 2 + (G - gg) ** 2 + (B - bb) ** 2) / 3.0;
-                        mseM2 += ((R - rr2) ** 2 + (G - gg2) ** 2 + (B - bb2) ** 2) / 3.0;
-                        // mseF += (R - r) ** 2;
-                        // mseM += (R - rr) ** 2;
-                        //console.log(mse);
+                        if(R + G + B == 765)
+                            white++;
+                        it++;
                     }
                 }
-                mseF /= (this.resolution.width * this.resolution.height);
-                mseM /= (this.resolution.width * this.resolution.height);
-                mseM2 /= (this.resolution.width * this.resolution.height);
-                let mseM0 = mseM;
-                mseM = mseM * (1-k2p) + mseM2 * k2p;
-                // let mseMLOG = Math.exp(Math.log(mseM) * (1-k2p) + Math.log(mseM2) * k2p);
-                // bpFOV += "FOV " + k * 2 + "\n";
-                // bpMCM += "MCM " + k2 * 2 + "\n";
-                // bpFOV += "FOV " + k + "\n";
-                // bpMCM += "MCM " + (k2 + k2p) + "\n";
-                // resultsFOV += mseF.toFixed(2) + "\n";
-                // resultsMCM += mseM.toFixed(2) + "\n";
-                // diff += (mseF - mseM).toFixed(2) + "\n";
-                div += (mseF/ mseM).toFixed(4) + "\n";
-                // console.log("FOV " + k * 2 + " MCM " + k2 * 2);
-
-                console.log("FOV " + k + " MCM " + (k2 + k2p));
-                console.log(mseF);
-                console.log(mseM);
-                // console.log(mseMLOG);
-                console.log("-----");
-                console.log(k2 + k2p, k2, k2p);
-                console.log(mseM0);
-                console.log(mseM2);
-
-
+                console.log("WHITE %: " + white / it);
             }
-            console.log("RATIO (used):", ratio.toFixed(2));
-            // console.log("DIFFERENCE:\n" + diff);
-            console.log("F/M RATIO:\n" + div);
-            this.timerMCM = 0;
-            this.timerFOV = 0;
-            this.autoMeasure = false;
-            this.second = false;
-            // console.log("FOV BP:\n" + bpFOV);
-            // console.log("MCM BP:\n" + bpMCM);
-
-            let white = 0;
-            let it = 0;
-            for(let i = 0; i < this.resolution.height; i++) {
-                for(let j = 0; j < this.resolution.width; j++) {
-                    let index = (i * this.resolution.height + j) * 4;
-                    let R = this.pixels[index];
-                    let G = this.pixels[index+1];
-                    let B = this.pixels[index+2];
-                    if(R + G + B == 765)
-                        white++;
-                    it++;
-                }
-            }
-            console.log("WHITE %: " + white / it);
+            return;
         }
 
         this.countMCM++;
     }
-    else if(false && (this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2)) {
+    else if(this.right && this.VRAnimator.renderState == 1) { //(this.renderer instanceof FOVRenderer || this.renderer instanceof MCMRenderer2 || this.renderer instanceof FOVRenderer2)) {
         // if(this.countFOV == 0) {
         //     this.brick = true;
         // }
@@ -1881,8 +1930,12 @@ render() {
 
             if(this.countFOV == measureIter) {
                 console.log("--- FOV READY ---");
-                if(this.autoMeasure)
+                if(this.autoMeasure) {
                     this.chooseRenderer("mcm");
+                    this.VRAnimator.renderState = 1;
+                    this.reproject.reset();
+                    return;
+                }
             }
         }
         
@@ -1923,15 +1976,15 @@ render() {
     // if(this.count % 500 == 0) {
     //     console.log(`${this.count / 50}%`)
     // }
-    if(this.count % 5000 == 0 && this.count != 0) {
-        // console.log(this.timeList);
-        console.log(`${this.count / 5000}%`)
+    // if(this.count % 5000 == 0 && this.count != 0) {
+    //     // console.log(this.timeList);
+    //     console.log(`${this.count / 5000}%`)
 
-        console.log(`MEDIAN Time: ${this.median(this.timeList).toFixed(3)} ms`);
-        console.log(`AVERAG Time: ${((this.timer / (this.count - 10)) / 1000000.0).toFixed(3)} ms`);
-        console.log(`MIN: ${Math.min(...this.timeList)}`)
-        console.log(`MAX: ${Math.max(...this.timeList)}`)
-    }
+    //     console.log(`MEDIAN Time: ${this.median(this.timeList).toFixed(3)} ms`);
+    //     console.log(`AVERAG Time: ${((this.timer / (this.count - 10)) / 1000000.0).toFixed(3)} ms`);
+    //     console.log(`MIN: ${Math.min(...this.timeList)}`)
+    //     console.log(`MAX: ${Math.max(...this.timeList)}`)
+    // }
 
 }
 
@@ -1944,6 +1997,197 @@ median(numbers) {
     }
 
     return sorted[middle];
+}
+
+evalNormal() {
+    this.reproCount++;
+    for(let f = 0; f <= 1; f++) {
+        // console.log("FOV TIME: ", (this.timerFOV / 500.0).toFixed(2));
+        // console.log("MCM TIME (speedup):", (this.timerMCM2 / 500.0).toFixed(2));
+        // console.log("MCM TIME (used): ", (this.timerMCM / 500.0).toFixed(2));
+        // let ratio = this.timerFOV / this.timerMCM;
+        // console.log("RATIO (speedup):", (this.timerFOV / this.timerMCM2).toFixed(2));
+        // console.log("RATIO (used):", ratio.toFixed(2));
+        // ratio = 1.06; // 50
+        let cons = 0;
+        let ratio = 1;
+        if(f == 0) {
+            //min
+            if(this.whiteP == 0.75) {
+                ratio = 2.22; // 75
+                cons = 0.311;
+            }
+            if(this.whiteP == 0.5) {
+                ratio = 1.3; // 50
+                cons = 0.353;
+            }
+            if(this.whiteP == 0.25) {
+                ratio = 1.09; // 25
+                cons = 0.327;
+            }
+            if(this.whiteP == 0) {
+                ratio = 0.98; // 0
+                cons = 0.513;
+            }
+        }
+        else if(f == 1) {
+            //median
+            if(this.whiteP == 0.75) {
+                ratio = 2.376; // 75
+                cons = 0.254;
+            }
+            if(this.whiteP == 0.5) {
+                ratio = 1.134; // 50
+                cons = 0.316;
+            }
+            if(this.whiteP == 0.25) {
+                ratio = 0.951; // 25
+                cons = 0.358;
+            }
+            if(this.whiteP == 0) {
+                ratio = 0.985; // 0
+                cons = 0.494;
+            }
+        }
+        // cons = 0.39;
+        let listF = [];
+        let listM = [];
+        let resultsFOV = "";
+        let resultsMCM = "";
+        let bpFOV = "";
+        let bpMCM = "";
+        let diff = "";
+        let div = "";
+        for(let k = 0; k < this.FOVList.length-1; k++) { //FOVList length = MCMList length - 1?
+            if(k >= 10 && k % 5 != 0)
+                continue;
+            let k2 = Math.floor((k+1 + cons) * ratio - 1);
+            let k2p = ((k+1 + cons) * ratio - 1) - k2;
+            // if(k==10)
+            //     console.log(k2, k2p)
+            // let k2 = Math.round((k+1) * ratio)-1;
+            if(k2+1 >= this.MCMList.length)
+                break;
+            let mseF = 0;
+            let mseM = 0;
+            let mseM2 = 0;
+            for(let i = 0; i < this.canvas.height; i++) {
+                for(let j = 0; j < this.canvas.width; j++) {
+                    let index = (i * this.canvas.height + j) * 4;
+                    let R = this.pixels[index];
+                    let G = this.pixels[index+1];
+                    let B = this.pixels[index+2];
+
+                    let r = this.FOVList[k][index];
+                    let g = this.FOVList[k][index+1];
+                    let b = this.FOVList[k][index+2];
+
+                    let rr = this.MCMList[k2][index];
+                    let gg = this.MCMList[k2][index+1];
+                    let bb = this.MCMList[k2][index+2];
+
+                    let rr2 = this.MCMList[k2+1][index];
+                    let gg2 = this.MCMList[k2+1][index+1];
+                    let bb2 = this.MCMList[k2+1][index+2];
+                    // let bb2 = this.MCMList[k2][index+2]; * k2p + this.MCMList[k2+1][index+2] * (1-k2p);
+                    mseF += ((R - r) ** 2 + (G - g) ** 2 + (B - b) ** 2) / 3.0;
+                    mseM += ((R - rr) ** 2 + (G - gg) ** 2 + (B - bb) ** 2) / 3.0;
+                    mseM2 += ((R - rr2) ** 2 + (G - gg2) ** 2 + (B - bb2) ** 2) / 3.0;
+                    // mseF += (R - r) ** 2;
+                    // mseM += (R - rr) ** 2;
+                    //console.log(mse);
+                }
+            }
+            mseF /= (this.resolution.width * this.resolution.height);
+            mseM /= (this.resolution.width * this.resolution.height);
+            mseM2 /= (this.resolution.width * this.resolution.height);
+            let mseM0 = mseM;
+            mseM = mseM * (1-k2p) + mseM2 * k2p;
+            // let mseMLOG = Math.exp(Math.log(mseM) * (1-k2p) + Math.log(mseM2) * k2p);
+            // bpFOV += "FOV " + k * 2 + "\n";
+            // bpMCM += "MCM " + k2 * 2 + "\n";
+            // bpFOV += "FOV " + k + "\n";
+            // bpMCM += "MCM " + (k2 + k2p) + "\n";
+            // resultsFOV += mseF.toFixed(2) + "\n";
+            // resultsMCM += mseM.toFixed(2) + "\n";
+            // diff += (mseF - mseM).toFixed(2) + "\n";
+            // console.log("FOV " + k * 2 + " MCM " + k2 * 2);
+            
+            // div += (mseF/ mseM).toFixed(4) + "\n";
+            if(f == 0) {
+                this.divList[k] += (mseF / mseM);
+                if(!isNaN((this.divList[k] / this.reproCount).toFixed(3)))
+                    div += (this.divList[k] / this.reproCount).toFixed(3) + "\n";
+            } 
+            else if(f == 1) {
+                this.divList2[k] += (mseF / mseM);
+                if(!isNaN((this.divList2[k] / this.reproCount).toFixed(3)))
+                    div += (this.divList2[k] / this.reproCount).toFixed(3) + "\n";
+            }
+
+            // console.log("FOV " + k + " MCM " + (k2 + k2p));
+            // console.log(mseF);
+            // console.log(mseM);
+            // // console.log(mseMLOG);
+            // console.log("-----");
+            // console.log(k2 + k2p, k2, k2p);
+            // console.log(mseM0);
+            // console.log(mseM2);
+
+        }
+        if(f==0) {
+            console.log("----------MIN----------");
+        }
+        else {
+            console.log("----------MEDIAN----------");
+
+        }
+
+        if(this.reproCount >= 6) {
+            console.log("R/B RATIO:\n" + div);
+            // console.log("ITERATIONS AHEAD:\n" + iterDiff);
+            console.log(this.reproCount)
+            // console.log("END");
+        }
+
+
+        // console.log("RATIO (used):", ratio.toFixed(2));
+        // // console.log("DIFFERENCE:\n" + diff);
+        // console.log("F/M RATIO:\n" + div);
+        // this.timerMCM = 0;
+        // this.timerFOV = 0;
+        // this.autoMeasure = false;
+        // this.second = false;
+        // console.log("FOV BP:\n" + bpFOV);
+        // console.log("MCM BP:\n" + bpMCM);
+
+        // let white = 0;
+        // let it = 0;
+        // for(let i = 0; i < this.resolution.height; i++) {
+        //     for(let j = 0; j < this.resolution.width; j++) {
+        //         let index = (i * this.resolution.height + j) * 4;
+        //         let R = this.pixels[index];
+        //         let G = this.pixels[index+1];
+        //         let B = this.pixels[index+2];
+        //         if(R + G + B == 765)
+        //             white++;
+        //         it++;
+        //     }
+        // }
+        // console.log("WHITE %: " + white / it);
+    }
+    if(this.reproCount < 20) {
+        console.log("PROGRESS: ", this.reproCount * 5 + "%");
+        this.iter = -1;
+        this.second = false;
+        this.FOVList = [];
+        this.MCMList = [];
+        if(this.autoMeasure)
+            this.chooseRenderer("fov2");
+        // this.countFOV = 0;
+        // this.countMCM = -1;
+    }
+
 }
 
 evalRepro() {

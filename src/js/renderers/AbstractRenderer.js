@@ -93,7 +93,7 @@ reset(force = false) {
     // if(this instanceof MIPRenderer) {
     //     console.log("MIP",this.iter)
     // }
-    if(this.disable || !force && !(this instanceof MIPRenderer) && (this.iter <= 1)) {
+    if(this.disable || !force && !(this instanceof MIPRenderer) && (this.iter <= 0)) {
         // console.log(force);
         // console.log("reset", this instanceof MIPRenderer ? "mip" : this.iter);
         return;
@@ -109,11 +109,11 @@ reset(force = false) {
     // if(this.FOV2 && this._context.reproject) {
     //     this._context.reproject.reset();
     // }
-    if(this.FOV2 && this._context.reproject) {
-        // this.renderingContext.renderer.reset();
-        this._context.right = true;
-        this._context.reproReady = true;
-    }
+    // if(this.FOV2 && this._context.reproject) {
+    //     // this.renderingContext.renderer.reset();
+    //     this._context.right = true;
+    //     this._context.reproReady = true;
+    // }
 }
 
 _rebuildBuffers() {

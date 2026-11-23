@@ -338,10 +338,10 @@ out vec4 oColor;
 
 void main() {
     // oColor = vec4(texture(uMIP, vPosition).r, 0, 0, 1);
-    oColor = vec4(texture(uColor, vPosition).rgb, 1);
+    // oColor = vec4(texture(uColor, vPosition).rgb, 1);
     // float acc = texelFetch(uMIP, ivec2(0, 0), 9).a;
-    // float acc = texture(uMIP, vPosition).a;
-    // oColor = vec4(acc, acc, acc, 1);
+    float acc = texture(uMIP, vPosition).a;
+    oColor = vec4(acc, acc, acc, 1);
     // if(acc >= 0.8) {
     //     oColor = vec4(0, acc, 0, 1);
     // }

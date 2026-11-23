@@ -6,3 +6,5 @@ settings
 data/*
 .vscode
 /*.png
+*.py
+*.xlsx
